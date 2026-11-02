@@ -1,14 +1,22 @@
 // Função da Vercel: recebe o pedido do jogo, confere se a pessoa está logada no Firebase
-// e repassa o texto ao Gemini. A chave do Gemini fica só aqui, nas variáveis de ambiente.
+// e repassa o texto para a IA do mestre (Claude ou Gemini). As chaves ficam só aqui,
+// nas variáveis de ambiente da Vercel, nunca no código do site.
 //
 // Variáveis de ambiente (Vercel > Project > Settings > Environment Variables):
-//   GEMINI_API_KEY          chave do Google AI Studio (obrigatória)
-//   FIREBASE_API_KEY        o mesmo apiKey do config.js (obrigatória, usada para conferir o login)
-//   GEMINI_MODEL            opcional, modelo da narração (padrão: gemini-3-flash-preview)
-//   GEMINI_MODEL_RAPIDO     opcional, modelo das checagens rápidas (padrão: gemini-3.1-flash-lite)
+//   FIREBASE_API_KEY      o mesmo apiKey do config.js (obrigatória, usada para conferir o login)
+//
+//   ANTHROPIC_API_KEY     chave do Claude Console (platform.claude.com). Se existir, o mestre usa o Claude.
+//   CLAUDE_MODEL          opcional, modelo da narração (padrão: claude-haiku-5-5)
+//   CLAUDE_MODEL_RAPIDO   opcional, modelo das checagens rápidas (padrão: claude-haiku-5-5)
+//
+//   GEMINI_API_KEY        chave do Google AI Studio. Usada se não houver ANTHROPIC_API_KEY.
+//   GEMINI_MODEL          opcional, modelo da narração (padrão: gemini-3-flash-preview)
+//   GEMINI_MODEL_RAPIDO   opcional, modelo das checagens rápidas (padrão: gemini-3.1-flash-lite)
+//
+//   MESTRE_PROVEDOR       opcional: "claude" ou "gemini", para forçar um dos dois quando as duas chaves existirem.
 
-const PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
-const RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
+const GEMINI_PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
+const GEMINI_RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
 
 async function usuarioValido(token) {
   if (!token) return false;
@@ -20,23 +28,76 @@ async function usuarioValido(token) {
   return Array.isArray(j.users) && j.users.length > 0;
 }
 
-async function chamarGemini(modelo, prompt) {
-  return fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-    body: JSON.stringify({
-      contents: [{ role: "user", parts: [{ text: prompt }] }],
-      generationConfig: { temperature: 0.9, maxOutputTokens: 2048 }
-    })
-  });
+function escolherProvedor() {
+  const forcado = String(process.env.MESTRE_PROVEDOR || "").toLowerCase();
+  if (forcado === "claude" && process.env.ANTHROPIC_API_KEY) return "claude";
+  if (forcado === "gemini" && process.env.GEMINI_API_KEY) return "gemini";
+  if (process.env.ANTHROPIC_API_KEY) return "claude";
+  if (process.env.GEMINI_API_KEY) return "gemini";
+  return null;
+}
+
+// ---------- Claude ----------
+async function responderClaude(prompt, rapido) {
+  const modelo = (rapido ? process.env.CLAUDE_MODEL_RAPIDO : process.env.CLAUDE_MODEL) || "claude-haiku-5-5";
+  let r;
+  try {
+    r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01"
+      },
+      body: JSON.stringify({
+        model: modelo,
+        max_tokens: rapido ? 1024 : 2048,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+  } catch { return { status: 502, erro: "Falha de rede ao falar com o Claude." }; }
+  if (r.status === 429 || r.status === 529) return { status: 429, erro: "Limite de mensagens do Claude atingido." };
+  if (r.status === 401) return { status: 500, erro: "A ANTHROPIC_API_KEY na Vercel está errada ou foi revogada." };
+  if (r.status === 400) {
+    const t = await r.text();
+    if (/credit|balance/i.test(t)) return { status: 402, erro: "Os créditos da API do Claude acabaram. Adicione créditos no Claude Console." };
+    return { status: 502, erro: `Claude recusou o pedido: ${t.slice(0, 300)}` };
+  }
+  if (!r.ok) return { status: 502, erro: `Claude respondeu ${r.status}: ${(await r.text()).slice(0, 300)}` };
+  const j = await r.json();
+  const texto = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+  return { status: 200, texto, modelo };
+}
+
+// ---------- Gemini ----------
+async function responderGemini(prompt, rapido) {
+  const preferido = rapido ? process.env.GEMINI_MODEL_RAPIDO : process.env.GEMINI_MODEL;
+  const modelos = [...new Set([preferido, ...(rapido ? GEMINI_RAPIDO : GEMINI_PADRAO)].filter(Boolean))];
+  for (const modelo of modelos) {
+    let r;
+    try {
+      r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 2048 } })
+      });
+    } catch { return { status: 502, erro: "Falha de rede ao falar com o Gemini." }; }
+    if (r.status === 404) continue; // modelo não existe mais: tenta o próximo da lista
+    if (r.status === 429) return { status: 429, erro: "Limite de mensagens do Gemini atingido." };
+    if (!r.ok) return { status: 502, erro: `Gemini respondeu ${r.status}: ${(await r.text()).slice(0, 300)}` };
+    const j = await r.json();
+    const texto = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
+    return { status: 200, texto, modelo };
+  }
+  return { status: 502, erro: "Nenhum dos modelos do Gemini configurados está disponível. Defina GEMINI_MODEL na Vercel." };
 }
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).send("Use POST"); return; }
-  if (!process.env.GEMINI_API_KEY || !process.env.FIREBASE_API_KEY) {
-    res.status(500).send("Faltam variáveis de ambiente na Vercel: GEMINI_API_KEY e FIREBASE_API_KEY.");
-    return;
-  }
+  if (!process.env.FIREBASE_API_KEY) { res.status(500).send("Falta a variável FIREBASE_API_KEY na Vercel."); return; }
+  const provedor = escolherProvedor();
+  if (!provedor) { res.status(500).send("Falta a chave da IA na Vercel: ANTHROPIC_API_KEY (Claude) ou GEMINI_API_KEY (Gemini)."); return; }
+
   const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
   try {
     if (!(await usuarioValido(token))) { res.status(401).send("Login inválido ou expirado."); return; }
@@ -46,20 +107,8 @@ export default async function handler(req, res) {
   const prompt = String(body.prompt || "").slice(0, 60000);
   if (!prompt) { res.status(400).send("Pedido vazio."); return; }
   const rapido = body.tier === "quick";
-  const preferido = rapido ? process.env.GEMINI_MODEL_RAPIDO : process.env.GEMINI_MODEL;
-  const modelos = [...new Set([preferido, ...(rapido ? RAPIDO : PADRAO)].filter(Boolean))];
 
-  for (const modelo of modelos) {
-    let r;
-    try { r = await chamarGemini(modelo, prompt); }
-    catch { res.status(502).send("Falha de rede ao falar com o Gemini."); return; }
-    if (r.status === 404) continue; // modelo não existe mais: tenta o próximo da lista
-    if (r.status === 429) { res.status(429).send("Limite de mensagens do Gemini atingido."); return; }
-    if (!r.ok) { res.status(502).send(`Gemini respondeu ${r.status}: ${(await r.text()).slice(0, 300)}`); return; }
-    const j = await r.json();
-    const texto = (j.candidates?.[0]?.content?.parts || []).map(p => p.text || "").join("");
-    res.status(200).json({ text: texto, modelo });
-    return;
-  }
-  res.status(502).send("Nenhum dos modelos do Gemini configurados está disponível. Defina GEMINI_MODEL na Vercel.");
+  const r = provedor === "claude" ? await responderClaude(prompt, rapido) : await responderGemini(prompt, rapido);
+  if (r.status !== 200) { res.status(r.status).send(r.erro); return; }
+  res.status(200).json({ text: r.texto, modelo: r.modelo, provedor });
 }

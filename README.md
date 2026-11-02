@@ -5,7 +5,7 @@ RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros 0.3) com mestre de IA: criado
 Roda na Vercel, com:
 - **Firebase Firestore** como banco de dados em tempo real (fichas, chat, combates, missões);
 - **Login com Google** pelo Firebase Authentication;
-- **Gemini** como mestre, chamado pela função `api/mestre.js` (a chave fica só na Vercel).
+- **Claude (Haiku 5.5)** ou **Gemini** como mestre, chamado pela função `api/mestre.js` (a chave fica só na Vercel).
 
 ## Arquivos
 
@@ -29,17 +29,19 @@ Roda na Vercel, com:
 5. **Configurações do projeto** (engrenagem) > Seus apps > ícone `</>` (Web) > registre o app. Copie os valores do `firebaseConfig` para o `config.js`.
 6. No `config.js`, coloque o e-mail do mestre em `ADMINS`.
 
-### 2. Gemini
-1. Em https://aistudio.google.com/apikey, clique em **Create API key**. A chave começa com `AIza`.
-2. Não coloque essa chave no código: ela vai só na Vercel (passo 3).
+### 2. IA do mestre (Claude ou Gemini)
+- **Claude:** em https://platform.claude.com, compre créditos em Billing e crie uma chave em API Keys (começa com `sk-ant-`).
+- **Gemini:** em https://aistudio.google.com/apikey, clique em **Create API key** (começa com `AIza`).
+- Não coloque a chave no código: ela vai só na Vercel (passo 3). Se as duas existirem, o Claude é usado.
 
 ### 3. Vercel
 1. Em https://vercel.com, entre com o GitHub e clique em **Add New > Project**.
 2. Escolha este repositório. Framework: **Other**. Não precisa de comando de build.
 3. Em **Environment Variables**, adicione:
-   - `GEMINI_API_KEY` = a chave do AI Studio
    - `FIREBASE_API_KEY` = o mesmo `apiKey` do `config.js`
-   - (opcional) `GEMINI_MODEL` para escolher o modelo da narração
+   - `ANTHROPIC_API_KEY` = a chave do Claude Console (mestre com Claude Haiku 5.5)
+   - ou `GEMINI_API_KEY` = a chave do AI Studio (mestre com Gemini)
+   - (opcional) `CLAUDE_MODEL` / `GEMINI_MODEL` para trocar o modelo da narração, e `MESTRE_PROVEDOR` (`claude` ou `gemini`) para escolher quando as duas chaves existirem
 4. Clique em **Deploy**.
 5. Depois do primeiro deploy, copie o domínio do site (ex.: `jjk.vercel.app`) e adicione em **Firebase > Authentication > Configurações > Domínios autorizados**. Sem isso o login com Google não abre.
 
