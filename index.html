@@ -903,6 +903,7 @@ function refreshLight(){const C=calc();$('#idade-efeito').innerHTML=esc(C.idade.
 
 /* ---------- Eventos ---------- */
 document.addEventListener('input',e=>{
+  if(e.target.id==='hist-txt'){clearTimeout(window.__histT);window.__histT=setTimeout(()=>lerHistorico(e.target.value),400);return;}
   const el=e.target;
   if(el.dataset.bind){const k=el.dataset.bind;F[k]=el.type==='number'?el.value:el.value;
     if(k==='nivel'||k==='idade'){renderAll();return;}
@@ -1914,6 +1915,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.admfim){const loc=b.dataset.admfim;db.doc('combates/'+loc).update({ativo:false,resultado:'encerrado',fim:Date.now()}).then(()=>admPost(loc,{tipo:'combate',texto:'O mestre encerrou o combate.'})).catch(()=>admStatus('Não consegui encerrar.',true));return;}
   if(b.dataset.admfalar){const loc=b.dataset.admfalar;const t=$('#am-'+loc).value.trim();if(!t)return;const fora=$('#amm-'+loc).value==='f';admPost(loc,{tipo:'mestre',texto:t,fora,alvoId:'',alvoNome:''}).then(()=>{$('#am-'+loc).value='';});return;}
   if(b.dataset.admlimpar){const loc=b.dataset.admlimpar;openModal(`Limpar o canal de ${locById(loc).curto}?`,'Todas as mensagens deste canal são apagadas para todo mundo. O diário do mestre continua.','','Limpar canal',async()=>{closeModal();await admLimparCanal(loc);});return;}
+  if(b.id==='btn-hist-importar'){importarHistorico();return;}
   if(b.id==='btn-fimcombate'){openModal('Encerrar o combate?','Use se a luta travou ou já acabou na história. Todos os inimigos somem da ordem de turnos.','','Encerrar combate',async()=>{closeModal();await encerrarCombate('encerrado');});return;}
 });
 document.addEventListener('keydown',e=>{
@@ -1921,7 +1923,7 @@ document.addEventListener('keydown',e=>{
   const n=e.target.closest&&e.target.closest('#map .node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selLoc=n.dataset.loc;renderMapa();const el=document.querySelector(`#map .node[data-loc="${selLoc}"]`);el&&el.focus();}
   if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}
 });
-document.addEventListener('change',e=>{if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
+document.addEventListener('change',e=>{if(e.target.id==='hist-arq'&&e.target.files[0]){e.target.files[0].text().then(lerHistorico);}if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
 $('#chat-form').addEventListener('submit',e=>{e.preventDefault();enviar();});
 async function entrarMundo(){
   const st=$('#save-status');
@@ -1949,7 +1951,12 @@ function renderAdmin(){
   if(!db){$('#adm-body').innerHTML='<p class="lead">O painel precisa do armazenamento do grupo. Entre com a conta Google do mestre.</p>';return;}
   admAssinarCombates();
   $('#adm-body').innerHTML=`<div class="adm-grid"><div class="panel"><h2>Personagens</h2><div class="party" id="adm-lista"></div></div><div id="adm-editor"></div></div>
-    <div class="panel" style="margin-top:16px"><h2>Locais, combates e canais</h2><div id="adm-locais" class="adm-locais"></div></div>`;
+    <div class="panel" style="margin-top:16px"><h2>Locais, combates e canais</h2><div id="adm-locais" class="adm-locais"></div></div>
+    <div class="panel" style="margin-top:16px"><h2>Importar histórico dos chats</h2>
+      <p class="note" style="margin:0">Use o arquivo gerado no site antigo pelo botão "Exportar histórico para o site novo". Antes, cada jogador precisa ter entrado aqui e salvo a ficha, para aparecer na lista abaixo.</p>
+      <input type="file" id="hist-arq" accept=".json,application/json,text/plain">
+      <label class="sr" for="hist-txt">Ou cole o conteúdo</label><textarea id="hist-txt" class="mono" rows="3" placeholder="...ou cole aqui o texto exportado"></textarea>
+      <div id="hist-map"></div></div>`;
   renderAdmLista();renderAdmEditor();renderAdmLocais();
 }
 function renderAdmLista(){
@@ -2050,6 +2057,31 @@ async function admAcao(a){
     try{await db.doc('fichas/'+id).update({ficha:o});}catch{}
     renderAdmEditor();}
   }catch{}
+}
+let histDados=null;
+function lerHistorico(t){
+  try{histDados=JSON.parse(t);}catch{histDados=null;$('#hist-map').innerHTML='<p class="note" style="color:var(--seal)">Esse texto não é um histórico válido. Confira se copiou tudo.</p>';return;}
+  if(!histDados||!histDados.canais){histDados=null;$('#hist-map').innerHTML='<p class="note" style="color:var(--seal)">Esse arquivo não tem o campo "canais".</p>';return;}
+  const novos=[...new Set([...jogadores.keys(),...party.keys()])].map(k=>[k,jogadores.get(k)?.nome||party.get(k)?.resumo?.nome||k]);
+  const total=Object.values(histDados.canais).reduce((a,l)=>a+l.length,0);
+  const linhas=Object.entries(histDados.jogadores||{}).map(([velho,j])=>{const auto=novos.find(([k,n])=>normNome(n)===normNome(j.nome))?.[0]||'';
+    return `<label class="f" for="hm-${slugId(velho)}">${esc(j.nome||velho)} no site antigo é, aqui:<select id="hm-${slugId(velho)}" data-velho="${esc(velho)}"><option value="">(ninguém, manter como estava)</option>${novos.map(([k,n])=>`<option value="${esc(k)}" ${k===auto?'selected':''}>${esc(n)}</option>`).join('')}</select></label>`;}).join('');
+  $('#hist-map').innerHTML=`<p class="counter">${total} mensagens em ${Object.keys(histDados.canais).length} canais.</p><div class="grid g2">${linhas}</div><div class="adm-acts" style="margin-top:8px"><button class="btn primary" id="btn-hist-importar">Importar histórico</button></div>`;
+}
+async function importarHistorico(){
+  if(!histDados)return;const mapa={};
+  document.querySelectorAll('#hist-map select[data-velho]').forEach(s=>{if(s.value)mapa[s.dataset.velho]=s.value;});
+  const quartoVelho={};Object.entries(histDados.jogadores||{}).forEach(([v,j])=>{if(j.quarto)quartoVelho[j.quarto]=v;});
+  const tarefas=[];
+  for(const [canal,lista] of Object.entries(histDados.canais)){
+    let novoCanal=canal;if(quartoVelho[canal]&&mapa[quartoVelho[canal]])novoCanal=quartoId(mapa[quartoVelho[canal]]);
+    for(const m of lista){const {id:mid,...dados}=m;if(dados.autorId&&mapa[dados.autorId])dados.autorId=mapa[dados.autorId];if(dados.alvoId&&mapa[dados.alvoId])dados.alvoId=mapa[dados.alvoId];
+      tarefas.push(()=>db.doc(`canais/${novoCanal}/msgs/${slugId(mid||('m'+dados.ts))}`).set(dados));}}
+  const btn=$('#btn-hist-importar');btn.disabled=true;let feitas=0,falhas=0;
+  const lote=async()=>{while(tarefas.length){const t=tarefas.shift();try{await t();}catch{falhas++;}feitas++;if(feitas%20===0)admStatus(`Importando... ${feitas} mensagens`);}};
+  await Promise.all(Array.from({length:6},lote));
+  admStatus(falhas?`Importadas ${feitas-falhas} mensagens, ${falhas} falharam. Pode rodar de novo sem duplicar.`:`Histórico importado: ${feitas} mensagens.`,!!falhas);
+  btn.disabled=false;
 }
 async function admPost(loc,obj){try{await db.collection(`canais/${loc}/msgs`).add({...obj,autorId:uid,ts:Date.now(),criado:new Date().toISOString()});admStatus('Enviado.');}catch{admStatus('Não consegui enviar.',true);}}
 async function admLimparCanal(loc){
