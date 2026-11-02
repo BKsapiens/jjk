@@ -1919,7 +1919,7 @@ document.addEventListener('keydown',e=>{
   const n=e.target.closest&&e.target.closest('#map .node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selLoc=n.dataset.loc;renderMapa();const el=document.querySelector(`#map .node[data-loc="${selLoc}"]`);el&&el.focus();}
   if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}
 });
-document.addEventListener('change',e=>{if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
+document.addEventListener('change',e=>{if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
 $('#chat-form').addEventListener('submit',e=>{e.preventDefault();enviar();});
 async function entrarMundo(){
   const st=$('#save-status');
@@ -1982,6 +1982,10 @@ function renderAdmEditor(){
   <div class="panel"><h2>Técnicas desbloqueadas</h2><p class="note" style="margin:0">Técnicas avançadas que fogem das regras de criação (herança de clã, receptáculo, objeto amaldiçoado). O jogador vê na ficha e o mestre de IA aceita como válidas.</p>
     <div id="adm-esp" class="adm-esp">${(fi.especiais||[]).map((e,i)=>admEspRow(e,i)).join('')}</div>
     <div class="adm-acts"><button class="btn small" data-adm="addesp">+ Técnica</button><button class="btn primary" data-adm="especiais">Salvar técnicas</button></div></div>
+  <div class="panel"><h2>Importar personagem</h2><p class="note" style="margin:0">Traz um personagem de outro site (ficha, PV/PA/PE, inventário, dinheiro e o diário do mestre) para esta conta. Escolha o arquivo .json exportado ou cole o conteúdo.</p>
+    <input type="file" id="adm-import-arq" accept=".json,application/json">
+    <label class="sr" for="adm-import">Conteúdo do arquivo</label><textarea id="adm-import" class="mono" rows="4" placeholder='{"ficha":{...},"jogador":{...}}'></textarea>
+    <div class="adm-acts"><button class="btn primary" data-adm="importar">Importar para este personagem</button></div></div>
   <div class="panel"><h2>Ficha completa (avançado)</h2><p class="note" style="margin:0">Edite atributos, perícias, técnica, vantagens ou qualquer campo. O jogador recebe a ficha nova na hora.</p>
     <label class="sr" for="adm-ficha">Ficha em JSON</label><textarea id="adm-ficha" class="mono" rows="10">${esc(JSON.stringify(fi,null,1))}</textarea>
     <div class="adm-acts"><button class="btn primary" data-adm="ficha">Aplicar ficha</button></div></div>`;
@@ -2025,6 +2029,20 @@ async function admAcao(a){
   if(a==='limpardiario'){openModal('Limpar o diário?','O mestre de IA esquece tudo o que anotou sobre este personagem.','','Limpar diário',async()=>{closeModal();await admUpdate(id,{diario:[]});renderAdmEditor();});return;}
   if(a==='addesp'){const box=$('#adm-esp');box.insertAdjacentHTML('beforeend',admEspRow({},box.children.length));box.lastElementChild.querySelector('input').focus();return;}
   if(a==='especiais'){const es=lerEspAdm();await admUpdate(id,{admin:{rev:Date.now(),especiais:es,ficha:null,xp:null,nivel:null}});try{await db.doc('fichas/'+id).update({ficha:{especiais:es}});}catch{}renderAdmEditor();}
+  if(a==='importar'){let o;try{o=JSON.parse($('#adm-import').value);}catch{admStatus('O arquivo de importação não é um JSON válido.',true);return;}
+    if(!o||!o.ficha){admStatus('Esse arquivo não tem uma ficha (campo "ficha").',true);return;}
+    const f={...o.ficha};delete f.adminRev;const jg={...(o.jogador||{})};
+    if(o.idAntigo){const velho=quartoId(o.idAntigo),novo=quartoId(id);const tr=x=>x===velho?novo:x;
+      if(Array.isArray(jg.diario))jg.diario=jg.diario.map(d=>({...d,local:tr(d.local)}));if(Array.isArray(jg.visitados))jg.visitados=jg.visitados.map(tr);}
+    const atual=jogadores.get(id)||{};const rev=Date.now();
+    const doc={nome:f.nome||jg.nome||'Sem nome',local:atual.local||jg.local||'escola',estado:jg.estado||atual.estado||{pv:1,pa:1,pe:1},max:jg.max||atual.max||{pv:1,pa:1,pe:1},bonusMax:jg.bonusMax||{pv:0,pa:0,pe:0},
+      inventario:Array.isArray(jg.inventario)?jg.inventario:(atual.inventario||[]),ienes:+jg.ienes||0,diario:Array.isArray(jg.diario)?jg.diario.slice(-40):[],visitados:Array.isArray(jg.visitados)?jg.visitados:[],missoesPagas:[],
+      stats:jg.stats||atual.stats||null,admin:{rev,ficha:f,xp:null,nivel:null,especiais:Array.isArray(f.especiais)?f.especiais:[]},atualizado:new Date().toISOString()};
+    try{await db.doc('jogadores/'+id).set(doc);
+      await db.doc('fichas/'+id).set({ficha:f,resumo:{nome:f.nome||'Sem nome',classe:f.classe||'',nivel:+f.nivel||1,xp:+f.xp||0,pendencias:0},donoId:id,atualizado:new Date().toISOString()});
+      admStatus(`${f.nome||'Personagem'} importado. A tela do jogador atualiza sozinha.`);$('#adm-import').value='';renderAdmEditor();}
+    catch{admStatus('Não consegui importar. Confira se você está logado com a conta do mestre e se as regras do Firestore foram publicadas.',true);}
+    return;}
   if(a==='ficha'){let o;try{o=JSON.parse($('#adm-ficha').value);}catch{admStatus('O JSON da ficha tem erro de formatação. Confira vírgulas e aspas.',true);return;}
     await admUpdate(id,{admin:{rev:Date.now(),ficha:o,xp:null,nivel:null,especiais:Array.isArray(o.especiais)?o.especiais:[]}});
     try{await db.doc('fichas/'+id).update({ficha:o});}catch{}
@@ -2090,9 +2108,9 @@ async function boot(){
   db.collection('jogadores').onSnapshot(snap=>{jogadores.clear();snap.docs.forEach(d=>{const x=d.data();if(!x)return;jogadores.set(d.id,x);
       if(d.id===uid&&meu&&!snap.metadata.hasPendingWrites){const antes=meu.local;
         meu={...meu,estado:x.estado||meu.estado,max:x.max||meu.max,bonusMax:x.bonusMax||meu.bonusMax,local:x.local,inventario:x.inventario||meu.inventario,ienes:x.ienes??meu.ienes,diario:x.diario||meu.diario,missoesPagas:x.missoesPagas||meu.missoesPagas,visitados:x.visitados||meu.visitados};
-        aplicarAdminNoJogador(x);
         if(x.local!==antes&&location.hash.startsWith('#local-')&&x.local)setTimeout(()=>{location.hash='local-'+x.local;},50);
-        setTimeout(()=>{sincronizarPvCombate();},0);}});
+        setTimeout(()=>{sincronizarPvCombate();},0);}
+      if(d.id===uid)aplicarAdminNoJogador(x);});
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(!$('#mapa-view').hidden)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if($('#inv-drawer').classList.contains('show'))renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
   assinarMissoes();
