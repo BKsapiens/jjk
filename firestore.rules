@@ -1,0 +1,30 @@
+rules_version = '2';
+// Cole este arquivo em: console do Firebase > Firestore Database > Regras > Publicar.
+// Troque o e-mail abaixo pelo e-mail da conta Google do mestre (o mesmo do config.js).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function logado() { return request.auth != null; }
+    function mestre() { return logado() && request.auth.token.email in ['seu-email@gmail.com']; }
+
+    // Ficha e estado de cada jogador: todos leem, só o dono (ou o mestre) escreve.
+    match /fichas/{uid} {
+      allow read: if logado();
+      allow write: if logado() && (request.auth.uid == uid || mestre());
+    }
+    match /jogadores/{uid} {
+      allow read: if logado();
+      allow write: if logado() && (request.auth.uid == uid || mestre());
+    }
+
+    // Chat, combates e missões são compartilhados entre os jogadores logados.
+    match /canais/{local}/msgs/{msg} {
+      allow read, write: if logado();
+    }
+    match /combates/{local} {
+      allow read, write: if logado();
+    }
+    match /missoes/{id} {
+      allow read, write: if logado();
+    }
+  }
+}

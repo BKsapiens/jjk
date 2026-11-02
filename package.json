@@ -1,0 +1,7 @@
+{
+  "name": "era-dos-feiticeiros",
+  "private": true,
+  "type": "module",
+  "description": "RPG de Jujutsu Kaisen (Era dos Feiticeiros 0.3) com mestre de IA",
+  "engines": { "node": ">=18" }
+}
