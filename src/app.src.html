@@ -439,11 +439,10 @@ body.em-dominio #canal-view .chat::before{content:"領域展開 · " var(--dom-n
 @keyframes domOnda{0%{transform:scale(0)}60%{transform:scale(60);opacity:.9}100%{transform:scale(60);opacity:0}}
 @keyframes domTit{0%,15%{opacity:0;transform:skew(-6deg) scale(.6)}30%{opacity:1;transform:skew(-6deg) scale(1.05)}40%,80%{opacity:1;transform:skew(-6deg) scale(1)}100%{opacity:0;transform:skew(-6deg) scale(1.1)}}
 .ordem li{position:relative}
-.ordem li.bf-hit{animation:bfTreme .5s linear 3;background:#1a0306!important;box-shadow:0 0 0 2px #e8101c,0 0 18px #e8101c}
-.bf-raios{position:absolute;inset:-6px -4px;pointer-events:none;display:grid;place-items:center;animation:bfPisca .16s steps(2) 9}
+.ordem li.bf-hit{animation:bfTreme .09s linear 10;background:#1a0306!important;box-shadow:0 0 0 2px #e8101c,0 0 18px #e8101c}
+.bf-raios{position:absolute;inset:-6px -4px;pointer-events:none;animation:bfPisca .07s steps(2) 13}
 .bf-raios svg{position:absolute;inset:0;width:100%;height:100%}
-.bf-raios b{position:relative;font:900 italic 18px/1 var(--body);color:#fff;background:#e8101c;border:2px solid #000;padding:2px 8px;transform:skew(-12deg) rotate(-4deg);letter-spacing:1px;text-shadow:2px 2px 0 #000}
-@keyframes bfTreme{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px) rotate(-1deg)}40%{transform:translate(4px,-2px) rotate(1deg)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
+@keyframes bfTreme{0%,100%{transform:translate(0,0)}25%{transform:translate(-5px,2px) rotate(-1.2deg)}50%{transform:translate(5px,-2px) rotate(1.2deg)}75%{transform:translate(-3px,-2px)}}
 @keyframes bfPisca{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
 body.sem-animacao .ordem li.bf-hit,body.sem-animacao .bf-raios{animation:none}
 @media (prefers-reduced-motion:reduce){.ordem li.bf-hit,.bf-raios,.dom-onda,.dom-titulo{animation-duration:.01s!important;animation-iteration-count:1!important}}
@@ -3081,10 +3080,10 @@ function tocarDominio(d){
 }
 /* Black Flash: o card do inimigo treme com raios vermelhos e pretos (para todos que estão vendo o combate) */
 let bfVisto=0,bfAtivo=null;
-const BF_SVG=`<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#e8101c" stroke-width="5"/><path d="M6 40 L30 30 L46 48 L70 24 L92 42 L116 26 L136 50 L158 28 L196 42" fill="none" stroke="#0b0a0c" stroke-width="4"/><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#fff" stroke-width="1.5"/></svg><b>黒閃 BLACK FLASH</b>`;
+const BF_SVG=`<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#e8101c" stroke-width="5"/><path d="M6 40 L30 30 L46 48 L70 24 L92 42 L116 26 L136 50 L158 28 L196 42" fill="none" stroke="#0b0a0c" stroke-width="4"/><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#fff" stroke-width="1.5"/></svg>`;
 function tocarBlackFlash(){
   const u=combate&&combate.ultimoBF;
-  if(u&&+u.t>bfVisto){bfVisto=+u.t;if(Date.now()-(+u.t||0)<15000)bfAtivo={alvo:u.alvo,ate:Date.now()+1700};}
+  if(u&&+u.t>bfVisto){bfVisto=+u.t;if(Date.now()-(+u.t||0)<15000)bfAtivo={alvo:u.alvo,ate:Date.now()+950};}
   if(!bfAtivo||Date.now()>bfAtivo.ate){bfAtivo=null;return;}
   const li=document.querySelector(`#combate-panel li[data-pid="${CSS.escape(bfAtivo.alvo)}"]`);if(!li||li.querySelector('.bf-raios'))return;
   li.classList.add('bf-hit');const raio=document.createElement('span');raio.className='bf-raios';raio.setAttribute('aria-hidden','true');raio.innerHTML=BF_SVG;li.appendChild(raio);
