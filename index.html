@@ -204,7 +204,8 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel.show .cel-fundo{opacity:1}
 .cel-mao{position:absolute;left:50%;bottom:0;width:min(98vw,calc(100vh * 1.414));aspect-ratio:2480/1754;transform:translate(-50%,105%) rotate(-14deg);transform-origin:50% 100%;transition:transform .42s cubic-bezier(.2,.9,.25,1.12)}
 .cel.show .cel-mao{transform:translate(-50%,3%) rotate(0deg)}
-.cel-mao img{position:absolute;inset:0;width:100%;height:100%;user-select:none}
+.cel-mao>img,.cel-mao>picture>img{position:absolute;inset:0;width:100%;height:100%;user-select:none}
+.cel-mao picture{position:absolute;inset:0}
 .cel-maos{pointer-events:none}
 .cel-mascara{position:absolute;inset:0;-webkit-mask-image:url(img/celular-mascara.png);mask-image:url(img/celular-mascara.png);-webkit-mask-size:100% 100%;mask-size:100% 100%}
 .cel-tela{font-size:15px;position:absolute;left:24.8%;top:3.3%;width:48.3%;height:96%;transform:rotate(7.5deg);transform-origin:0 0;display:flex;flex-direction:column;padding:2.2% 3% 0 4%;color:#fff;font-size:14px}
@@ -268,6 +269,9 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel-ic{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;cursor:pointer;color:#fff;padding:0}
 .cel-ic .q{width:78px;height:78px;display:grid;place-items:center;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;font:900 36px/1 'Shippori Mincho B1',serif;color:#000;transition:transform .12s}
 .cel-ic:nth-child(3n+2) .q{transform:rotate(4deg)}.cel-ic:nth-child(3n) .q{transform:rotate(-3deg)}.cel-ic:nth-child(3n+1) .q{transform:rotate(-5deg)}
+.cel-ic .qi{width:128px;height:128px;object-fit:contain;filter:drop-shadow(4px 5px 0 rgba(0,0,0,.85));transition:transform .12s}
+.cel-ic:hover .qi,.cel-ic:focus-visible .qi{transform:scale(1.1) rotate(-2deg)}
+.cel-ic.off .qi{filter:grayscale(1) drop-shadow(4px 5px 0 rgba(0,0,0,.85))}
 .cel-ic:hover .q,.cel-ic:focus-visible .q{transform:scale(1.08) rotate(0);background:#000;color:#fff;border-color:#fff}
 .cel-ic:focus-visible{outline:none}
 .cel-ic span{font:900 14px/1.1 var(--body);background:#000;color:#fff;padding:3px 7px;letter-spacing:.5px;text-transform:uppercase;transform:skew(-10deg)}
@@ -459,19 +463,19 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
   .p5-cel-ico{width:30px;height:30px}
   .p5-cel-txt b{font-size:10px}
   body.rolar-aberto .p5-cel{display:none}
-  /* o celular ocupa a tela, sem a mão */
-  .cel-mao{left:0;right:0;bottom:0;top:0;width:auto;aspect-ratio:auto;transform:translateY(105%) rotate(-6deg);transform-origin:50% 100%}
-  .cel.show .cel-mao{transform:none}
-  .cel-mao img{display:none}
-  .cel-mascara{-webkit-mask-image:none;mask-image:none;position:absolute;inset:8px 8px 0;background:#d3121c;border:5px solid #000;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 0 0 3px #fff}
-  .cel-tela{position:absolute;inset:0;width:auto;height:auto;transform:none;padding:10px 12px 0;font-size:15px}
+  /* o celular inteiro (sem a mão), em pé, saindo de baixo da tela */
+  .cel-mao{width:197vw;left:-28vw;bottom:-2vw;aspect-ratio:2480/2276;transform-origin:48.5% 100%;transform:rotate(-7.7deg) translateY(110%)}
+  .cel.show .cel-mao{transform:rotate(-7.7deg)}
+  .cel-mao .cel-maos{display:none}
+  .cel-mascara{-webkit-mask-image:url(img/celular-inteiro-mascara.png);mask-image:url(img/celular-inteiro-mascara.png)}
+  .cel-tela{left:24.7%;top:25.7%;width:47.7%;height:74%;transform:rotate(7.7deg);padding:10px 12px 0;font-size:15px}
   .cel-topo h2{font-size:24px!important}
   .cel-bt{width:40px!important;height:40px!important;font-size:20px!important}
   .cel-hora{font-size:14px!important}
   .cel .cel-app:not([data-app="home"]){zoom:1.08}
   .cel-corpo{padding:10px 2px calc(40px + env(safe-area-inset-bottom)) 0}
   .cel-grade{gap:22px 8px!important;padding:16px 0!important}
-  .cel-ic .q{width:74px!important;height:74px!important;font-size:36px!important}
+  .cel-ic .qi{width:84px;height:84px}
   .cel-ic span{font-size:13px!important}
   .cel-badge{min-width:26px;height:26px;font-size:13px!important}
   .dm-log{max-height:52dvh}
@@ -690,7 +694,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 <div class="cel" id="cel" hidden>
   <div class="cel-fundo" data-celfechar="1"></div>
   <div class="cel-mao" role="dialog" aria-modal="true" aria-labelledby="cel-titulo">
-    <img class="cel-base" src="img/celular.png" alt="" draggable="false">
+    <picture><source media="(max-width:760px)" srcset="img/celular-inteiro.png"><img class="cel-base" src="img/celular.png" alt="" draggable="false"></picture>
     <div class="cel-mascara"><div class="cel-tela">
       <div class="cel-topo"><button type="button" class="cel-bt" id="cel-voltar" aria-label="Voltar">‹</button><h2 id="cel-titulo">Celular</h2><span class="cel-hora" id="cel-hora"></span><button type="button" class="cel-bt" data-celfechar="1" aria-label="Guardar o celular">✕</button></div>
       <div class="cel-corpo" id="cel-corpo">
@@ -2622,7 +2626,7 @@ function renderCombate(){
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['descanso','寮','Descanso'],['cena','人','Na cena'],['inventario','袋','Inventário'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();setTimeout(()=>{const b=$('#mapa-fechar');b&&b.focus();},30);}
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;}
@@ -2643,7 +2647,7 @@ function celIr(app){
 function renderCelApp(){
   const a=celApp;if(!a)return;
   if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
-    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><span class="q" aria-hidden="true">${kj}</span><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
+    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
   if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
     if(!mm&&!mp)$('#minha-missao').innerHTML='';}
   if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
