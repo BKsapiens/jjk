@@ -269,6 +269,10 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .post-bt{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:800;font-size:13px;padding:3px 10px;cursor:pointer;transform:skew(-6deg)}
 .post-bt.on{background:#d3121c;color:#fff}.post-bt:hover,.post-bt:focus-visible{background:#0b0a0c;color:#fff;outline:none}
 .post-form{margin-bottom:4px}
+.cel-relogio{margin:0 0 10px;color:#fff;text-shadow:2px 2px 0 #000;font-size:14px}.cel-relogio b{font-size:16px}
+.desc-rec{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-weight:800}
+.desc-barra{display:block;height:10px;background:#d8d3d0;border:2px solid #0b0a0c}.desc-barra i{display:block;height:100%;background:#d3121c;transition:width .6s}
+body.noite-jogo #mapa-tela svg#map{filter:brightness(.72) saturate(.85) hue-rotate(-8deg)}
 .notas-box{display:flex;flex-direction:column;gap:8px}.notas-box>.btn.primary{align-self:flex-start}
 .nota-titulo,.nota-texto{width:100%;box-sizing:border-box;background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #000;font:inherit;padding:8px 10px}
 .nota-titulo{font-weight:900;font-size:1.1em}.nota-texto{min-height:46vh;resize:vertical;line-height:1.5}
@@ -806,7 +810,7 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
     <div class="cel-mascara"><div class="cel-tela">
       <div class="cel-topo"><button type="button" class="cel-bt" id="cel-voltar" aria-label="Voltar">‹</button><h2 id="cel-titulo">Celular</h2><span class="cel-hora" id="cel-hora"></span><button type="button" class="cel-bt" data-celfechar="1" aria-label="Guardar o celular">✕</button></div>
       <div class="cel-corpo" id="cel-corpo">
-        <section class="cel-app" data-app="home"><div class="cel-grade" id="cel-grade"></div></section>
+        <section class="cel-app" data-app="home"><p class="cel-relogio" id="cel-relogio"></p><div class="cel-grade" id="cel-grade"></div></section>
         <section class="cel-app" data-app="objetivos" hidden><div class="panel" id="minha-missao"></div><div class="panel" id="cel-sem-missao"></div></section>
         <section class="cel-app" data-app="descanso" hidden><div class="panel" id="descanso-panel"></div><div class="panel" id="cel-sem-descanso"></div></section>
         <section class="cel-app" data-app="cena" hidden><div class="panel" id="presentes"></div><div class="panel" id="loc-info"></div></section>
@@ -1679,6 +1683,7 @@ function renderMapa(){
 }
 
 function bloqueioDe(id){
+  if(meu?.descanso)return 'Você está descansando. Abra o app Descanso e toque em Levantar antes de sair.';
   if(ehEscola(raiz(id))&&!podeEntrarEscola(raiz(id)))return `Você é freelancer: só entra na ${ESCOLAS[raiz(id)].nome} se um aluno de lá te convidar.`;
   const l=locById(id);if(!areaLiberada(l))return `${l.area} só abre para freelancers com ${l.restrito.cacadas} caçadas concluídas (você tem ${+meu?.cacadasFeitas||0}).`;
   return '';}
@@ -2038,6 +2043,48 @@ const DIA_MS=2*3600000,RELOGIO_EPOCH=Date.UTC(2026,10,1,15,0);
 const diaJogo=(t=Date.now())=>Math.floor((t-RELOGIO_EPOCH)/DIA_MS);
 const horaJogo=(t=Date.now())=>((((t-RELOGIO_EPOCH)%DIA_MS)+DIA_MS)%DIA_MS)/DIA_MS*24;
 const msAteProximoDia=(t=Date.now())=>DIA_MS-((((t-RELOGIO_EPOCH)%DIA_MS)+DIA_MS)%DIA_MS);
+const HORA_JOGO_MS=DIA_MS/24; /* 1 hora no jogo = 5 minutos reais */
+const periodoDia=(h=horaJogo())=>h<5?'madrugada':h<12?'manhã':h<17?'tarde':h<19?'entardecer':'noite';
+const ehNoite=(h=horaJogo())=>h>=19||h<5;
+const relogioTxt=(t=Date.now())=>{const h=horaJogo(t);return `${String(Math.floor(h)).padStart(2,'0')}:${String(Math.floor(h%1*60)).padStart(2,'0')}`;};
+const iconePeriodo=(h=horaJogo())=>ehNoite(h)?'☾':h<7?'◐':'☀';
+const duracaoJogo=ms=>{const m=Math.floor(ms/HORA_JOGO_MS*60);return m<60?`${m} min`:`${Math.floor(m/60)} h${m%60?` ${String(m%60).padStart(2,'0')}`:''}`;};
+function atualizarRelogio(){
+  const t=`${iconePeriodo()} ${relogioTxt()}`;const el=$('#cel-hora');if(el){el.textContent=t;el.title=`Hora no jogo (${periodoDia()}). Um dia no jogo dura 2 horas reais.`;}
+  const r=$('#cel-relogio');if(r)r.innerHTML=`<b>${iconePeriodo()} ${relogioTxt()}</b> · ${periodoDia()} · dia ${typeof campanha!=='undefined'&&+campanha?.inicio?Math.floor((Date.now()-campanha.inicio)/DIA_MS)+1:diaJogo()+1} da campanha`;
+  document.body.classList.toggle('noite-jogo',ehNoite());
+}
+
+/* Descanso progressivo: deitado no quarto, cada hora do jogo recupera 10% de PV, PA e PE.
+   Enquanto descansa, o personagem não sai do lugar nem age com o mestre. */
+const DESC_TAXA=10;
+function previaDescanso(){
+  const d=meu?.descanso;if(!d)return null;const horas=Math.max(0,(Date.now()-(+d.inicio||Date.now()))/HORA_JOGO_MS);
+  const e={};['pv','pa','pe'].forEach(k=>{const mx=+meu.max[k]||0;const base=+d.base?.[k]||0;e[k]=Math.min(mx,base+Math.floor(mx*DESC_TAXA*horas/100));});return {horas,e};
+}
+async function comecarDescanso(){
+  const l=locById(canalAtual);if(!meu||!l||!l.quarto||meu.descanso)return;
+  if(combate&&combate.ativo&&combateLocal===canalAtual){toastChat('Não dá para descansar no meio de um combate.');return;}
+  const now=Date.now();await atualizarMeu({descanso:{inicio:now,local:canalAtual,base:{...meu.estado}}});
+  await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} deitou para descansar.`});renderDescanso();
+}
+let descOcupado=false;
+async function aplicarDescanso(final,motivo){
+  const pr=previaDescanso();if(!pr||descOcupado)return;descOcupado=true;
+  try{const e={...meu.estado};let mudou=false;['pv','pa','pe'].forEach(k=>{if(pr.e[k]>e[k]){e[k]=pr.e[k];mudou=true;}});
+    if(!final){if(mudou)await atualizarMeu({estado:e});return;}
+    const d=meu.descanso;const ganho={};['pv','pa','pe'].forEach(k=>ganho[k]=e[k]-(+d.base?.[k]||0));
+    const patch={estado:e,descanso:null};
+    if(pr.horas>=1){const c={...(meu.cont||{})};c.descansos=(+c.descansos||0)+1;patch.cont=c;}
+    await atualizarMeu(patch);
+    if(pr.horas>=4&&F.treino&&F.treino.pronto===false){F.treino={...F.treino,pronto:true};saveDraft();if(db&&uid)salvarQuieto();}
+    const loc=d.local||canalAtual;
+    await postMsg(loc,{tipo:'sistema',texto:`${F.nome} ${motivo||'levantou'} depois de ${duracaoJogo(Date.now()-d.inicio)} de descanso: +${Math.max(0,ganho.pv)} PV, +${Math.max(0,ganho.pa)} PA, +${Math.max(0,ganho.pe)} PE.`});
+    renderDescanso();}
+  finally{descOcupado=false;}
+}
+setInterval(()=>{atualizarRelogio();if(meu?.descanso){aplicarDescanso(false);if(celApp==='descanso'||canalAtual===meu.descanso.local)renderDescanso();}},20000);
+atualizarRelogio();
 
 /* App Caçadores (só freelancers): contratos rápidos de eliminar 1 a 5 criaturas, sem investigação nem relatório.
    Os contratos mudam a cada dia do jogo e são gerados aqui, sem gastar IA. */
@@ -2343,20 +2390,15 @@ function renderRoll(){
 function renderDescanso(){
   const p=$('#descanso-panel');if(!p)return;const l=locById(canalAtual);
   if(!l||!l.quarto||!meu){p.hidden=true;p.innerHTML='';return;}
-  const meuQ=l.dono===myId();const emComb=combate&&combate.ativo&&souParticipante();
-  p.hidden=false;p.innerHTML=`<h2>${meuQ?'Seu quarto':'Descanso'}</h2><p class="note" style="margin:0">Tabela de descanso do livro: recupera uma parte de PV, PA e PE. Se for interrompido por combate, não conta.</p>
-    <div style="display:flex;flex-direction:column;gap:6px">${[['curto','Descanso curto · 2 h',25],['inter','Descanso intermediário · 4 h',50],['longo','Descanso longo · 10 h',80]].map(([k,t,pc])=>`<button class="btn" data-descanso="${k}" ${emComb||narrando?'disabled':''}>${t} · ${pc}%</button>`).join('')}</div>`;
-}
-async function descansar(tipo){
-  const pc={curto:25,inter:50,longo:80}[tipo];if(!pc||!meu)return;
-  if(combate&&combate.ativo&&souParticipante()){toastChat('Não dá para descansar no meio de um combate.');return;}
-  const e={...meu.estado},m=meu.max,ganho={};
-  ['pv','pa','pe'].forEach(k=>{const g=Math.max(1,Math.floor(m[k]*pc/100));const novo=Math.min(m[k],e[k]+g);ganho[k]=novo-e[k];e[k]=novo;});
-  if(tipo!=='curto'&&F.treino&&F.treino.pronto===false){F.treino={...F.treino,pronto:true};saveDraft();if(db&&uid)salvarQuieto();}
-  await atualizarMeu({estado:e});
-  const nome={curto:'um descanso curto (2 horas)',inter:'um descanso intermediário (4 horas)',longo:'um descanso longo (10 horas)'}[tipo];
-  await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} fez ${nome}: +${ganho.pv} PV, +${ganho.pa} PA, +${ganho.pe} PE.`});
-  narrar(canalAtual,{tipo:'acao',texto:`(descansou: ${nome}, já recuperado pelo sistema)`});
+  const meuQ=l.dono===myId();const emComb=combate&&combate.ativo&&combateLocal===canalAtual;const pr=previaDescanso();
+  const barra=(k,n)=>{const mx=+meu.max[k]||1;const v=pr?pr.e[k]:meu.estado[k];return `<div class="desc-rec"><span>${n}</span><span class="desc-barra"><i style="width:${Math.round(v/mx*100)}%"></i></span><b>${v}/${mx}</b></div>`;};
+  const falta=pr?Math.max(0,...['pv','pa','pe'].map(k=>{const mx=+meu.max[k]||0;const base=+meu.descanso.base?.[k]||0;return mx>base?Math.ceil((mx-base)/(mx*DESC_TAXA/100)):0;}))*HORA_JOGO_MS-(Date.now()-meu.descanso.inicio):0;
+  p.hidden=false;p.innerHTML=`<h2>${meuQ?(ehFree(myId())?'Seu apartamento':'Seu quarto'):'Descanso'}</h2>
+    <p class="note" style="margin:0">${iconePeriodo()} ${relogioTxt()} · ${periodoDia()}. Cada hora no jogo (5 minutos reais) deitado recupera ${DESC_TAXA}% de PV, PA e PE. Enquanto descansa, você não sai do lugar nem age com o mestre.</p>
+    ${barra('pv','PV')}${barra('pa','PA')}${barra('pe','PE')}
+    ${pr?`<p class="note" style="margin:0"><b>Descansando há ${duracaoJogo(Date.now()-meu.descanso.inicio)}.</b> ${falta>0?`Recuperação completa em uns ${Math.ceil(falta/60000)} min reais.`:'Tudo recuperado.'}</p>
+      <button class="btn primary" data-desc="levantar">Levantar</button>`
+    :`<button class="btn primary" data-desc="deitar" ${emComb?'disabled':''}>Deitar e descansar</button>`}`;
 }
 function renderAreas(){
   const bar=$('#areas-bar');if(!bar)return;const id=canalAtual;
@@ -2394,6 +2436,7 @@ function agendarObservacao(id,t,r){
 async function enviar(){
   const ta=$('#chat-input');const t=ta.value.trim();if(!t||!canalAtual)return;
   if(narrando&&paraQuem==='mestre'){toastChat('Espere o mestre terminar de narrar.');return;}
+  if(meu?.descanso&&paraQuem==='mestre'){toastChat('Você está descansando. Levante (app Descanso) para agir com o mestre. Falar com os outros jogadores pode.');return;}
   let sobre=paraQuem==='mestre'&&(calc().hasTec||(F.especiais||[]).length)?Math.max(0,parseInt($('#chat-sobre').value)||0):0;
   if(sobre){const C=calc();
     if(sobre>meu.estado.pa){toastChat(`Você só tem ${meu.estado.pa} PA. Diminua o PA extra.`);return;}
@@ -2538,7 +2581,7 @@ COMO NARRAR
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 {{FIXO_FIM}}
-${direcaoMestre()}NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
+${direcaoMestre()}HORA NO JOGO: ${relogioTxt()} (${periodoDia()}).${ehNoite()?' À noite as ruas esvaziam e as maldições ficam mais ativas e ousadas.':''} NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
@@ -2670,7 +2713,7 @@ function assinarCombate(local){
   if(db){combateUnsub=db.doc('combates/'+local).onSnapshot(s=>{combate=s.exists?s.data():null;aposMudancaCombate();},()=>{});}
   else{combate=(window.__combatesLocais||{})[local]||null;renderCombate();}
 }
-function aposMudancaCombate(){aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
+function aposMudancaCombate(){if(combate&&combate.ativo&&meu?.descanso&&combateLocal===meu.descanso.local)aplicarDescanso(true,'acordou com o combate');aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
 async function combateWrite(patch,full){
   const local=combateLocal;if(!local)return;
   combate=full?patch:deepMerge(combate||{},patch);
@@ -3059,16 +3102,16 @@ function celIr(app){if(app==='config')celCreditos=false;if(app==='notas'&&celApp
   if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
   $('#cel-titulo').textContent=CEL_TIT[app]||'Celular';$('#cel-voltar').style.visibility=app==='home'?'hidden':'visible';
-  $('#cel-hora').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});$('#cel-corpo').scrollTop=0;
+  atualizarRelogio();$('#cel-corpo').scrollTop=0;
   renderCelApp();
 }
 function renderCelApp(){
   const a=celApp;if(!a)return;
-  if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
+  if(a==='home'){atualizarRelogio();const quarto=!!locById(canalAtual)?.quarto;
     $('#cel-grade').innerHTML=CEL_APPS.filter(([k])=>k!=='cacadores'||ehFree(myId())).map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}${k==='social'&&postsNaoLidos()?`<i class="cel-badge">${Math.min(99,postsNaoLidos())}</i>`:''}</button>`).join('');}
   if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
     if(!mm&&!mp)$('#minha-missao').innerHTML='';}
-  if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
+  if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no ${ehFree(myId())?'seu apartamento':'quarto do dormitório'}.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para ${ehFree(myId())?'o meu apartamento':'o meu quarto'}</button>`:''}`;}
   if(a==='cena'){if(canalAtual)renderPresentes();else{$('#presentes').innerHTML='<p class="note" style="margin:0">Você ainda não está em nenhum lugar. Abra o Mapa.</p>';$('#loc-info').innerHTML='';}}
   if(a==='inventario')renderInv();
   if(a==='npcs')renderNpcs();
@@ -3328,7 +3371,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.msair){sairMissao(b.dataset.msair);return;}
   if(b.dataset.madd){adicionarMissao(b.dataset.madd,$('#madd-'+b.dataset.madd).value);return;}
   if(b.id==='btn-gerar-missoes'){gerarMissoes();return;}
-  if(b.dataset.descanso){descansar(b.dataset.descanso);return;}
+  if(b.dataset.desc){if(b.dataset.desc==='deitar')comecarDescanso();else aplicarDescanso(true);return;}
   if(b.dataset.treino){treinar(b.dataset.treino);return;}
   if(b.id==='btn-relatorio'){const mm=minhaMissao();if(!mm)return;openModal(`Relatório: ${mm.titulo}`,'Resuma o que aconteceu na missão (opcional). O professor lê e a missão é paga para todo o grupo.',' ','Entregar relatório',async()=>{const t=$('#modal-text').value.trim();closeModal();await entregarRelatorio(mm,t);});$('#modal-text').value='';$('#modal-text').placeholder='Ex.: Achamos a maldição na plataforma 4, o guarda estava alimentando ela...';$('#modal-text').focus();return;}
 
