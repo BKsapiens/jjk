@@ -205,7 +205,7 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel-mao{position:absolute;left:50%;bottom:0;width:min(98vw,calc(100vh * 1.414));aspect-ratio:2480/1754;transform:translate(-50%,105%) rotate(-14deg);transform-origin:50% 100%;transition:transform .42s cubic-bezier(.2,.9,.25,1.12)}
 .cel.show .cel-mao{transform:translate(-50%,3%) rotate(0deg)}
 .cel-mao img{position:absolute;inset:0;width:100%;height:100%;user-select:none}
-.cel-maos{pointer-events:none;opacity:.8}
+.cel-maos{pointer-events:none}
 .cel-mascara{position:absolute;inset:0;-webkit-mask-image:url(img/celular-mascara.png);mask-image:url(img/celular-mascara.png);-webkit-mask-size:100% 100%;mask-size:100% 100%}
 .cel-tela{font-size:15px;position:absolute;left:24.8%;top:3.3%;width:48.3%;height:96%;transform:rotate(7.5deg);transform-origin:0 0;display:flex;flex-direction:column;padding:2.2% 3% 0 4%;color:#fff;font-size:14px}
 .cel-topo{display:flex;align-items:center;gap:8px;padding:6px 0 8px;border-bottom:3px solid #000}
@@ -215,7 +215,29 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel-bt:hover,.cel-bt:focus-visible{background:#fff;color:#000;outline:none}
 .cel-corpo{flex:1;overflow:auto;padding:10px 4px 60px 0;scrollbar-width:thin;scrollbar-color:#000 transparent}
 .cel-app{display:flex;flex-direction:column;gap:10px}
-.cel .panel{background:#0b0a0c;border:2px solid #fff;border-radius:2px;box-shadow:4px 4px 0 #000;padding:12px}
+.cel .panel,.cel .loc-card{background:#fff;color:#0b0a0c;border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 #000;padding:14px;transform:rotate(-.6deg)}
+.cel .panel:nth-of-type(2n){transform:rotate(.5deg)}
+.cel .panel h2,.cel .panel h3{color:#0b0a0c;font-family:var(--display);font-style:italic;font-weight:900}
+.cel .panel h2{display:block;width:fit-content;max-width:100%;background:#0b0a0c;color:#fff;padding:4px 12px;transform:skew(-8deg);font-size:18px;line-height:1.2;margin:0 0 8px}
+.cel .panel [style*="var(--bone)"]{color:#d3121c!important}
+.cel .panel .note,.cel .panel small,.cel .panel p{color:#2a2629}
+.cel .panel b,.cel .panel strong{color:#0b0a0c}
+.cel .panel .counter{color:#0b0a0c}
+.cel .panel .btn{background:#0b0a0c;color:#fff;border:2px solid #0b0a0c;border-radius:0;font-weight:800;transform:skew(-6deg)}
+.cel .panel .btn:hover,.cel .panel .btn:focus-visible{background:#d3121c;border-color:#0b0a0c;color:#fff}
+.cel .panel .btn.primary{background:#d3121c;border-color:#0b0a0c}
+.cel .panel .btn.primary:hover{background:#0b0a0c}
+.cel .panel input,.cel .panel select,.cel .panel textarea{background:#fff;color:#0b0a0c;border:2px solid #0b0a0c;border-radius:0}
+.cel .panel .f,.cel .panel label{color:#0b0a0c}
+.cel .panel .pill,.cel .panel .tags span{background:#0b0a0c;color:#fff;border:0;border-radius:0;transform:skew(-8deg)}
+.cel .panel .missao,.cel .panel .npc-item,.cel .panel .inv-item{background:#fff;color:#0b0a0c;border:2px solid #0b0a0c;border-radius:0;box-shadow:3px 3px 0 #d3121c}
+.cel .panel .missao p,.cel .panel .npc-item span,.cel .panel .inv-item small{color:#2a2629}
+.cel .panel .qty button{background:#0b0a0c;color:#fff;border:0;border-radius:0}
+.cel .panel .tok{border:2px solid #0b0a0c}
+.cel .panel .pool{background:#0b0a0c;border-radius:0}.cel .panel .pool .k,.cel .panel .pool .v{color:#fff}
+.cel .panel .mini-attrs div{background:#0b0a0c;color:#fff;border-radius:0}.cel .panel .mini-attrs span,.cel .panel .mini-attrs b{color:#fff}
+.cel .panel .who-list div{color:#0b0a0c}
+.cel .panel ul{color:#2a2629}
 .cel .panel:empty{display:none}
 .cel-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 12px;padding:14px 2px}
 .cel-ic{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;cursor:pointer;color:#fff;padding:0}
