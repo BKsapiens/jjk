@@ -43,6 +43,11 @@ service cloud.firestore {
       allow read, create: if logado();
       allow update, delete: if mestre();
     }
+    // Mensagens diretas: só os dois jogadores da conversa (o id da conversa é "uidA__uidB").
+    match /dms/{conversa}/msgs/{msg} {
+      allow read, create: if logado() && request.auth.uid in conversa.split('__');
+      allow delete: if mestre();
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();

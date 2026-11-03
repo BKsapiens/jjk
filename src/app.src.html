@@ -244,6 +244,25 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .situacao.ok{background:#0b0a0c;color:#fff}.situacao.ok b{color:#fff!important}.situacao.ok span{color:#e6e6e6}
 .situacao.falta{background:#d3121c;color:#fff}.situacao.falta b{color:#fff!important}.situacao.falta span{color:#fff}
 .side .situacao{transform:none}
+.cel-ic{position:relative}
+.cel-badge{position:absolute;top:-10px;right:4px;min-width:34px;height:34px;padding:0 7px;font-size:17px!important;display:grid;place-items:center;background:#fff;color:#d3121c;border:3px solid #000;border-radius:50%;font:900 13px/1 var(--body);font-style:normal}
+.dm-item .cel-badge{position:static;margin-left:auto;background:#d3121c;color:#fff}
+.p5-cel-dot{display:grid;place-items:center;font:900 11px/1 var(--body);color:#d3121c;min-width:22px;height:22px;width:auto;padding:0 4px}
+.dm-item{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:#fff;border:2px solid #000;box-shadow:3px 3px 0 #d3121c;padding:8px 10px;margin:8px 0;cursor:pointer;color:#0b0a0c;transform:skew(-3deg)}
+.dm-item:hover,.dm-item:focus-visible{background:#0b0a0c;color:#fff;outline:none}.dm-item:hover small,.dm-item:focus-visible small{color:#ddd}
+.dm-txt{display:flex;flex-direction:column;min-width:0}.dm-txt small{color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dm-conversa{display:flex;flex-direction:column;gap:8px}
+.dm-voltar{align-self:flex-start;background:#0b0a0c!important;color:#fff!important;border:2px solid #fff!important;border-radius:0!important;transform:skew(-8deg)}
+.dm-log{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow:auto;padding:6px 4px}
+.dm-bolha{max-width:82%;padding:8px 12px;border:3px solid #000;box-shadow:4px 4px 0 #000;position:relative}
+.dm-bolha p{margin:0;white-space:pre-wrap;font-weight:600}.dm-bolha small{display:block;font-size:11px;margin-top:2px;opacity:.75}
+.dm-bolha.ele{align-self:flex-start;background:#fff;color:#0b0a0c;transform:rotate(-1.5deg)}
+.dm-bolha.eu{align-self:flex-end;background:#0b0a0c;color:#fff;border-color:#fff;transform:rotate(1.5deg)}
+.dm-vazio{color:#fff!important;text-shadow:2px 2px 0 #000}
+.dm-form{display:flex;gap:6px;align-items:stretch;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:6px}
+.dm-form textarea{flex:1;resize:none;border:0;background:#fff;color:#0b0a0c;font:inherit;padding:4px}
+.dm-form textarea:focus{outline:2px solid #d3121c}
+.dm-form .btn{background:#d3121c;color:#fff;border:2px solid #000;border-radius:0;font-weight:900;transform:skew(-6deg)}
 .cel .panel:empty{display:none}
 .cel-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:26px 12px;padding:14px 2px}
 .cel-ic{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;cursor:pointer;color:#fff;padding:0}
@@ -609,6 +628,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <section class="cel-app" data-app="npcs" hidden><div class="panel"><p class="note" style="margin:0">Todo personagem que o mestre apresenta fica anotado aqui, com o que ele lembra de vocês.</p>
           <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome"><div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div></div></section>
         <section class="cel-app" data-app="ficha" hidden><div class="panel" id="cel-ficha"></div></section>
+        <section class="cel-app" data-app="mensagens" hidden><div id="cel-dm"></div></section>
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
     </div></div>
@@ -2524,11 +2544,11 @@ function renderCombate(){
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mapa','地','Mapa'],['objetivos','任','Objetivos'],['descanso','寮','Descanso'],['cena','人','Na cena'],['inventario','袋','Inventário'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['descanso','寮','Descanso'],['cena','人','Na cena'],['inventario','袋','Inventário'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();setTimeout(()=>{const b=$('#mapa-fechar');b&&b.focus();},30);}
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;}
-const CEL_TIT={home:'Celular',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',config:'Ajustes'};
+const CEL_TIT={home:'Celular',mensagens:'Mensagens',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',config:'Ajustes'};
 function abrirCel(app){
   const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
@@ -2536,6 +2556,7 @@ function abrirCel(app){
 function fecharCel(semFoco){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);if(!semFoco){const b=$('#btn-cel');b&&b.focus();}}
 function celIr(app){
   if(app==='mapa'){abrirMapa();return;}
+  if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
   $('#cel-titulo').textContent=CEL_TIT[app]||'Celular';$('#cel-voltar').style.visibility=app==='home'?'hidden':'visible';
   $('#cel-hora').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});$('#cel-corpo').scrollTop=0;
@@ -2544,7 +2565,7 @@ function celIr(app){
 function renderCelApp(){
   const a=celApp;if(!a)return;
   if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
-    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><span class="q" aria-hidden="true">${kj}</span><span>${n}</span></button>`).join('');}
+    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><span class="q" aria-hidden="true">${kj}</span><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
   if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
     if(!mm&&!mp)$('#minha-missao').innerHTML='';}
   if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
@@ -2553,7 +2574,58 @@ function renderCelApp(){
   if(a==='npcs')renderNpcs();
   if(a==='ficha')renderCelFicha();
   if(a==='config')renderCelConfig();
+  if(a==='mensagens')renderDM();
 }
+/* ---------- Mensagens diretas entre jogadores (só os dois leem) ---------- */
+const dmConv=k=>[myId(),k].sort().join('__');
+const dmMsgs=new Map(),dmUnsubs=new Map();let dmAberto=null,dmInicio=Date.now(),dmEnviando=false;
+function dmLidos(){try{return JSON.parse(localStorage.getItem('jjk-dm-lido-'+myId())||'{}');}catch{return {};}}
+function dmMarcarLido(k){const l=dmLidos();const ult=(dmMsgs.get(k)||[]).slice(-1)[0];l[k]=Math.max(+l[k]||0,+ult?.ts||Date.now());try{localStorage.setItem('jjk-dm-lido-'+myId(),JSON.stringify(l));}catch{}}
+const dmNaoLidas=k=>{const l=+dmLidos()[k]||0;return (dmMsgs.get(k)||[]).filter(m=>m.de!==myId()&&+m.ts>l).length;};
+const dmTotalNaoLidas=()=>[...dmMsgs.keys()].reduce((a,k)=>a+dmNaoLidas(k),0);
+function assinarDMs(){
+  if(!db||!uid)return;
+  for(const k of jogadores.keys()){if(k===myId()||dmUnsubs.has(k))continue;
+    dmUnsubs.set(k,db.collection(`dms/${dmConv(k)}/msgs`).orderBy('ts','desc').limit(80).onSnapshot(sn=>{
+      const antes=dmMsgs.get(k)||[];const lista=sn.docs.map(d=>({id:d.id,...d.data()})).reverse();dmMsgs.set(k,lista);
+      const novas=lista.filter(m=>m.de===k&&+m.ts>dmInicio&&!antes.some(a=>a.id===m.id));
+      if(dmAberto===k&&celApp==='mensagens')dmMarcarLido(k);
+      else if(novas.length&&canalAtual)toastChat(`Nova mensagem de ${nomeJog(k)} no celular.`);
+      atualizarAlertaDM();if(celApp==='mensagens')renderDM();else if(celApp==='home')renderCelApp();},()=>{}));}
+}
+function atualizarAlertaDM(){const el=$('#cel-alerta');if(el){const n=dmTotalNaoLidas();el.hidden=!n;el.textContent=n?String(Math.min(n,99)):'';}}
+function renderDM(){
+  const box=$('#cel-dm');if(!box)return;
+  const ae=document.activeElement;const digitando=ae&&ae.id==='dm-texto'?{v:ae.value,s:ae.selectionStart}:null;
+  if(!dmAberto){
+    const outros=[...jogadores.entries()].filter(([k])=>k!==myId());
+    const ord=outros.map(([k,j])=>({k,j,ult:(dmMsgs.get(k)||[]).slice(-1)[0]})).sort((a,b)=>(+b.ult?.ts||0)-(+a.ult?.ts||0)||String(a.j.nome).localeCompare(String(b.j.nome)));
+    $('#cel-titulo').textContent='Mensagens';
+    box.innerHTML=`<div class="panel"><h2>Conversas</h2>${ord.length?ord.map(({k,j,ult})=>{const n=dmNaoLidas(k);
+      return `<button type="button" class="dm-item" data-dmabrir="${esc(k)}"><span class="tok" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span class="dm-txt"><b>${esc(j.nome)}</b><small>${ult?esc((ult.de===myId()?'Você: ':'')+String(ult.texto).slice(0,60)):esc(identDe(k))}</small></span>${n?`<i class="cel-badge">${n}</i>`:''}</button>`;}).join(''):'<p class="note" style="margin:0">Ninguém mais entrou no mundo ainda.</p>'}
+      <p class="note" style="margin:8px 0 0">Mensagens diretas ficam só entre vocês dois. O mestre não lê.</p></div>`;
+    return;}
+  const k=dmAberto;const j=jogadores.get(k)||{};const lista=dmMsgs.get(k)||[];dmMarcarLido(k);atualizarAlertaDM();
+  $('#cel-titulo').textContent=j.nome||'Conversa';
+  box.innerHTML=`<div class="dm-conversa"><button type="button" class="btn small dm-voltar" data-dmvoltar="1">‹ Conversas</button>
+    <div class="dm-log" id="dm-log">${lista.length?lista.map(m=>{const meu_=m.de===myId();return `<div class="dm-bolha ${meu_?'eu':'ele'}"><p>${esc(m.texto)}</p><small>${new Date(+m.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small></div>`;}).join(''):'<p class="note dm-vazio">Nenhuma mensagem ainda. Diga oi.</p>'}</div>
+    <form class="dm-form" id="dm-form"><label class="sr" for="dm-texto">Mensagem para ${esc(j.nome||'')}</label><textarea id="dm-texto" rows="2" placeholder="Mensagem para ${esc(j.nome||'')}..."></textarea><button class="btn primary" type="submit" ${dmEnviando?'disabled':''}>Enviar</button></form></div>`;
+  const log=$('#dm-log');if(log)log.scrollTop=log.scrollHeight;
+  const ta=$('#dm-texto');if(ta&&digitando){ta.value=digitando.v;ta.focus();try{ta.setSelectionRange(digitando.s,digitando.s);}catch{}}
+}
+async function enviarDM(){
+  const ta=$('#dm-texto');const t=(ta?.value||'').trim();if(!t||!dmAberto||dmEnviando)return;
+  const k=dmAberto;const m={de:myId(),deNome:F.nome||'Sem nome',para:k,texto:t.slice(0,1500),ts:Date.now()};
+  dmEnviando=true;ta.value='';
+  try{if(db)await db.collection(`dms/${dmConv(k)}/msgs`).add(m);else dmMsgs.set(k,[...(dmMsgs.get(k)||[]),{id:'l'+m.ts,...m}]);}
+  catch{ta.value=t;toastChat('Não consegui mandar a mensagem. Confira se as regras novas do Firestore foram publicadas.');}
+  finally{dmEnviando=false;renderDM();const t2=$('#dm-texto');t2&&t2.focus();}
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-dmabrir],[data-dmvoltar]');if(!b)return;
+  if(b.dataset.dmabrir){dmAberto=b.dataset.dmabrir;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
+  if(b.dataset.dmvoltar){dmAberto=null;renderDM();}});
+document.addEventListener('submit',e=>{if(e.target.id!=='dm-form')return;e.preventDefault();enviarDM();});
+document.addEventListener('keydown',e=>{if(e.target.id==='dm-texto'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarDM();}});
 function renderCelFicha(){
   const C=calc();const e=meu?.estado||{},m=meu?.max||{};
   $('#cel-ficha').innerHTML=`<h2 style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</h2><p class="note" style="margin:0">${esc([C.raca?.n,C.classe?.nome,F.antecedente].filter(Boolean).join(' · '))} · nível ${C.n} · ${esc(identDe(myId()))}</p>
@@ -2927,6 +2999,7 @@ async function boot(){
         if(x.local!==antes&&location.hash.startsWith('#local-')&&x.local)setTimeout(()=>{location.hash='local-'+x.local;},50);
         setTimeout(()=>{sincronizarPvCombate();},0);}
       if(d.id===uid)aplicarAdminNoJogador(x);});
+    assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
   assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();
