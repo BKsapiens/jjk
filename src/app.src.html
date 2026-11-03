@@ -415,6 +415,27 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .missao .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .missao select{width:auto;padding:4px 8px;font-size:13px}
 .empty-chat{color:var(--ash);font-size:14px;margin:auto;text-align:center;max-width:44ch}
+/* carregando ao trocar de cidade: gente andando de um lado para o outro */
+.chat{position:relative}
+.carregando{position:absolute;inset:0;z-index:6;overflow:hidden;background:#d3121c;background-image:radial-gradient(rgba(0,0,0,.18) 1.4px,transparent 1.6px);background-size:11px 11px;border-radius:inherit;opacity:1;transition:opacity .35s}
+.carregando.saindo{opacity:0}
+.car-cena{position:absolute;left:0;right:0;bottom:12%;top:8%}
+.car-chao{position:absolute;left:0;right:0;bottom:0;height:12%;background:#0b0a0c}
+.car-chao::before{content:"";position:absolute;left:0;right:0;top:-4px;height:4px;background:#fff}
+.andante{position:absolute;bottom:0;height:var(--h,78%);left:0;animation:andar var(--dur,9s) linear var(--atraso,0s) infinite;will-change:transform}
+.andante img{height:100%;width:auto;display:block;animation:passo .45s ease-in-out infinite alternate;filter:drop-shadow(5px 4px 0 rgba(0,0,0,.35))}
+.andante.esq img{transform:scaleX(-1)}
+.andante.esq{animation-name:andarEsq}
+.andante.conhecido img{filter:drop-shadow(5px 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 0 #000)}
+@keyframes andar{from{transform:translateX(-30vw)}to{transform:translateX(calc(var(--larg,1200px) + 10vw))}}
+@keyframes andarEsq{from{transform:translateX(calc(var(--larg,1200px) + 10vw))}to{transform:translateX(-30vw)}}
+@keyframes passo{from{translate:0 0;rotate:-1deg}to{translate:0 -2.5%;rotate:1deg}}
+.car-titulo{position:absolute;left:18px;top:18px;display:flex;flex-direction:column;gap:6px;align-items:flex-start;z-index:2}
+.car-titulo b{background:#0b0a0c;color:#fff;font:900 italic clamp(26px,5vw,46px)/1 var(--display);padding:6px 16px 8px;transform:skew(-10deg) rotate(-3deg);box-shadow:6px 6px 0 #fff;text-transform:uppercase;letter-spacing:1px}
+.car-titulo span{background:#fff;color:#0b0a0c;font:900 14px/1 var(--body);padding:5px 10px;transform:skew(-10deg) rotate(-2deg);letter-spacing:2px;text-transform:uppercase}
+.car-titulo i{font-style:normal;animation:pisca 1.2s infinite}.car-titulo i:nth-child(2){animation-delay:.2s}.car-titulo i:nth-child(3){animation-delay:.4s}
+@keyframes pisca{0%,100%{opacity:.2}50%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.andante,.andante img{animation:none}.andante{transform:translateX(var(--x0,40vw))}}
 /* página da técnica */
 .tec-wrap{max-width:900px}
 .variacoes{display:flex;flex-direction:column;gap:14px;margin-top:10px}
@@ -680,6 +701,8 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
     <nav class="areas" id="areas-bar" aria-label="Áreas da escola" hidden></nav>
     <div id="canal-view" class="canal-grid" hidden>
       <div class="chat">
+        <div class="carregando" id="carregando" hidden aria-live="polite"><div class="car-cena" id="car-cena" aria-hidden="true"></div><div class="car-chao" aria-hidden="true"></div>
+          <div class="car-titulo"><b id="car-nome">Tóquio</b><span id="car-txt">Chegando<i>.</i><i>.</i><i>.</i></span></div></div>
         <div class="chat-log" id="chat-log" aria-live="polite"></div>
         <div class="chat-thinking" id="chat-thinking" hidden>O mestre está narrando<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
         <form class="chat-form" id="chat-form">
@@ -1608,6 +1631,7 @@ async function irPara(id,anterior){
   const vis=new Set([...(meu.visitados||[]),...(meu.diario||[]).map(d=>d.local).filter(Boolean)]);
   const primeira=!vis.has(id);
   meu.__de=meu.local;
+  if(mudou&&raiz(meu.local||'')!==raiz(id))mostrarCarregando(id,primeira);
   if(mudou){const de=meu.local;const nl=x=>raiz(de)===raiz(id)?(locById(x)?.area||nomeLocal(x)):(locById(x)?.pai?`${locById(raiz(x))?.curto||''} · ${nomeLocal(x)}`:nomeLocal(x));
     if(de)await postMsg(de,{tipo:'sistema',texto:`${F.nome||'Alguém'} saiu em direção a ${nl(id)}.`});
     vis.add(id);await atualizarMeu({local:id,visitados:[...vis].slice(-60)});
@@ -2030,7 +2054,7 @@ function abrirCanal(id){
   if(canalUnsub){canalUnsub();canalUnsub=null;}
   canalAtual=id;msgs=[];renderChat();
   if(db){canalUnsub=db.collection(`canais/${id}/msgs`).orderBy('ts','desc').limit(80).onSnapshot(snap=>{
-      msgs=snap.docs.map(d=>({id:d.id,...d.data()})).reverse();msgs.forEach(m=>{if(+m.ts>(ultimoTs[id]||0))ultimoTs[id]=+m.ts;});renderChat();renderRoll();},
+      msgs=snap.docs.map(d=>({id:d.id,...d.data()})).reverse();if(carreg&&carreg.id===id)carreg.msgs=true;msgs.forEach(m=>{if(+m.ts>(ultimoTs[id]||0))ultimoTs[id]=+m.ts;});renderChat();renderRoll();},
     ()=>{$('#chat-log').innerHTML='<p class="empty-chat">Não deu para carregar as mensagens deste canal. Recarregue a página.</p>';});}
   else{msgs=localMsgs[id]||[];renderChat();}
 }
@@ -2385,7 +2409,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
   }catch(err){
     avisoNormal();if(obs)return;
     toastChat(err?.code==='rate_limited'?'O mestre precisa de um respiro (muitas mensagens seguidas). Espere um pouco e mande de novo.':err?.code==='not_granted'?'O uso da IA não foi permitido nesta visualização.':`O mestre não conseguiu responder agora. Mande a ação de novo.${err?.message&&err.message!=='sem conexão com o servidor'?` (detalhe: ${String(err.message).slice(0,200)})`:''}`);
-  }finally{narrando=false;$('#chat-thinking').hidden=true;renderRoll();renderCombate();}
+  }finally{narrando=false;$('#chat-thinking').hidden=true;renderRoll();renderCombate();if(carreg&&carreg.id===id)carreg.narrou=true;}
   if(iniciarDepois){assinarCombate(id);await iniciarCombate(id,iniciarDepois.inimigos,iniciarDepois.jogadores);}
   if(viajar){await new Promise(r=>setTimeout(r,1200));irPara(viajar,anteriorTxt);}
 }
@@ -2730,6 +2754,29 @@ function renderCombate(){
    :eu?`<p class="note" style="margin:0">Vez de ${esc(vez?.nome||'...')}.</p>${vez&&vez.tipo==='jogador'?`<button class="btn small" id="btn-passar">Passar a vez de ${esc(vez.nome)}</button>`:''}`:''}
    <button class="btn small" id="btn-fimcombate" style="align-self:flex-start">Encerrar combate</button>`;
 }
+
+/* ---------- Carregando ao trocar de cidade ---------- */
+const ANDANTES={passante1:'img/andante-passante1.png',passante2:'img/andante-passante2.png',passante3:'img/andante-passante3.png',gojo:'img/andante-gojo.png',itadori:'img/andante-itadori.png'};
+let carreg=null,carregTimer=null;
+function mostrarCarregando(id,precisaNarrar){
+  const box=$('#carregando');if(!box)return;const l=locById(raiz(id));
+  $('#car-nome').textContent=l?.curto||'Tóquio';
+  const comuns=['passante1','passante2','passante3'];const lista=[];const n=4+Math.floor(Math.random()*2);
+  for(let i=0;i<n;i++)lista.push({k:comuns[Math.floor(Math.random()*comuns.length)],conhecido:false});
+  const r=Math.random();if(r<0.30)lista.push({k:Math.random()<0.5?'gojo':'itadori',conhecido:true});if(r<0.06)lista.push({k:'gojo',conhecido:true},{k:'itadori',conhecido:true});
+  const larg=box.parentElement.clientWidth||1000;
+  $('#car-cena').innerHTML=lista.sort(()=>Math.random()-.5).map((a,i)=>{const prof=0.6+Math.random()*0.4;const dur=(7+Math.random()*7)/(prof);const esq=Math.random()<0.5;
+    return `<div class="andante${esq?' esq':''}${a.conhecido?' conhecido':''}" style="--h:${Math.round(38+prof*30)}%;--dur:${dur.toFixed(1)}s;--atraso:-${(Math.random()*dur).toFixed(1)}s;--larg:${larg}px;--x0:${Math.round(Math.random()*80)}vw;z-index:${Math.round(prof*10)};opacity:${(0.75+prof*0.25).toFixed(2)}"><img src="${ANDANTES[a.k]}" alt="" draggable="false"></div>`;}).join('');
+  box.classList.remove('saindo');box.hidden=false;
+  carreg={id,t0:Date.now(),precisa:!!precisaNarrar,msgs:false,narrou:false};
+  clearInterval(carregTimer);carregTimer=setInterval(checarCarregando,300);
+}
+function checarCarregando(){
+  if(!carreg){clearInterval(carregTimer);return;}const dt=Date.now()-carreg.t0;
+  const pronto=carreg.msgs&&(!carreg.precisa||carreg.narrou)&&canalAtual===carreg.id;
+  if((pronto&&dt>1600)||dt>25000)esconderCarregando();
+}
+function esconderCarregando(){const box=$('#carregando');carreg=null;clearInterval(carregTimer);if(!box||box.hidden)return;box.classList.add('saindo');setTimeout(()=>{if(!carreg){box.hidden=true;$('#car-cena').innerHTML='';}},380);}
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
