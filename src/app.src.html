@@ -269,6 +269,11 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .post-bt{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:800;font-size:13px;padding:3px 10px;cursor:pointer;transform:skew(-6deg)}
 .post-bt.on{background:#d3121c;color:#fff}.post-bt:hover,.post-bt:focus-visible{background:#0b0a0c;color:#fff;outline:none}
 .post-form{margin-bottom:4px}
+.notas-box{display:flex;flex-direction:column;gap:8px}.notas-box>.btn.primary{align-self:flex-start}
+.nota-titulo,.nota-texto{width:100%;box-sizing:border-box;background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #000;font:inherit;padding:8px 10px}
+.nota-titulo{font-weight:900;font-size:1.1em}.nota-texto{min-height:46vh;resize:vertical;line-height:1.5}
+.nota-titulo:focus,.nota-texto:focus{outline:2px solid #d3121c}
+.nota-rodape{display:flex;justify-content:space-between;align-items:center;gap:8px}.nota-rodape .note{color:#fff;text-shadow:1px 1px 0 #000}
 .dm-form{display:flex;gap:6px;align-items:stretch;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:6px}
 .dm-form textarea{flex:1;resize:none;border:0;background:#fff;color:#0b0a0c;font:inherit;padding:4px}
 .dm-form textarea:focus{outline:2px solid #d3121c}
@@ -813,6 +818,7 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
         <section class="cel-app" data-app="social" hidden><div id="cel-social"></div></section>
         <section class="cel-app" data-app="cacadores" hidden><div class="panel" id="cel-cacadores"></div></section>
         <section class="cel-app" data-app="conquistas" hidden><div class="panel" id="cel-conquistas"></div></section>
+        <section class="cel-app" data-app="notas" hidden><div id="cel-notas" class="notas-box"></div></section>
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
     </div></div>
@@ -3006,7 +3012,7 @@ function esconderCarregando(){const box=$('#carregando');carreg=null;clearInterv
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mensagens','話','Mensagens'],['social','囁','Sussurros'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['conquistas','誉','Conquistas'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['social','囁','Sussurros'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['conquistas','誉','Conquistas'],['notas','記','Notas'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;m.classList.remove('detalhe');if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();
   setTimeout(()=>{mapaCentrar(selLoc,ehMobile()?2.1:1);const b=$('#mapa-fechar');b&&b.focus();},30);}
@@ -3042,13 +3048,13 @@ function mapaZoom(f,cx,cy){const svg=$('#map');const r=svg.getBoundingClientRect
 })();
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;m.classList.remove('detalhe');}
 
-const CEL_TIT={home:'Celular',mensagens:'Mensagens',social:'Sussurros',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',conquistas:'Conquistas',config:'Ajustes'};
+const CEL_TIT={home:'Celular',mensagens:'Mensagens',social:'Sussurros',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',conquistas:'Conquistas',notas:'Notas',config:'Ajustes'};
 function abrirCel(app){
   const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
 }
 function fecharCel(semFoco){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);if(!semFoco){const b=$('#btn-cel');b&&b.focus();}}
-function celIr(app){if(app==='config')celCreditos=false;if(app==='social'&&celApp!=='social')postThread=null;
+function celIr(app){if(app==='config')celCreditos=false;if(app==='notas'&&celApp!=='notas')notaAberta=null;if(app==='social'&&celApp!=='social')postThread=null;
   if(app==='mapa'){abrirMapa();return;}
   if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
@@ -3070,6 +3076,7 @@ function renderCelApp(){
   if(a==='config')renderCelConfig();
   if(a==='cacadores')renderCacadores();
   if(a==='conquistas')renderConquistas();
+  if(a==='notas')renderNotas();
   if(a==='mensagens')renderDM();
   if(a==='social'){postsMarcarLido();atualizarAlertaDM();renderSocial();}
 }
@@ -3127,6 +3134,46 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-dmabrir],[
   if(b.dataset.dmabrir){dmAberto=b.dataset.dmabrir;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
   if(b.dataset.dmvoltar){dmAberto=null;renderDM();}});
 document.addEventListener('submit',e=>{if(e.target.id!=='dm-form')return;e.preventDefault();enviarDM();});
+
+/* ---------- Bloco de notas pessoal (só o dono lê; doc notas/{uid}) ---------- */
+let notas=null,notaAberta=null,notaTimer=null,notasStatus='';
+async function carregarNotas(){
+  if(notas)return;notas=[];
+  try{if(db&&uid){const d=await db.doc('notas/'+uid).get();notas=d.exists&&Array.isArray(d.data().lista)?d.data().lista:[];}
+    else notas=JSON.parse(localStorage.getItem('jjk-notas-'+myId())||'[]');}catch{notas=notas||[];}
+}
+async function salvarNotas(){
+  notasStatus='Salvando...';marcarNotaStatus();
+  try{if(db&&uid)await db.doc('notas/'+uid).set({lista:notas.slice(0,60),atualizado:Date.now()});else localStorage.setItem('jjk-notas-'+myId(),JSON.stringify(notas));notasStatus='Salvo';}
+  catch{notasStatus='Não consegui salvar. Confira se as regras do Firestore foram publicadas.';}
+  marcarNotaStatus();
+}
+function marcarNotaStatus(){const el=$('#nota-status');if(el)el.textContent=notasStatus;}
+async function renderNotas(){
+  const box=$('#cel-notas');if(!box)return;
+  if(!notas){box.innerHTML='<p class="note" style="margin:0">Abrindo o bloco de notas...</p>';await carregarNotas();}
+  const n=notaAberta&&notas.find(x=>x.id===notaAberta);
+  if(n){$('#cel-titulo').textContent='Nota';
+    box.innerHTML=`<button type="button" class="btn small dm-voltar" data-nvoltar="1">‹ Notas</button>
+      <label class="sr" for="nota-titulo">Título</label><input id="nota-titulo" class="nota-titulo" maxlength="60" placeholder="Título" value="${esc(n.titulo||'')}">
+      <label class="sr" for="nota-texto">Texto</label><textarea id="nota-texto" class="nota-texto" maxlength="4000" placeholder="Pistas, nomes, coisas para não esquecer...">${esc(n.texto||'')}</textarea>
+      <div class="nota-rodape"><span id="nota-status" class="note" aria-live="polite">${esc(notasStatus)}</span><button type="button" class="btn small" data-napagar="${n.id}">Apagar nota</button></div>`;
+    return;}
+  notaAberta=null;$('#cel-titulo').textContent='Notas';
+  const lista=[...notas].sort((a,b)=>(+b.t||0)-(+a.t||0));
+  box.innerHTML=`<button type="button" class="btn primary small" data-nnova="1">+ Nova nota</button>
+    <p class="note dm-vazio" style="margin:8px 0">Só você vê suas notas. O mestre de IA não lê.</p>
+    ${lista.length?lista.map(x=>`<button type="button" class="dm-item" data-nabrir="${x.id}"><span class="dm-txt"><b>${esc(x.titulo||'Sem título')}</b><small>${esc(String(x.texto||'').replace(/\s+/g,' ').slice(0,80)||'(vazia)')}</small></span><small style="margin-left:auto;white-space:nowrap">${new Date(+x.t||Date.now()).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}</small></button>`).join(''):'<p class="note dm-vazio">Nenhuma nota ainda.</p>'}`;
+}
+document.addEventListener('input',e=>{if(!e.target.matches('#nota-titulo,#nota-texto'))return;const n=notas&&notas.find(x=>x.id===notaAberta);if(!n)return;
+  n.titulo=$('#nota-titulo').value.slice(0,60);n.texto=$('#nota-texto').value.slice(0,4000);n.t=Date.now();notasStatus='Editando...';marcarNotaStatus();
+  clearTimeout(notaTimer);notaTimer=setTimeout(salvarNotas,800);});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-nnova],[data-nabrir],[data-nvoltar],[data-napagar]');if(!b||!notas)return;
+  if(b.dataset.nnova){const n={id:'n'+Date.now().toString(36),titulo:'',texto:'',t:Date.now()};notas.unshift(n);notaAberta=n.id;notasStatus='';renderNotas().then(()=>{const t=$('#nota-titulo');t&&t.focus();});return;}
+  if(b.dataset.nabrir){notaAberta=b.dataset.nabrir;notasStatus='';renderNotas();return;}
+  if(b.dataset.nvoltar){clearTimeout(notaTimer);const n=notas.find(x=>x.id===notaAberta);if(n&&!n.titulo&&!n.texto)notas=notas.filter(x=>x!==n);salvarNotas();notaAberta=null;renderNotas();return;}
+  if(b.dataset.napagar){const id=b.dataset.napagar;openModal('Apagar esta nota?','Não dá para desfazer.','','Apagar',async()=>{closeModal();clearTimeout(notaTimer);notas=notas.filter(x=>x.id!==id);notaAberta=null;await salvarNotas();renderNotas();});}
+});
 
 /* ---------- Rede social entre jogadores ("Sussurros"): posts, respostas e curtidas, sem IA ---------- */
 const posts=new Map();let postsUnsub=null,postThread=null,postEnviando=false;

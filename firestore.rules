@@ -61,6 +61,10 @@ service cloud.firestore {
       allow update: if logado() && (resource.data.autor == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curtidas']));
       allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
     }
+    // Bloco de notas pessoal: só o dono lê e escreve.
+    match /notas/{uid} {
+      allow read, write: if logado() && request.auth.uid == uid;
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();
