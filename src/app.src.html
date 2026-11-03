@@ -1968,6 +1968,12 @@ COMO NARRAR
 - Respeite a ficha: o personagem só faz o que as habilidades e a técnica dele permitem.
 - COMBATE: comece um combate quando a cena virar luta (emboscada, ataque surpresa, maldição atacando, jogador atacando algo hostil) preenchendo "combate" com os inimigos: nome, grau (4 fraco, 3, 2, 1, 0 = grau especial; para nível 1-3 use quase sempre grau 4 e às vezes 3), qtd (1 a 3) e descrição curta. O sistema cria fichas, iniciativa e turnos sozinho. Durante um combate ativo, use "combate" de novo só para reforços. Técnicas, manobras e ações especiais dos jogadores você resolve: aplique o dano nos inimigos com "danoInimigos" (use o id), e o custo em PA/PE em "efeitos". Se a luta acabar por fuga, rendição ou acordo, use "fimCombate": true. Não peça teste de ataque: ataques com armas usam o botão Atacar.
 - FORA DO JOGO: quando o jogador fala com você chamando de "mestre" (ex.: "perdão mestre, eu percebi, é uma criatura ou não?"), responda como o mestre conversando na mesa: informal, curto (1 ou 2 frases), em primeira pessoa, sem narrar a cena, sem segunda pessoa dramática. Ex.: "sim sim, é uma maldição, e pelo tamanho deve ser grau 4". Responda com o que o personagem poderia perceber ou saber, sem entregar segredos da trama. Nesse caso use "foraDoJogo": true e não mude efeitos, itens, combate ou teste. Quando o jogador voltar a falar como o personagem, volte a narrar normalmente.
+- EFEITOS QUE DURAM (contratos, votos, selos, atordoar, sangrar, enfraquecer): os turnos dos inimigos são automáticos, então um efeito que dura só funciona se você o registrar em "condicoes". Tipos:
+  * "nao_ataca": o alvo não pode atacar alguém. {"alvo":"id do inimigo","tipo":"nao_ataca","contra":"id do jogador protegido ou todos","dano":"2d4 (punição se ele atacar mesmo assim; omita se não houver)","bloqueia":false,"rodadas":null,"nome":"Contrato de Kento"}. Com "bloqueia":false o inimigo só ataca o protegido se não houver outro alvo, e aí sofre a punição; com "bloqueia":true o golpe é impedido de vez.
+  * "atordoado": perde os próximos turnos ("rodadas": quantos).
+  * "dano_turno": sofre dano no começo de cada turno dele ("dano":"1d6").
+  * "penalidade": "atk" e/ou "def" negativos (ou positivos) no ataque e na defesa dele.
+  "rodadas": null dura até o fim do combate. Leia a técnica na ficha e traduza o efeito para essas regras, com o custo em "efeitos". Se o alvo precisa falhar num teste para o efeito pegar, peça o teste antes e só registre se ele falhar. Os efeitos ativos aparecem no resumo do combate.
 - TÉCNICAS DESBLOQUEADAS: quando a ficha lista técnicas avançadas desbloqueadas pelo mestre, elas são válidas mesmo fugindo das regras normais (ex.: um receptáculo usando o poder de quem abriga). Resolva-as pela descrição, cobre o custo indicado em efeitos.pa e aceite sobrecarga.
 - MISSÕES E RELATÓRIO: chamados ficam no Quadro de Missões da escola. O relatório oficial é entregue pelo botão "Entregar relatório" na Sala dos Professores; o sistema conclui a missão e paga XP, ienes e pontos de graduação a todo o grupo (não dê XP nem ienes por isso). Contar o que aconteceu a outro NPC (a médica, um colega) é só conversa: não vira teste, não paga nada; o NPC reage com bom senso e pode lembrar de entregar o relatório na Sala dos Professores. Se, na Sala dos Professores, ${F.nome} descrever o relatório pelo chat em vez do botão e o objetivo estiver cumprido, use "missaoConcluida": true.
 - REGRAS DA CASA DE ENERGIA: (1) Recuperar energia: em combate, o jogador pode gastar a ação do turno para recuperar 1d8 PA. Se ele declarar isso no chat durante o turno dele, use "recuperarPA": true (o sistema rola o 1d8 e aplica; não ponha esse PA em efeitos). Fora de combate, descanso continua sendo o jeito de recuperar. (2) Sobrecarga: ao usar a Técnica Inata (ou uma técnica desbloqueada), o jogador pode gastar PA além do custo: CADA 1 PA extra soma +1 dado de dano da técnica. O sistema rola esses dados e informa o total; some esse total exato. Custo base + extra nunca passa do limite por ativação (Nível × 4). Desconte tudo em efeitos.pa e mostre o dano maior na narração e em danoInimigos. Mais PA extra precisa sempre dar bem mais dano.
@@ -2006,7 +2012,7 @@ AGORA: ${gat}
 ANTES DE RESPONDER, CONFIRA: (1) o que o jogador quer agora, em uma frase; (2) respeitei o que ele declarou entre asteriscos ou parênteses; (3) minha resposta avança a cena e não repete detalhes das respostas anteriores; (4) nada contradiz o histórico, a ficha, o inventário ou o roteiro da missão; (5) só peço teste se houver risco real e incerteza.
 
 Responda SOMENTE com um objeto JSON, sem texto fora dele:
-{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta","olho":false}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true,"falas":[],"npcs":[],"bonusProximoAtaque":null,"transferir":[]}
+{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta","olho":false}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true,"falas":[],"npcs":[],"bonusProximoAtaque":null,"transferir":[],"condicoes":[]}
 "efeitos", "itens" e "ienes" são mudanças para ${F.nome} (negativo gasta/perde, positivo ganha). Use os nomes dos itens exatamente como estão no inventário. "itens" pode ser []. "memoria" é uma frase curta só quando algo relevante acontecer (pista, NPC conhecido, ferimento, missão, item importante, decisão).`;
   try{
     const res=await chamarIA(prompt,obs?'quick':'default',obs?null:avisoEspera);avisoNormal();
@@ -2049,6 +2055,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     if(j.missaoConcluida===true&&minhaMissao())await concluirMissao(minhaMissao(),id);
     if(j.recuperarPA===true&&combate&&combate.ativo&&combateLocal===id&&minhaVez())await recuperarPA(false);
     const xpG=Math.max(0,Math.min(300,Math.round(+j.xp||0)));if(xpG)await ganharXP(xpG,'mestre',id);
+    if(Array.isArray(j.condicoes)&&j.condicoes.length)await aplicarCondicoes(j.condicoes,id);
     if(combate&&combate.ativo&&combateLocal===id&&Array.isArray(j.danoInimigos)){const up={};const linhas=[];
       j.danoInimigos.forEach(x=>{const p=combate.participantes[x?.id];const d=Math.round(+x?.dano||0);if(!p||p.tipo!=='inimigo'||!d)return;const novo=Math.max(0,Math.min(p.pvMax,p.pv-d));up[p.id]={pv:novo};linhas.push(`${p.nome} ${d>0?'sofre '+d+' de dano':'recupera '+(-d)+' PV'}${novo<=0?' e cai':''}.`);});
       if(linhas.length){await combateWrite({participantes:up});await postMsg(id,{tipo:'combate',texto:linhas.join(' ')});}}
@@ -2181,15 +2188,50 @@ async function encerrarCombate(res,silencioso,vencedor){
   if(!silencioso)await postMsg(combateLocal,{tipo:'combate',texto:res==='vitoria'?'Todos os inimigos caíram. Fim do combate.':res==='derrota'?'Todos os jogadores caíram. Fim do combate.':res==='duelo'?`Fim do duelo: ${vencedor||'alguém'} venceu.`:'Combate encerrado.'});
 }
 function penalDefesa(p){const d=p.defesas||{};return d.rodada===combate.rodada?(+d.n||0):0;}
+/* Condições de combate criadas por técnicas (contratos, atordoamento, sangramento, penalidades).
+   O mestre de IA cria; o sistema cumpre nos turnos dos inimigos. */
+const condAtivas=p=>(Array.isArray(p?.condicoes)?p.condicoes:[]).filter(c=>c&&(c.rodadas==null||+c.rodadas>0));
+const modCond=(p,k)=>condAtivas(p).filter(c=>c.tipo==='penalidade').reduce((a,c)=>a+(Math.round(+c[k])||0),0);
+function descCond(c){const quem=c.contra?(c.contra==='todos'?'ninguém':(combate?.participantes?.[c.contra]?.nome||'alguém')):'';
+  return c.tipo==='nao_ataca'?`não pode atacar ${quem}${c.dano?` (se atacar, sofre ${c.dano})`:''}${c.bloqueia?' (o golpe é impedido)':''}`
+    :c.tipo==='atordoado'?'perde os turnos'
+    :c.tipo==='dano_turno'?`sofre ${c.dano} no início de cada turno`
+    :c.tipo==='penalidade'?`${+c.atk?`${c.atk>0?'+':''}${c.atk} no ataque `:''}${+c.def?`${c.def>0?'+':''}${c.def} na defesa`:''}`.trim()
+    :String(c.tipo||'');}
+async function aplicarCondicoes(lista,local){
+  if(!combate||!combate.ativo||combateLocal!==local)return;const up={};const linhas=[];
+  for(const x of (Array.isArray(lista)?lista:[]).slice(0,6)){
+    const p=combate.participantes[x?.alvo];if(!p)continue;
+    const tipo=['nao_ataca','atordoado','dano_turno','penalidade'].includes(x.tipo)?x.tipo:null;if(!tipo)continue;
+    const contra=x.contra==='todos'?'todos':(combate.participantes[x.contra]?x.contra:(tipo==='nao_ataca'?myId():null));
+    const c={nome:String(x.nome||'Técnica').slice(0,50),tipo,...(contra?{contra}:{}),...(x.dano?{dano:String(x.dano).replace(/[^0-9d+\-]/gi,'').slice(0,12)}:{}),
+      ...(x.bloqueia===true?{bloqueia:true}:{}),...(+x.atk?{atk:Math.max(-10,Math.min(10,Math.round(+x.atk)))}:{}),...(+x.def?{def:Math.max(-10,Math.min(10,Math.round(+x.def)))}:{}),
+      rodadas:x.rodadas==null||x.rodadas===''?null:Math.max(1,Math.min(20,Math.round(+x.rodadas)||1)),de:myId()};
+    if(condAtivas(p).some(z=>z.nome===c.nome&&z.tipo===c.tipo&&z.contra===c.contra&&z.dano===c.dano&&z.rodadas===c.rodadas))continue;
+    const atuais=(up[p.id]?.condicoes||condAtivas(p)).filter(z=>!(z.nome===c.nome&&z.tipo===c.tipo));
+    up[p.id]={condicoes:[...atuais,c].slice(-6)};
+    linhas.push(`${c.nome}: ${p.nome} ${descCond(c)}${c.rodadas?` por ${c.rodadas} rodada(s)`:' até o fim do combate'}.`);}
+  if(linhas.length){await combateWrite({participantes:up});await postMsg(local,{tipo:'combate',texto:linhas.join(' ')});}
+}
 async function ataqueInimigo(e){
-  const alvos=alvosPara(e.id).filter(p=>p.tipo==='jogador');const alvo=alvos[Math.floor(Math.random()*alvos.length)];if(!alvo)return null;
+  let alvos=alvosPara(e.id).filter(p=>p.tipo==='jogador');if(!alvos.length)return null;
+  const proib=condAtivas(e).filter(c=>c.tipo==='nao_ataca');const extra=[];let danoProprio=0;
+  if(proib.length){const livres=alvos.filter(a=>!proib.some(c=>c.contra==='todos'||c.contra===a.id));
+    if(livres.length)alvos=livres;
+    else{const c=proib.find(z=>alvos.some(a=>z.contra==='todos'||z.contra===a.id))||proib[0];
+      if(c.dano){const r=rolarExpr(c.dano);danoProprio=Math.max(0,r?.total||0);extra.push(`${e.nome} quebra ${c.nome} e sofre ${c.dano} = ${danoProprio} de dano.`);}
+      if(c.bloqueia){const novo=Math.max(0,e.pv-danoProprio);const txt=`${e.nome} tenta atacar, mas ${c.nome} impede o golpe.${extra.length?' '+extra.join(' '):''}${novo<=0?` ${e.nome} cai.`:''}`;
+        return {txt,patch:{participantes:{[e.id]:{pv:novo}}}};}}}
+  const alvo=alvos[Math.floor(Math.random()*alvos.length)];
   const st={...STATS_PADRAO,...(alvo.stats||{})};const defNome=st.esquiva>=st.luta?'Esquiva':'Bloqueio';const pen=penalDefesa(alvo);const defB=Math.max(st.esquiva,st.luta)-pen;
-  const ra=d20(),rd=d20();const at=ra+e.atk,df=rd+defB;
+  const atk=e.atk+modCond(e,'atk');const ra=d20(),rd=d20();const at=ra+atk,df=rd+defB;
   let txt,dano=0;
   if(ra!==1&&(ra===20||at>df)){const p=parseDados(e.dano);const crit=ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+p.flat;const red=rolarRD(st.rd||'1d4');dano=Math.max(1,bruto-red);
-    txt=`${e.nome} ataca ${alvo.nome}: ${ra}+${e.atk} = ${at} contra ${defNome} ${rd}+${defB} = ${df}. ${crit?'CRÍTICO! ':''}Acerta: ${bruto} de dano − ${red} de RD = ${dano} de dano.`;}
-  else txt=`${e.nome} ataca ${alvo.nome}: ${ra}+${e.atk} = ${at} contra ${defNome} ${rd}+${defB} = ${df}. ${alvo.nome} se defende.`;
+    txt=`${e.nome} ataca ${alvo.nome}: ${ra}+${atk} = ${at} contra ${defNome} ${rd}+${defB} = ${df}. ${crit?'CRÍTICO! ':''}Acerta: ${bruto} de dano − ${red} de RD = ${dano} de dano.`;}
+  else txt=`${e.nome} ataca ${alvo.nome}: ${ra}+${atk} = ${at} contra ${defNome} ${rd}+${defB} = ${df}. ${alvo.nome} se defende.`;
+  if(extra.length)txt=extra.join(' ')+' '+txt;
   const patch={participantes:{[alvo.id]:{defesas:{rodada:combate.rodada,n:pen+1}}}};
+  if(danoProprio){const novoE=Math.max(0,e.pv-danoProprio);patch.participantes[e.id]={pv:novoE};if(novoE<=0)txt+=` ${e.nome} cai pelo preço do contrato.`;}
   if(dano){const gid=`g${Date.now().toString(36)}${dN(9999)}`;const novo=Math.max(0,alvo.pv-dano);
     patch.participantes[alvo.id].pv=novo;patch.golpes={[gid]:{alvo:alvo.id,pv:-dano,de:e.nome,t:Date.now()}};
     if(novo<=0)txt+=` ${alvo.nome} cai.`;}
@@ -2200,7 +2242,16 @@ async function turnosInimigos(){
   while(combate&&combate.ativo&&guard++<20){
     const atual=combate.participantes[combate.vez];
     if(atual&&atual.tipo==='inimigo'&&atual.pv>0){
-      const r=await ataqueInimigo(atual);if(r){eventos.push(r.txt);await postMsg(combateLocal,{tipo:'combate',texto:r.txt});await combateWrite(r.patch);}
+      const cs=condAtivas(atual);let pula=false;
+      if(cs.length){const linhas=[];let pv=atual.pv;
+        cs.filter(c=>c.tipo==='dano_turno'&&c.dano).forEach(c=>{const r=rolarExpr(c.dano);const d=Math.max(0,r?.total||0);pv=Math.max(0,pv-d);linhas.push(`${atual.nome} sofre ${c.dano} = ${d} (${c.nome}).`);});
+        if(cs.some(c=>c.tipo==='atordoado')){pula=true;linhas.push(`${atual.nome} não consegue agir (${cs.find(c=>c.tipo==='atordoado').nome}).`);}
+        const novas=(atual.condicoes||[]).map(c=>c&&c.rodadas!=null?{...c,rodadas:+c.rodadas-1}:c).filter(c=>c&&(c.rodadas==null||c.rodadas>0));
+        (atual.condicoes||[]).forEach(c=>{if(c&&c.rodadas!=null&&+c.rodadas-1<=0)linhas.push(`${c.nome} termina para ${atual.nome}.`);});
+        await combateWrite({participantes:{[atual.id]:{pv,condicoes:novas}}});
+        if(pv<=0){linhas.push(`${atual.nome} cai.`);pula=true;}
+        if(linhas.length){const t=linhas.join(' ');eventos.push(t);await postMsg(combateLocal,{tipo:'combate',texto:t});}}
+      const r=pula?null:await ataqueInimigo(combate.participantes[atual.id]);if(r){eventos.push(r.txt);await postMsg(combateLocal,{tipo:'combate',texto:r.txt});await combateWrite(r.patch);}
       if(await checarFim())break;
       const {p,volta}=proximoDepois(atual.id);if(!p)break;
       await combateWrite({vez:p.id,...(volta?{rodada:(combate.rodada||1)+1}:{})});
@@ -2287,8 +2338,8 @@ async function atacar(alvoId,armaNome){
     await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20,t:Date.now()}}});
     await postMsg(combateLocal,{tipo:'combate',pedido:true,alvoId:alvo.id,texto:`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at}${ra===20?' (20 natural!)':''}. ${alvo.nome}, role Esquiva ou Bloqueio (Luta) para se defender.`});
     return;}
-  const rd=d20();const df=rd+(alvo.def||0);
-  let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${alvo.def} = ${df}.`;
+  const defA=(alvo.def||0)+modCond(alvo,'def');const rd=d20();const df=rd+defA;
+  let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${defA} = ${df}.`;
   const patch={};
   if(ra!==1&&(ra===20||at>df)){const p=parseDados(arma.dados);const crit=ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+bonusDano;const dano=Math.max(1,bruto-(alvo.rd||0));
     const novo=Math.max(0,alvo.pv-dano);patch.participantes={[alvoId]:{pv:novo}};
@@ -2343,7 +2394,7 @@ async function sincronizarPvCombate(){
 function resumoCombate(){
   if(!combate||!combate.ativo)return 'Nenhum combate ativo neste local.';
   return `${ehDuelo()?'DUELO ENTRE JOGADORES':'COMBATE'} ATIVO · rodada ${combate.rodada} · vez de ${combate.participantes[combate.vez]?.nome}.
-Participantes (id · nome · PV): ${ordem().map(p=>`${p.id} · ${p.nome}${p.tipo==='inimigo'?` (${GRAUS[p.grau]?.label})`:' (jogador)'} · ${p.pv}/${p.pvMax}${p.pv<=0?' CAÍDO':''}`).join('; ')}.
+Participantes (id · nome · PV): ${ordem().map(p=>`${p.id} · ${p.nome}${p.tipo==='inimigo'?` (${GRAUS[p.grau]?.label})`:' (jogador)'} · ${p.pv}/${p.pvMax}${p.pv<=0?' CAÍDO':''}${condAtivas(p).length?` [efeitos ativos: ${condAtivas(p).map(c=>`${c.nome}: ${descCond(c)}`).join('; ')}]`:''}`).join('; ')}.
 Ataques com armas, defesas e dano são resolvidos pelo sistema (não refaça essas contas). Técnicas e ações especiais você resolve e aplica com "danoInimigos" (inimigos) ou "danoJogadores" (jogadores).`;
 }
 function renderCombate(){
@@ -2355,7 +2406,7 @@ function renderCombate(){
   const C=calc();
   box.innerHTML=`<h2>${ehDuelo()?'Duelo':'Combate'} <span class="note" style="font-family:var(--body);font-size:13px;font-weight:400">rodada ${combate.rodada}</span></h2>
    <ol class="ordem">${o.map(p=>{const pct=p.pvMax?Math.max(0,p.pv/p.pvMax*100):0;
-     return `<li class="${p.id===combate.vez?'vez':''}${p.pv<=0?' caido':''}"><span class="ini">${p.ini}</span><span class="nm"><span>${esc(p.nome)}${p.tipo==='inimigo'?` <span class="pill warn">${esc(GRAUS[p.grau]?.label||'')}</span>`:p.id===myId()?' <span class="pill info">você</span>':''}</span><span class="mini ${p.tipo}"><span style="width:${pct}%"></span></span></span><span class="pvn">${p.pv}/${p.pvMax}</span></li>`;}).join('')}</ol>
+     return `<li class="${p.id===combate.vez?'vez':''}${p.pv<=0?' caido':''}"><span class="ini">${p.ini}</span><span class="nm"><span>${esc(p.nome)}${p.tipo==='inimigo'?` <span class="pill warn">${esc(GRAUS[p.grau]?.label||'')}</span>`:p.id===myId()?' <span class="pill info">você</span>':''}${condAtivas(p).map(c=>` <span class="pill" title="${esc(descCond(c))}">${esc(c.nome)}${c.rodadas?` ${c.rodadas}r`:''}</span>`).join('')}</span><span class="mini ${p.tipo}"><span style="width:${pct}%"></span></span></span><span class="pvn">${p.pv}/${p.pvMax}</span></li>`;}).join('')}</ol>
    ${meusPend.map(x=>`<div class="pedido defesa"><b>${esc(x.atacanteNome)}</b> ataca você com ${esc(x.arma)}: <b>${x.total}</b>${x.crit?' (20 natural, acerta de qualquer jeito)':''}. Role sua defesa:
      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn primary small" data-defesa="${x.id}|esquiva" ${defendendo?'disabled':''}>Esquiva ${C.skill['Esquiva'].v>=0?'+':''}${C.skill['Esquiva'].v}</button><button class="btn primary small" data-defesa="${x.id}|luta" ${defendendo?'disabled':''}>Bloqueio (Luta) ${C.skill['Luta'].v>=0?'+':''}${C.skill['Luta'].v}</button></div></div>`).join('')}
    ${!eu?`<button class="btn primary" id="btn-entrar-combate">Entrar no combate</button>`:''}
@@ -2573,8 +2624,11 @@ async function admAcao(a){
     const mx0=j.max||{pv:0,pa:0,pe:0};const mx={pv:Math.max(0,mx0.pv-(bOld.pv||0)+bn.pv),pa:Math.max(0,mx0.pa-(bOld.pa||0)+bn.pa),pe:Math.max(0,mx0.pe-(bOld.pe||0)+bn.pe)};
     let e={pv:v('adm-pv'),pa:v('adm-pa'),pe:v('adm-pe')};
     if(a==='curar')e={...mx};if(a==='derrubar')e={...e,pv:0};
-    ['pv','pa','pe'].forEach(k=>e[k]=Math.max(0,Math.min(mx[k],e[k])));
-    await admUpdate(id,{estado:e,max:mx,bonusMax:bn});renderAdmEditor();}
+    const subiu=[];['pv','pa','pe'].forEach(k=>{e[k]=Math.max(0,e[k]);if(a==='recursos'&&e[k]>mx[k]){bn[k]+=e[k]-mx[k];subiu.push(`${k.toUpperCase()} máximo ${mx[k]} → ${e[k]}`);mx[k]=e[k];}});
+    await admUpdate(id,{estado:e,max:mx,bonusMax:bn});
+    for(const [loc,c] of Object.entries(admComb)){if(c&&c.ativo&&c.participantes?.[id]){try{await db.doc('combates/'+loc).update({participantes:{[id]:{pv:e.pv,pvMax:mx.pv}}});}catch{}}}
+    if(subiu.length)admStatus(`Salvo. O valor passou do máximo, então o máximo subiu junto (${subiu.join(', ')}).`);
+    renderAdmEditor();}
   if(a==='progressao'||a==='darxp'){
     const f=party.get(id)?.ficha||{};let nivel=Math.max(1,Math.min(20,v('adm-nivel'))),xp=Math.max(0,v('adm-xp'));
     if(a==='darxp'){xp=Math.max(+f.xp||0,XP_TAB[Math.max(1,+f.nivel||1)-1])+v('adm-darxp');nivel=Math.max(+f.nivel||1,nivelPorXp(xp));}
