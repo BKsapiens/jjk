@@ -53,7 +53,7 @@ async function responderClaude(prompt, rapido) {
       },
       body: JSON.stringify({
         model: modelo,
-        max_tokens: rapido ? 1024 : 3000,
+        max_tokens: rapido ? 1024 : 4096,
         messages: [{ role: "user", content: prompt }]
       })
     });
@@ -81,7 +81,7 @@ async function responderGemini(prompt, rapido) {
       r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`, {
         method: "POST",
         headers: { "content-type": "application/json", "x-goog-api-key": process.env.GEMINI_API_KEY },
-        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 2048 } })
+        body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 4096 } })
       });
     } catch { return { status: 502, erro: "Falha de rede ao falar com o Gemini." }; }
     if (r.status === 404) continue; // modelo não existe mais: tenta o próximo da lista

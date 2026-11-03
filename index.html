@@ -1194,6 +1194,7 @@ function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'
 const locById=id=>LOCAIS.find(l=>l.id===id)||(ehQuarto(id)?quartoLoc(id):undefined);
 const raiz=id=>(locById(id)?.pai)||id;
 const MAPA=()=>LOCAIS.filter(l=>!l.pai);
+const nomeDestino=id=>{const l=locById(id);if(!l)return id||'';return l.pai&&!ehEscola(l.pai)?`${locById(l.pai)?.curto} · ${l.area}`:l.pai?`${locById(l.pai)?.curto} · ${l.area}`:l.curto;};
 const nomeLocal=id=>{const l=locById(id);if(!l)return '';return l.pai?l.area:l.curto;};
 const GRAUS_PG=[[3000,'Grau Especial'],[2500,'Semi-Grau Especial'],[2000,'Grau 1'],[1500,'Semi-Grau 1'],[850,'Grau 2'],[500,'Semi-Grau 2'],[300,'Grau 3'],[100,'Grau 4'],[0,'Aprendiz']];
 const grauEscola=pg=>GRAUS_PG.find(([n])=>(+pg||0)>=n)[1];
@@ -1394,7 +1395,7 @@ ${memoriaCampanha()}
 Histórico recente do canal:
 ${historico().split('\n').slice(-14).join('\n')}`:''}
 Responda SOMENTE com JSON: {"segredo":${SEGREDO_FORMATO}${emAndamento?',"etapaAtual":2':''}}`;
-    try{const res=await chamarIA(prompt,'default');const j=JSON.parse((res.text||'').match(/\{[\s\S]*\}/)[0]);
+    try{const res=await chamarIA(prompt,'default');const j=lerJSON(res.text);
       const sg=normSegredo(j.segredo,m.grau);if(!sg)return null;
       const etapa=emAndamento?Math.max(0,Math.min(sg.etapas.length-1,Math.round(+j.etapaAtual||0))):0;
       const patch={segredo:sg,etapa,...(emAndamento?{combates:sg.maxCombates-1,acoes:0}:{})};
@@ -1429,7 +1430,7 @@ const minhaMissao=()=>[...missoes.values()].find(m=>m.status==='andamento'&&(m.m
 const nomeJog=id=>id===myId()?F.nome:(jogadores.get(id)?.nome||party.get(id)?.resumo?.nome||'alguém');
 function renderMissoes(){
   const mm=minhaMissao();const box=$('#minha-missao');
-  if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p>${mm.segredo?`<p>Progresso: <b style="color:var(--bone)">${mm.objetivoCumprido?'objetivo cumprido':`etapa ${Math.min((+mm.etapa||0)+1,mm.segredo.etapas.length)} de ${mm.segredo.etapas.length}`}</b></p>`:''}${locById(canalAtual)?.tipo==='professores'?((mm.objetivoCumprido||!mm.segredo)?`<button class="btn primary" id="btn-relatorio" ${narrando?'disabled':''}>Entregar relatório</button>`:`<p class="note">O objetivo ainda não foi cumprido (etapa ${Math.min((+mm.etapa||0)+1,mm.segredo.etapas.length)} de ${mm.segredo.etapas.length}). Termine a missão antes de entregar o relatório.</p>`):'<p>Para receber, entregue o relatório na Sala dos Professores.</p>'}</div>`:'')
+  if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeDestino(mm.destino))}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p>${mm.segredo?`<p>Progresso: <b style="color:var(--bone)">${mm.objetivoCumprido?'objetivo cumprido':`etapa ${Math.min((+mm.etapa||0)+1,mm.segredo.etapas.length)} de ${mm.segredo.etapas.length}`}</b></p>`:''}${locById(canalAtual)?.tipo==='professores'?((mm.objetivoCumprido||!mm.segredo)?`<button class="btn primary" id="btn-relatorio" ${narrando?'disabled':''}>Entregar relatório</button>`:`<p class="note">O objetivo ainda não foi cumprido (etapa ${Math.min((+mm.etapa||0)+1,mm.segredo.etapas.length)} de ${mm.segredo.etapas.length}). Termine a missão antes de entregar o relatório.</p>`):'<p>Para receber, entregue o relatório na Sala dos Professores.</p>'}</div>`:'')
     +(mp?`<h2 style="margin-top:${mm?'10px':'0'}">Missão pessoal</h2><p class="note" style="margin:0">${esc(mp)}</p>`:'');}
   const p=$('#missoes-panel');if(!p)return;
   if(locById(canalAtual)?.tipo!=='missoes'){p.hidden=true;p.innerHTML='';return;}
@@ -1439,7 +1440,7 @@ function renderMissoes(){
   const candidatos=[...jogadores.entries()].filter(([k])=>k!==myId());
   p.innerHTML=`<h2>Quadro de missões · ${esc(ESCOLAS[quadro]?.curta||'')}</h2>${lista.length?lista.map(m=>{const membro=(m.membros||[]).includes(myId());const fora=candidatos.filter(([k])=>!(m.membros||[]).includes(k));
     return `<div class="missao${membro?' minha':''}"><div class="tt"><b>${esc(m.titulo)}</b>${m.olho?'<span class="pill warn">Semana dos Olhos</span>':''}<span class="pill ${m.status==='aberta'?'ok':'info'}">${m.status==='aberta'?'aberta':'em andamento'}</span></div>
-      <p>${esc(m.descricao)}</p><p>Grau ${esc(m.grau)} · Destino: ${esc(nomeLocal(m.destino)||m.destino)} · Recompensa: ${m.xp||0} XP, ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} e ${pgDaMissao(m)} PG por membro</p>
+      <p>${esc(m.descricao)}</p><p>Grau ${esc(m.grau)} · Destino: ${esc(nomeDestino(m.destino))} · Recompensa: ${m.xp||0} XP, ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} e ${pgDaMissao(m)} PG por membro</p>
       ${m.status==='andamento'?`<p>Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')||'ninguém'}</p>`:''}
       <div class="acts">${m.status==='aberta'?`<button class="btn small primary" data-maceitar="${m.id}" ${mm?'disabled title="Você já está em uma missão"':''}>Aceitar missão</button>`
         :membro?`${fora.length?`<label class="sr" for="madd-${m.id}">Jogador</label><select id="madd-${m.id}">${fora.map(([k,j])=>`<option value="${esc(k)}">${esc(j.nome)}</option>`).join('')}</select><button class="btn small" data-madd="${m.id}">Adicionar ao grupo</button>`:''}<button class="btn small" data-msair="${m.id}">Sair</button>`
@@ -1448,7 +1449,8 @@ function renderMissoes(){
 }
 async function aceitarMissao(id){const m=missoes.get(id);if(!m||m.status!=='aberta'||minhaMissao())return;
   await missaoWrite(id,{status:'andamento',lider:myId(),membros:[myId()],aceita:Date.now()});
-  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} aceitou a missão "${m.titulo}".`});}
+  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} aceitou a missão "${m.titulo}".`});
+  if(!m.segredo)gerarSegredo({...m,status:'andamento'},false);}
 async function entrarMissao(id){const m=missoes.get(id);if(!m||minhaMissao())return;
   await missaoWrite(id,{membros:[...new Set([...(m.membros||[]),myId()])]});
   await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} entrou no grupo da missão "${m.titulo}".`});}
@@ -1482,6 +1484,15 @@ async function pagarMissoes(){
   finally{pagandoMissao=false;}
   setTimeout(pagarMissoes,300);
 }
+function lerJSON(t){
+  const txt=String(t||'').replace(/```(json)?/gi,'');const i=txt.indexOf('{');if(i<0)throw {message:'a IA não respondeu em JSON'};
+  let c=txt.slice(i,txt.lastIndexOf('}')+1);
+  try{return JSON.parse(c);}catch{}
+  // resposta cortada: fecha o que ficou aberto
+  c=txt.slice(i);let pilha=[],str=false,esc_=false;for(const ch of c){if(str){if(esc_)esc_=false;else if(ch==='\\')esc_=true;else if(ch==='"')str=false;continue;}if(ch==='"')str=true;else if(ch==='{'||ch==='[')pilha.push(ch);else if(ch==='}'||ch===']')pilha.pop();}
+  let fix=c.replace(/,\s*$/,'');if(str)fix+='"';fix=fix.replace(/,\s*"[^"]*"?\s*:?\s*"?$/,'');while(pilha.length)fix+=pilha.pop()==='{'?'}':']';
+  try{return JSON.parse(fix);}catch{throw {message:'a resposta da IA veio incompleta'};}
+}
 async function gerarMissoes(){
   if(!sample||gerandoMissoes)return;gerandoMissoes=true;renderMissoes();
   const quadro=raiz(canalAtual)==='kyoto'?'kyoto':'escola';const kyotoQ=quadro==='kyoto';
@@ -1498,15 +1509,15 @@ ${livroNpcs(15)}
 Chamados que já existem (não repita): ${existentes||'nenhum'}.
 Estas são missões comuns (não são das Semanas dos Olhos): nada de olhos de Sōgen aqui, mas cada chamado pode deixar um fio pequeno para as ameaças da campanha. Pelo menos um chamado deve ser uma side quest que apresenta um personagem secundário com nome (uma pessoa comum, um feiticeiro de fora, alguém ligado a um NPC já conhecido), descrito em "npc".
 Regras: grau 4 na maioria (às vezes 3) para nível 1-3. Recompensa do livro: grau 4 = 10 a 30 XP, grau 3 = 31 a 80 XP. Dinheiro entre 10000 e 60000 ienes. Descrição em 1 ou 2 frases, como um chamado oficial, com um gancho de mistério.
-Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""},"segredo":${SEGREDO_FORMATO}}]}
-Cada missão precisa de um "segredo": o roteiro escondido dos jogadores, uma história curta com começo, meio e fim que se resolve em 30 a 60 minutos de jogo, com no máximo 2 combates (grau 4) ou 3 (grau 3), contando o chefe.`;
-  try{const res=await chamarIA(prompt,'default');const m=(res.text||'').match(/\{[\s\S]*\}/);const j=JSON.parse(m[0]);
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""}}]}`;
+  try{const res=await chamarIA(prompt,'default');const j=lerJSON(res.text);
+    if(!Array.isArray(j.missoes)||!j.missoes.length)throw {message:'a IA não mandou nenhum chamado'};
     for(const x of (j.missoes||[]).slice(0,3)){const destino=locById(x.destino)?x.destino:(kyotoQ?'gion':'shibuya');
       if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Ligado ao chamado "${String(x.titulo||'').slice(0,80)}".`}],destino);
       const gr=+x.grau===3?3:4;const sg=normSegredo(x.segredo,gr);
       await missaoCriar({...(sg?{segredo:sg,etapa:0,combates:0,acoes:0}:{}),titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:gr,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now(),quadro});}
     await postMsg(`${quadro}-missoes`,{tipo:'sistema',texto:'Novos chamados foram pregados no quadro.'});
-  }catch{toastChat('Os professores não conseguiram preparar chamados agora. Tente de novo.');}
+  }catch(e){toastChat(`Os professores não conseguiram preparar chamados agora. Tente de novo.${e?.code==='rate_limited'?' (muitas mensagens seguidas)':e?.message?` (detalhe: ${String(e.message).slice(0,160)})`:''}`);}
   finally{gerandoMissoes=false;renderMissoes();}
 }
 
@@ -1719,9 +1730,8 @@ ${memoriaCampanha()}
 ${livroNpcs(15)}
 
 Crie os 3 chamados da SEMANA DOS OLHOS número ${sem}. Cada um é uma pista de que um olho de Kokonoe Sōgen está num lugar diferente. Para os jogadores, os chamados parecem missões oficiais da escola sobre "um objeto amaldiçoado de grau especial" (não diga o nome de Sōgen no título). Destinos, nesta ordem: ${destinos.join(', ')} (ids). Cada descrição em 1 ou 2 frases, com um gancho diferente (onde o olho foi visto, quem relatou, que maldições se agitaram).
-Cada chamado precisa de um "segredo": o roteiro escondido dos jogadores, curto (30 a 60 minutos de jogo, no máximo 3 combates contando o chefe). Na ordem dos chamados: ${destinos.map((d,i)=>`${i+1}º ${i===achavel?'o olho PODE ser recuperado: o chefe é a maldição que comeu o olho':'o olho NÃO pode ser encontrado: no desfecho ele já sumiu, com pista de quem levou'}`).join('; ')}.
-Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc":{"nome":"testemunha ou contato","descricao":"curta"},"segredo":${SEGREDO_FORMATO}}]}`;
-  let j;try{const res=await chamarIA(prompt,'default');j=JSON.parse((res.text||'').match(/\{[\s\S]*\}/)[0]);}catch{return 'A IA não conseguiu preparar os chamados. Tente de novo.';}
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc":{"nome":"testemunha ou contato","descricao":"curta"}}]}`;
+  let j;try{const res=await chamarIA(prompt,'default');j=lerJSON(res.text);}catch(e){return `A IA não conseguiu preparar os chamados (${e?.message||'erro'}). Tente de novo.`;}
   const lista=(j.missoes||[]).slice(0,3);if(lista.length<3)return 'A IA respondeu com menos de 3 chamados. Tente de novo.';
   for(let i=0;i<3;i++){const x=lista[i];
     if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Contato do chamado "${String(x.titulo||'').slice(0,80)}" (Semana dos Olhos ${sem}).`}],destinos[i]);
@@ -1965,7 +1975,7 @@ async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Confira se você está logado e se a Vercel tem a chave do Gemini configurada.'});return;}
   if(narrando)return;narrando=true;const obs=g.tipo==='observar'||g.tipo==='duelo'||g.tipo==='retorno';if(!obs){$('#chat-thinking').hidden=false;}renderRoll();renderCombate();
   let viajar=null,anteriorTxt='',iniciarDepois=null;
-  {const mm0=minhaMissao();if(mm0&&!mm0.segredo&&!obs&&g.tipo!=='turno'&&naMissao(mm0,id)){avisoRoteiro();await gerarSegredo(mm0,true);avisoNormal();}}
+  {const mm0=minhaMissao();if(mm0&&!mm0.segredo&&!obs&&g.tipo!=='turno'&&naMissao(mm0,id)){avisoRoteiro();await gerarSegredo(mm0,!!mm0.aceita&&Date.now()-mm0.aceita>45*60000&&(+mm0.acoes||0)>3);avisoNormal();}}
   const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (aluno de ${escolaCurta(escolaDe(k))}, ${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
   const so=g.sobreRolagem;const txtSobre=g.sobrecarga?(so?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga). O SISTEMA JÁ ROLOU o dano extra: ${so.q}${so.dado} = ${so.dados.join('+')} = ${so.total}. Some EXATAMENTE +${so.total} ao dano que a técnica causaria (em danoInimigos/danoJogadores e na narração) e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:` Ele investe +${g.sobrecarga} PA extra na técnica.`):'';
   const txtDados=(g.dados||[]).length?` Dados que ele escreveu na mensagem, JÁ ROLADOS pelo sistema (use exatamente estes valores, não role de novo nem ignore): ${g.dados.map(d=>`${d.expr} = ${d.total}`).join('; ')}.`:'';
