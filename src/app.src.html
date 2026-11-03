@@ -147,7 +147,7 @@ dl.stats dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-wei
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 [hidden]{display:none!important}
 /* ---- mundo ---- */
-.world-wrap{max-width:1240px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px}
+.world-wrap{max-width:1380px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:16px}
 .world-top{display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--line);padding-bottom:12px;flex-wrap:wrap}
 a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:center}
 .world-top h1{font-size:24px}
@@ -170,14 +170,17 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .msg.mestre.fora .meta b{color:var(--ash);font-family:var(--body)}
 .bar.pv .fill{background:var(--seal)} .bar.pa .fill{background:var(--cursed)} .bar.pe .fill{background:var(--warn)}
 @media (prefers-reduced-motion:no-preference){.bar .fill{transition:width .4s}}
-.mapa-grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.mapa-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
 @media (max-width:900px){.mapa-grid{grid-template-columns:1fr}}
-.map-frame{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#0c0b0e}
+.map-frame{border:3px solid #fff;border-radius:4px;overflow:hidden;background:#0b0a0c;box-shadow:6px 6px 0 #d3121c}
 #map{display:block;width:100%;height:auto}
 #map .node{cursor:pointer}
 #map .node:focus{outline:none}
-#map .node:focus-visible .seal,#map .node:hover .seal{stroke:var(--bone)}
-#map .node.sel .seal{stroke:var(--bone);stroke-width:3}
+#map .node .ico>g{transition:transform .15s}
+#map .node:hover .ico>g,#map .node:focus-visible .ico>g{transform:scale(1.1)}
+#map .pulse{animation:pulso 1.6s ease-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pulso{0%{opacity:.9;transform:scale(.7)}100%{opacity:0;transform:scale(1.4)}}
+@media (prefers-reduced-motion:reduce){#map .pulse{animation:none}}
 .loc-card,.panel{border:1px solid var(--line);border-radius:10px;background:var(--ink-2);padding:16px;display:flex;flex-direction:column;gap:10px}
 .loc-card h2,.panel h2{font-size:19px}
 .loc-card p{margin:0;color:var(--ash);font-size:14px}
@@ -464,7 +467,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div class="hud" id="hud" aria-label="Seu personagem"></div>
     </header>
     <div id="mapa-view" class="mapa-grid">
-      <div class="map-frame"><svg id="map" viewBox="0 0 800 520" role="img" aria-label="Mapa de Tóquio e Kyoto"></svg></div>
+      <div class="map-frame"><svg id="map" viewBox="0 0 1000 640" role="img" aria-label="Mapa de Tóquio e Kyoto"></svg></div>
       <div class="loc-card" id="loc-card"></div>
     </div>
     <nav class="areas" id="areas-bar" aria-label="Áreas da escola" hidden></nav>
@@ -1087,6 +1090,90 @@ LOCAIS.push(
   {id:'kyoto-biblioteca',pai:'kyoto',tipo:'biblioteca',area:'Biblioteca de Pergaminhos',nome:'Escola de Kyoto · Biblioteca de Pergaminhos',curto:'Biblioteca',kanji:'書',tags:['pesquisa','história','segredos'],
    desc:'Estantes até o teto com pergaminhos e registros dos clãs, alguns selados. A bibliotecária vigia quem mexe no que não deve.',
    contexto:'Biblioteca de Pergaminhos da Escola de Kyoto: estantes até o teto, pergaminhos da era Heian, registros dos grandes clãs, uma ala selada com talismãs. Uma bibliotecária severa vigia tudo (o mestre dá nome a ela na primeira vez). Lugar de investigação: testes de História, Investigação e Jujutsu revelam lendas antigas, técnicas de clãs e pistas sobre a campanha (registros com páginas arrancadas, menções a um feiticeiro de muitos olhos), mas nunca a verdade inteira de uma vez.'});
+/* ---------- Mapa ampliado: cidades, praias e áreas de conversa ---------- */
+const subArea=(pai,id,area,kanji,kw,contexto,tags)=>({id:`${pai}-${id}`,pai,area,kanji,kw,tags:tags||[],curto:area,desc:contexto,contexto});
+LOCAIS.push(
+  {id:'shinjuku',nome:'Shinjuku',curto:'Shinjuku',kanji:'新',regiao:'toquio',area:'Estação Sul',kw:'shinjuku',tags:['arranha-céus','vida noturna','multidão'],
+   desc:'Arranha-céus de vidro, a estação mais movimentada do planeta e, do outro lado dos trilhos, os becos de neon de Kabukichō.',
+   contexto:'Shinjuku: saída sul da estação mais movimentada do mundo, arranha-céus de escritórios, telões, multidões de assalariados. Do outro lado, Kabukichō e seus becos de neon. Muita gente cansada e com raiva acumulada: terreno fértil para maldições que se escondem em escadas de emergência e túneis de serviço.'},
+  {id:'akihabara',nome:'Akihabara',curto:'Akihabara',kanji:'秋',regiao:'toquio',area:'Rua Chūō',kw:'akihabara|akiba',tags:['eletrônicos','fliperamas','cultura pop'],
+   desc:'Prédios cobertos de anúncios de anime, lojas de eletrônicos de vários andares e fliperamas barulhentos.',
+   contexto:'Akihabara: avenida Chūō com prédios cobertos de anúncios de anime e jogos, lojas de eletrônicos e peças em vários andares, fliperamas, cafés temáticos. Aos domingos a rua fecha para pedestres. Objetos amaldiçoados às vezes aparecem misturados a sucata e itens de colecionador.'},
+  {id:'asakusa',nome:'Asakusa',curto:'Asakusa',kanji:'浅',regiao:'toquio',area:'Kaminarimon',kw:'asakusa|sens[oō]-?ji|kaminarimon',tags:['templos','tradição','turistas'],
+   desc:'O portão do trovão, a rua de barracas até o templo Sensō-ji e o rio Sumida com a torre ao fundo.',
+   contexto:'Asakusa: o portão Kaminarimon com sua lanterna vermelha gigante, a rua Nakamise cheia de barracas de doces e lembranças, o templo Sensō-ji, incenso no ar, e o rio Sumida com a torre de TV ao fundo. Lugar antigo, cheio de rezas e de pedidos não atendidos.'},
+  {id:'roppongi',nome:'Roppongi',curto:'Roppongi',kanji:'六',regiao:'toquio',area:'Avenida',kw:'roppongi',tags:['luxo','boates','estrangeiros'],
+   desc:'Torres de luxo, galerias de arte, embaixadas e boates que só fecham de manhã.',
+   contexto:'Roppongi: avenida de torres de luxo, galerias, embaixadas e muitos estrangeiros; à noite, boates, bares caros e gente rica com segredos. Clãs e famílias nobres de feiticeiros fazem negócios discretos por aqui.'},
+  {id:'odaiba',nome:'Odaiba',curto:'Odaiba',kanji:'台',regiao:'toquio',area:'Calçadão',kw:'odaiba|seaside|praia de odaiba',tags:['praia','baía','passeio'],
+   desc:'Ilha artificial na baía: calçadão à beira-mar, praia urbana, ponte iluminada e uma roda-gigante enorme.',
+   contexto:'Odaiba, ilha artificial na Baía de Tóquio: calçadão à beira-mar, praia urbana de areia (não é para nadar), vista da ponte iluminada, shoppings e uma roda-gigante enorme. Casais, turistas e famílias. A água da baía guarda coisas que ninguém procura.'},
+  {id:'yokohama',nome:'Yokohama · Chinatown',curto:'Yokohama',kanji:'華',regiao:'toquio',area:'Portão principal',kw:'yokohama|chinatown|bairro chin[eê]s',tags:['comida','porto','comércio'],
+   desc:'A maior Chinatown do Japão: portões coloridos, cheiro de bolinhos no vapor e ruelas que levam ao porto.',
+   contexto:'Chinatown de Yokohama, a uns 40 minutos de trem de Shibuya: portões coloridos, ruelas lotadas de restaurantes e barracas de bolinhos no vapor, templos chineses, e logo ali o porto com navios e armazéns. Rede antiga de famílias e comerciantes, alguns com contatos no mundo jujutsu.'},
+  {id:'miura',nome:'Praia de Miura',curto:'Miura',kanji:'浦',regiao:'toquio',area:'Praia',kw:'miura',tags:['praia','pescadores','isolado'],
+   desc:'Uma praia comprida e meio vazia na ponta da península, com farol, rochedos e vila de pescadores.',
+   contexto:'Praia de Miura, na ponta da península, a pouco mais de uma hora de trem: areia comprida, rochedos, um farol, vila de pescadores com barcos e redes. Fora da temporada fica quase vazia, com vento forte. Lendas locais falam de coisas que o mar devolve.'},
+  {id:'fushimi',nome:'Fushimi Inari',curto:'Fushimi Inari',kanji:'伏',regiao:'kyoto',x:0,y:0,area:'Santuário',kw:'fushimi|inari|torii',tags:['milhares de torii','montanha','raposas'],
+   desc:'Milhares de portões torii vermelhos subindo a montanha, estátuas de raposas e trilhas que ficam escuras cedo.',
+   contexto:'Santuário Fushimi Inari, em Kyoto: milhares de portões torii vermelhos formando túneis que sobem a montanha, estátuas de raposas mensageiras, pequenos altares cobertos de musgo. Embaixo é lotado de turistas; no alto, à noite, fica deserto e silencioso. Energia antiga e espíritos que não gostam de visitas.'},
+  // Shibuya
+  subArea('shibuya','cafe','Cafeteria','珈','cafeteria|caf[ée]|kissaten','Cafeteria Hoshizora, um kissaten pequeno numa rua lateral de Shibuya: balcão de madeira, sifões de café, cheiro de curry, jazz baixo. O dono, de poucas palavras, não pergunta nada a ninguém. Bom lugar para conversar com calma e trocar informações.',['conversa','descanso']),
+  subArea('shibuya','estacao','Estação de Metrô','駅','esta[çc][ãa]o|metr[ôo]|plataforma|trem','Estação de Shibuya: vários níveis de plataformas, corredores subterrâneos que parecem labirinto, catracas, multidão. Nos níveis mais fundos e nos túneis de serviço a energia amaldiçoada se acumula.',['metrô','subsolo']),
+  subArea('shibuya','shopping','Shopping','店','shopping|loja','Shopping de vários andares em Shibuya: lojas de roupa, praça de alimentação, escadas rolantes lotadas de jovens, banheiros e depósitos onde quase ninguém vai.',['compras','multidão']),
+  subArea('shibuya','rua1','Rua 1 · Center Gai','一','rua 1|center gai|centro','Center Gai, a rua 1 de Shibuya: calçadão estreito de pedestres, fliperamas, lojas de fast food, karaokês e jovens por toda parte. Barulhenta de dia e de noite.',['pedestres','jovens']),
+  subArea('shibuya','rua2','Rua 2 · Dogenzaka','二','rua 2|dogenzaka|ladeira','Dogenzaka, a rua 2 de Shibuya: ladeira com boates, casas de show, karaokês e hotéis baratos. À noite fica escura nos cantos e cheia de gente que não quer ser vista.',['noite','boates']),
+  subArea('shibuya','rua3','Rua 3 · Nonbei Yokochō','三','rua 3|nonbei|beco','Nonbei Yokochō, a rua 3 de Shibuya: beco estreito ao lado dos trilhos com dezenas de bares minúsculos de seis lugares, lanternas vermelhas, fofoca e bebida. Os donos sabem de tudo o que acontece no bairro.',['bares','fofoca']),
+  subArea('shibuya','esgotos','Esgotos','溝','esgoto|bueiro|galeria','Esgotos e galerias pluviais sob Shibuya: túneis de concreto, água parada até os tornozelos, ratos, escuridão e eco. Pessoas somem perto dos bueiros. Maldições pequenas e cinzentas surgem aqui com cheiro de água parada.',['subsolo','perigo']),
+  // Shinjuku
+  subArea('shinjuku','kabukicho','Kabukichō','歌','kabukich[oō]','Kabukichō, em Shinjuku: o portão de neon, host clubs, restaurantes, fliperamas e becos onde a polícia não entra muito. Gente perdida, dívidas e rancor.',['neon','perigo']),
+  subArea('shinjuku','goldengai','Golden Gai','酒','golden gai|bar','Golden Gai: seis vielas com quase 200 bares minúsculos, cada um com um tema e um dono esquisito. Lugar de conversa, rumores e encontros discretos.',['bares','conversa']),
+  subArea('shinjuku','mirante','Mirante do Governo','望','mirante|pr[ée]dio do governo','Mirante gratuito no alto do Prédio do Governo Metropolitano: vista da cidade inteira e, em dias limpos, do Monte Fuji. Bom para vigiar e para conversas longe de ouvidos.',['vista','calmo']),
+  // Akihabara
+  subArea('akihabara','fliperama','Fliperama','遊','fliperama|arcade','Fliperama de cinco andares em Akihabara: máquinas de luta, de música, gruas de pelúcia, fumaça no último andar. Barulho alto o bastante para falar qualquer coisa.',['jogos','barulho']),
+  subArea('akihabara','cafe','Café Temático','珈','caf[ée]|maid','Café temático em Akihabara, com atendentes fantasiadas e cardápio de nomes fofos. Clientes fiéis, fofocas do bairro, e uma atendente que enxerga coisas que não deveria.',['conversa','cultura pop']),
+  // Asakusa
+  subArea('asakusa','templo','Templo Sensō-ji','寺','templo|sens[oō]','Templo Sensō-ji: salão principal, nuvem de incenso, caixas de sorte (omikuji), monges e fiéis. Barreiras antigas e pedidos que se acumulam há séculos.',['templo','sagrado']),
+  subArea('asakusa','rio','Margem do Sumida','川','rio|sumida|margem','Margem do rio Sumida: passeio arborizado, barcos turísticos, a torre de TV do outro lado, moradores de rua sob as pontes. Calmo e bom para conversas.',['rio','conversa']),
+  // Roppongi
+  subArea('roppongi','boate','Boate','夜','boate|clube|balada','Boate de luxo em Roppongi: fila na porta, seguranças grandes, música eletrônica, área VIP com gente poderosa. Nem todo mundo aqui é só cliente.',['noite','luxo']),
+  subArea('roppongi','torre','Mirante da Torre','塔','torre|mirante','Mirante no topo de uma torre de Roppongi: vidro do chão ao teto, a Torre de Tóquio iluminada ao lado, café caro, silêncio.',['vista','calmo']),
+  // Avenida Sakuragawa
+  subArea('avenida','viaduto','Viaduto','橋','viaduto','Embaixo do viaduto ferroviário da Avenida Sakuragawa: pilares de concreto pichados, sombra, barulho dos trens a cada poucos minutos. É perto daqui que as pessoas desaparecem à noite.',['mistério','perigo']),
+  subArea('avenida','konbini','Konbini 24h','店','konbini|loja de conveni[êe]ncia','Loja de conveniência 24h da Avenida Sakuragawa: luz branca, onigiri, café de máquina, um atendente do turno da noite que viu coisas estranhas pela vitrine.',['conversa','rumores']),
+  subArea('avenida','izakaya','Izakaya','酒','izakaya|bar','Izakaya de bairro na Avenida Sakuragawa: lanternas vermelhas, espetinhos, cerveja, assalariados contando as fofocas da rua. Bom lugar para ouvir rumores.',['bar','rumores']),
+  // Odaiba
+  subArea('odaiba','praia','Praia de Odaiba','浜','praia|areia','Praia urbana de Odaiba: areia clara, água calma da baía, vista da ponte e da cidade. Não é permitido nadar. À noite, casais e silêncio.',['praia','conversa']),
+  subArea('odaiba','rodagigante','Roda-Gigante','輪','roda-?gigante','Roda-gigante de Odaiba: uma volta leva uns 16 minutos, cabines fechadas com vista de toda a baía. Perfeita para conversas que ninguém pode ouvir.',['vista','conversa']),
+  // Yokohama
+  subArea('yokohama','restaurante','Restaurante','食','restaurante|comida|bolinho','Restaurante de três andares em Chinatown: mesas redondas giratórias, dim sum, chá de jasmim, garçons apressados. A família dona conhece meio Yokohama.',['comida','conversa']),
+  subArea('yokohama','porto','Porto','港','porto|cais|armaz[ée]m','Porto de Yokohama: armazéns de tijolo, contêineres, guindastes, navios e um píer com vista para a ponte. À noite, cargas que não constam em nenhum papel.',['porto','contrabando']),
+  // Miura
+  subArea('miura','farol','Farol','灯','farol','Farol de Miura no alto dos rochedos: escada em espiral, vento forte, vista do mar inteiro. O faroleiro velho conta histórias do que o mar já trouxe.',['vista','lendas']),
+  subArea('miura','pier','Píer dos Pescadores','桟','p[íi]er|pescador|barco','Píer da vila de pescadores de Miura: barcos, redes secando, cheiro de peixe, uma barraca de lula grelhada. Os pescadores sabem quando o mar está "errado".',['pescadores','rumores']),
+  // Kyoto
+  subArea('gion','casadecha','Casa de Chá','茶','casa de ch[áa]|ch[áa]','Casa de chá tradicional em Gion: tatames, jardim interno, cerimônia do chá, uma anfitriã elegante que ouve tudo e esquece nada. Clãs de Kyoto marcam encontros discretos aqui.',['conversa','tradição']),
+  subArea('fushimi','trilha','Trilha dos Torii','鳥','trilha|t[úu]nel de torii|montanha','Trilha que sobe o monte Inari por túneis de torii vermelhos: degraus de pedra, altares pequenos, estátuas de raposa, lanternas. Quanto mais alto, mais vazio e mais escuro.',['montanha','espíritos'])
+);
+/* posições no mapa (viewBox 1000 x 640) */
+Object.entries({escola:[110,150],shinjuku:[300,170],akihabara:[590,130],asakusa:[760,95],shibuya:[285,330],roppongi:[455,385],avenida:[610,300],odaiba:[620,480],yokohama:[175,500],miura:[405,565],kyoto:[835,440],gion:[945,430],fushimi:[890,545]})
+  .forEach(([id,[x,y]])=>{const l=LOCAIS.find(z=>z.id===id);if(l){l.x=x;l.y=y;}});
+LOCAIS.find(l=>l.id==='shibuya').area='Cruzamento';LOCAIS.find(l=>l.id==='shibuya').kw='shibuya';
+LOCAIS.find(l=>l.id==='avenida').area='Calçada';LOCAIS.find(l=>l.id==='avenida').kw='avenida|sakuragawa';
+LOCAIS.find(l=>l.id==='gion').area='Ruas de pedra';LOCAIS.find(l=>l.id==='gion').kw='gion|higashiyama';
+['escola','shibuya','avenida'].forEach(i=>LOCAIS.find(l=>l.id===i).regiao='toquio');['kyoto','gion'].forEach(i=>LOCAIS.find(l=>l.id===i).regiao='kyoto');
+LOCAIS.filter(l=>l.pai&&!l.nome).forEach(l=>{const p=LOCAIS.find(z=>z.id===l.pai);l.nome=`${p.curto} · ${l.area}`;});
+const regiaoDe=id=>locById(raiz(id))?.regiao||'toquio';
+/* linhas de trem do mapa (estilo metrô) */
+const LINHAS=[
+  {cor:'#8fd14f',nos:['shibuya','shinjuku','akihabara','avenida','roppongi','shibuya']},
+  {cor:'#f39a1e',nos:['escola','shinjuku','akihabara','asakusa']},
+  {cor:'#3fc1d6',nos:['avenida','odaiba']},
+  {cor:'#e7e7e7',nos:['shibuya','yokohama']},
+  {cor:'#2f7fd8',nos:['yokohama','miura']},
+  {cor:'#c94fb5',nos:['roppongi','odaiba']},
+  {cor:'#f6d32b',nos:['kyoto','gion','fushimi']}];
+
 const ESCOLAS={escola:{chave:'toquio',nome:'Escola de Tóquio',curta:'Tóquio'},kyoto:{chave:'kyoto',nome:'Escola de Kyoto',curta:'Kyoto'}};
 const ehEscola=r=>!!ESCOLAS[r];
 const raizDaEscola=ch=>ch==='kyoto'?'kyoto':'escola';
@@ -1172,36 +1259,49 @@ function renderHud(){
 /* Mapa */
 function renderMapa(){
   const present=id=>[...jogadores.entries()].filter(([k,j])=>j.local&&raiz(j.local)===id);
-  const roads=[['escola','shibuya'],['shibuya','avenida'],['escola','avenida'],['kyoto','gion']];
-  let s=`<defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#1d1a20" stroke-width="1"/></pattern>
-    <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d2402f" stop-opacity=".35"/><stop offset="1" stop-color="#d2402f" stop-opacity="0"/></radialGradient></defs>
-    <rect width="800" height="520" fill="#0c0b0e"/><rect width="800" height="520" fill="url(#grid)"/>
-    <path d="M0 470 C120 430 230 500 340 470 S560 380 640 470 S760 520 800 500 V520 H0Z" fill="#11232a" opacity=".9"/>
-    <path d="M800 60 C700 120 690 200 740 270 S700 400 800 430" fill="none" stroke="#163039" stroke-width="22" stroke-linecap="round"/>
-    <g fill="#16241a">${[[60,80,46],[120,60,38],[90,140,52],[180,90,40],[40,200,44],[240,140,34],[110,230,40],[200,230,30],[60,300,36]].map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}"/>`).join('')}</g>
-    <g fill="none" stroke="#1f3a26" stroke-width="1.5">${[[70,110],[130,80],[95,170],[180,120],[55,220]].map(([x,y])=>`<path d="M${x-12} ${y+8} L${x} ${y-10} L${x+12} ${y+8}"/>`).join('')}</g>
-    <ellipse cx="500" cy="280" rx="190" ry="140" fill="none" stroke="#3a3238" stroke-width="2" stroke-dasharray="2 7"/>
-    <text x="640" y="160" fill="#4a424c" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">LINHA YAMANOTE</text>
-    <text x="40" y="330" fill="#2f4a36" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">MONTANHAS DO OESTE</text>
-    <text x="400" y="505" fill="#2a4a54" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">BAÍA DE TÓQUIO</text>
-    <rect x="18" y="350" width="300" height="152" rx="10" fill="#120f13" stroke="#3a3238" stroke-width="1.5"/>
-    <text x="30" y="368" fill="#6b5f68" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">KYOTO · ~2h15 DE SHINKANSEN</text>
-    <path d="M318 430 C380 420 430 330 520 250" fill="none" stroke="#3d3540" stroke-width="2" stroke-dasharray="3 6"/>
-    <text x="350" y="395" fill="#4a424c" font-size="10" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="1" transform="rotate(-38 350 395)">SHINKANSEN</text>`;
-  roads.forEach(([a,b])=>{const A=locById(a),B=locById(b);const mx=(A.x+B.x)/2+(a==='escola'&&b==='avenida'?-40:a==='kyoto'?0:20),my=(A.y+B.y)/2+(a==='escola'&&b==='avenida'?90:a==='kyoto'?-14:-30);
-    s+=`<path d="M${A.x} ${A.y} Q${mx} ${my} ${B.x} ${B.y}" fill="none" stroke="#4a3f45" stroke-width="3" stroke-dasharray="10 6"/>`;});
-  MAPA().forEach(l=>{const here=meu?.local&&raiz(meu.local)===l.id;const sel=selLoc===l.id;const ps=present(l.id);
-    s+=`<g class="node${sel?' sel':''}" data-loc="${l.id}" tabindex="0" role="button" aria-label="${esc(l.nome)}">
-      ${here?`<circle cx="${l.x}" cy="${l.y}" r="70" fill="url(#glow)"/>`:''}
-      <rect class="seal" x="${l.x-26}" y="${l.y-26}" width="52" height="52" rx="7" fill="#1a171d" stroke="#d2402f" stroke-width="2" transform="rotate(-4 ${l.x} ${l.y})"/>
-      <text x="${l.x}" y="${l.y+9}" text-anchor="middle" fill="#d2402f" font-size="26" font-family="Shippori Mincho B1, serif" font-weight="800">${l.kanji}</text>
-      <text x="${l.x}" y="${l.y+50}" text-anchor="middle" fill="#ece4d6" font-size="14" font-weight="700" font-family="Zen Kaku Gothic New, sans-serif">${esc(l.curto)}</text>
-      ${ps.map(([k,j],i)=>`<g transform="translate(${l.x+34+i*20} ${l.y-30})"><circle r="10" fill="${k===(uid||'eu')?'#d2402f':'#3d5a54'}" stroke="#0c0b0e" stroke-width="2"/><text y="4" text-anchor="middle" fill="#fff" font-size="9" font-weight="700" font-family="sans-serif">${esc(iniciais(j.nome))}</text></g>`).join('')}
+  const P=k=>{const l=locById(k);return [l.x,l.y];};
+  const rot=id=>((hashStr(id)%9)-4)*1.2;
+  let s=`<defs>
+      <pattern id="dots" width="10" height="10" patternUnits="userSpaceOnUse"><circle cx="5" cy="5" r="1.4" fill="#b80f18"/></pattern>
+      <clipPath id="oval"><ellipse cx="500" cy="320" rx="590" ry="370"/></clipPath>
+      <filter id="sombra" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="4" dy="5" stdDeviation="0" flood-color="#000" flood-opacity=".9"/></filter></defs>
+    <rect width="1000" height="640" fill="#0b0a0c"/>
+    <g clip-path="url(#oval)"><rect width="1000" height="640" fill="#d3121c"/><rect width="1000" height="640" fill="url(#dots)" opacity=".55"/>
+      <path d="M470 640 C520 560 600 540 700 560 S760 610 780 640Z" fill="#a50d15"/>
+      <path d="M0 640 V560 C60 600 120 610 230 600 C300 595 340 620 360 640Z" fill="#a50d15"/></g>
+    <text x="520" y="625" fill="#ffdede" opacity=".55" font-size="12" font-weight="800" letter-spacing="4" font-family="Zen Kaku Gothic New, sans-serif">BAÍA DE TÓQUIO</text>
+    <text x="40" y="70" fill="#fff" font-size="40" font-weight="900" font-family="Zen Kaku Gothic New, sans-serif" transform="rotate(-6 40 70)" stroke="#000" stroke-width="8" paint-order="stroke">東京</text>
+    <text x="44" y="96" fill="#000" font-size="13" font-weight="900" letter-spacing="5" font-family="Zen Kaku Gothic New, sans-serif" transform="rotate(-6 44 96)">TÓQUIO</text>
+    <g transform="rotate(-2 885 485)"><rect x="782" y="352" width="206" height="262" fill="#0b0a0c" stroke="#fff" stroke-width="4"/>
+      <rect x="782" y="352" width="206" height="262" fill="url(#dots)" opacity=".18"/>
+      <text x="796" y="384" fill="#fff" font-size="24" font-weight="900" font-family="Zen Kaku Gothic New, sans-serif">京都</text>
+      <text x="852" y="382" fill="#fff" font-size="11" font-weight="800" letter-spacing="3" font-family="Zen Kaku Gothic New, sans-serif">KYOTO · 2h15</text></g>
+    <path d="M590 130 L700 230 L930 352" fill="none" stroke="#0b0a0c" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M590 130 L700 230 L930 352" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
+    <path d="M590 130 L700 230 L930 352" fill="none" stroke="#0b0a0c" stroke-width="4" stroke-dasharray="10 8"/>
+    <text x="735" y="242" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" transform="rotate(28 735 242)" stroke="#000" stroke-width="4" paint-order="stroke">SHINKANSEN</text>`;
+  LINHAS.forEach(L=>{const pts=L.nos.map(P);const d='M'+pts.map(([x,y])=>`${x} ${y}`).join(' L');
+    s+=`<path d="${d}" fill="none" stroke="#0b0a0c" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${L.cor}" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>`;
+    for(let k=1;k<pts.length;k++){const [x1,y1]=pts[k-1],[x2,y2]=pts[k];s+=`<circle cx="${(x1+x2)/2}" cy="${(y1+y2)/2}" r="3.6" fill="#fff"/>`;}});
+  MAPA().forEach(l=>{const here=meu?.local&&raiz(meu.local)===l.id;const sel=selLoc===l.id;const ps=present(l.id);const r=rot(l.id);
+    const w=Math.max(70,l.curto.length*9+22);const nAreas=LOCAIS.filter(z=>z.pai===l.id).length;
+    s+=`<g class="node${sel?' sel':''}${here?' here':''}" data-loc="${l.id}" tabindex="0" role="button" aria-label="${esc(l.nome)}">
+      <g class="ico" transform="translate(${l.x} ${l.y}) rotate(${r})">
+        ${here?`<circle class="pulse" r="40" fill="none" stroke="#fff" stroke-width="3"/>`:''}
+        <g filter="url(#sombra)">
+        <rect x="-27" y="-40" width="54" height="50" fill="${sel?'#fff':'#0b0a0c'}" stroke="${sel?'#0b0a0c':'#fff'}" stroke-width="4"/>
+        <text y="-4" text-anchor="middle" fill="${sel?'#0b0a0c':'#fff'}" font-size="30" font-weight="900" font-family="Shippori Mincho B1, serif">${l.kanji}</text>
+        <rect x="${-w/2}" y="14" width="${w}" height="22" fill="${sel?'#0b0a0c':'#fff'}" stroke="#0b0a0c" stroke-width="3"/>
+        <text y="30" text-anchor="middle" fill="${sel?'#fff':'#0b0a0c'}" font-size="13" font-weight="900" letter-spacing=".5" font-family="Zen Kaku Gothic New, sans-serif">${esc(l.curto.toUpperCase())}</text></g>
+        ${nAreas?`<text y="50" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" letter-spacing="1" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="3" paint-order="stroke">${nAreas+1} ÁREAS</text>`:''}
+      </g>
+      ${ps.map(([k,j],i)=>`<g transform="translate(${l.x+32+i*19} ${l.y-38})"><circle r="10" fill="${corDe(k)}" stroke="#0b0a0c" stroke-width="3"/><text y="4" text-anchor="middle" fill="#0b0a0c" font-size="9" font-weight="900" font-family="sans-serif">${esc(iniciais(j.nome))}</text></g>`).join('')}
     </g>`;});
   $('#map').innerHTML=s;
   const l=locById(raiz(selLoc));const ps=present(l.id);const here=meu?.local&&raiz(meu.local)===l.id;
   const minhaE=raizDaEscola(escolaDe(myId()));
   $('#loc-card').innerHTML=`<h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
+    ${(()=>{const ar=LOCAIS.filter(z=>z.pai===l.id);return ar.length?`<p class="note" style="margin:0"><b style="color:var(--bone)">Áreas:</b> ${esc([l.area||'Centro',...ar.map(z=>z.area)].join(' · '))}</p>`:'';})()}
     <div><h3 style="font-size:14px;margin-bottom:6px">Quem está lá</h3><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}${locById(j.local)?.pai?` <span class="note">· ${esc(nomeLocal(j.local))}</span>`:''}</div>`).join(''):'<div class="note">Ninguém por enquanto.</div>'}</div></div>
     <button class="btn primary" data-entrar="${here?meu.local:l.id}">${here?'Voltar para o canal':'Ir para '+esc(l.curto)}</button>
     <p class="note">${meu?.local?`Você está em ${esc(locById(raiz(meu.local))?.curto||'')}${locById(meu.local)?.pai?` · ${esc(nomeLocal(meu.local))}`:''}.`:'Escolha onde começar. Clique em um local no mapa.'}</p>`;
@@ -1213,7 +1313,7 @@ async function irPara(id,anterior){
   const vis=new Set([...(meu.visitados||[]),...(meu.diario||[]).map(d=>d.local).filter(Boolean)]);
   const primeira=!vis.has(id);
   meu.__de=meu.local;
-  if(mudou){const de=meu.local;const nl=x=>ehEscola(raiz(x))&&raiz(de)===raiz(id)?(locById(x)?.area||nomeLocal(x)):(locById(x)?.pai?`${ESCOLAS[raiz(x)]?.nome||''} · ${nomeLocal(x)}`:nomeLocal(x));
+  if(mudou){const de=meu.local;const nl=x=>raiz(de)===raiz(id)?(locById(x)?.area||nomeLocal(x)):(locById(x)?.pai?`${locById(raiz(x))?.curto||''} · ${nomeLocal(x)}`:nomeLocal(x));
     if(de)await postMsg(de,{tipo:'sistema',texto:`${F.nome||'Alguém'} saiu em direção a ${nl(id)}.`});
     vis.add(id);await atualizarMeu({local:id,visitados:[...vis].slice(-60)});
     await postMsg(id,{tipo:'sistema',texto:`${F.nome||'Alguém'} chegou${de?` vindo de ${nl(de)}`:''}.`});}
@@ -1384,7 +1484,7 @@ async function gerarMissoes(){
   const niveis=[...party.values()].map(p=>+p.resumo?.nivel||1);const nv=Math.max(1,...(niveis.length?niveis:[calc().n]));
   const existentes=[...missoes.values()].map(m=>`${m.titulo} (${m.status})`).join('; ');
   const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros). Crie 3 chamados novos para o quadro de missões da ${kyotoQ?'Escola Técnica Jujutsu de Kyoto':'Escola Técnica Jujutsu de Tóquio'}, para alunos de nível ${nv}.
-Destinos possíveis (use o id): ${kyotoQ?'gion (Gion e Higashiyama: cidade antiga, templos, casas de chá), kyoto-biblioteca (Biblioteca de Pergaminhos da escola), kyoto-treino (Dojo de Treinos da escola), shibuya (Shibuya, em Tóquio: só às vezes, viagem de Shinkansen)':'shibuya (Shibuya: cruzamento, estação com subsolos, becos), avenida (Avenida Sakuragawa: comércio, viaduto ferroviário), escola-treino (Sala de Treinos da escola), gion (Gion, em Kyoto: só às vezes, viagem de Shinkansen)'}.
+Destinos possíveis (use o id; pode ser um lugar ou uma área dentro dele): ${LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&regiaoDe(l.id)===(kyotoQ?'kyoto':'toquio')).map(l=>`${l.id} (${l.nome}${l.tags?.length?': '+l.tags.join(', '):''})`).join('; ')}. Às vezes, um destino na outra cidade (${kyotoQ?'shibuya, em Tóquio':'gion, em Kyoto'}), viagem de Shinkansen. Varie os destinos.
 {{CAMPANHA}}
 
 ${direcaoMestre()}
@@ -1662,10 +1762,10 @@ async function descansar(tipo){
 }
 function renderAreas(){
   const bar=$('#areas-bar');if(!bar)return;const id=canalAtual;
-  const rz=raiz(id);if(!id||!ehEscola(rz)){bar.hidden=true;bar.innerHTML='';return;}
+  const rz=raiz(id);if(!id||(!ehEscola(rz)&&!LOCAIS.some(l=>l.pai===rz))){bar.hidden=true;bar.innerHTML='';return;}
   bar.hidden=false;const cont=a=>[...jogadores.values()].filter(j=>j.local===a).length;
   const quartos=[quartoId(myId()),...[...jogadores.keys()].map(k=>quartoId(k)),...(ehQuarto(id)?[id]:[])].filter(q=>raiz(q)===rz);
-  const lista=[...LOCAIS.filter(l=>l.id===rz||l.pai===rz),...[...new Set(quartos)].map(locById)];
+  const lista=[...LOCAIS.filter(l=>l.id===rz||l.pai===rz),...(ehEscola(rz)?[...new Set(quartos)].map(locById):[])];
   bar.innerHTML=lista.map(l=>`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
 }
 function renderPresentes(){
@@ -1762,13 +1862,15 @@ function memoriaCampanha(){
   return `Do próprio jogador, em todos os locais (mais antigo primeiro):\n${meus||'(nada ainda)'}\n\nDos outros jogadores:\n${outros||'(nada ainda)'}`;
 }
 function detectarViagem(t){
-  if(!/caminh\w* (para|pra|até)|vou (para|pra|até|ao|à|na|no)|indo (para|pra)|volto (para|pra)|sigo (para|pra)|entro na|entro no/i.test(t))return null;
+  if(!/caminh\w* (para|pra|até)|vou (para|pra|até|ao|à|na|no)|indo (para|pra)|volto (para|pra)|sigo (para|pra)|entro na|entro no|entro em|des[çc]\w* (para|pra|até|ao|à|aos|às|na|no|nos)|subo (para|pra|até|ao|à|na|no)/i.test(t))return null;
   const atualR=raiz(canalAtual||meu?.local);const er=ehEscola(atualR)?atualR:raizDaEscola(escolaDe(myId()));
+  if(!ehEscola(atualR)){const f=LOCAIS.find(l=>l.pai===atualR&&l.kw&&new RegExp(l.kw,'i').test(t));if(f)return f.id;if(new RegExp(`cruzamento|${locById(atualR)?.area||'@@'}`,'i').test(t)&&LOCAIS.some(l=>l.pai===atualR))return atualR;}
   const sub=[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],[`${er}-enfermaria`,/enfermaria|shoko|curandeiro/i],[`${er}-professores`,/sala dos? professor/i],[`${er}-missoes`,/quadro|mural de miss/i],[`${er}-treino`,/sala de treino|dojo|tatame|treinamento/i],...(er==='kyoto'?[['kyoto-biblioteca',/biblioteca|pergaminho/i]]:[]),[er,/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
   if(sub&&!/kyoto|quioto|t[óo]quio|tokyo/i.test(t))return sub[0];
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até)|indo (para|pra)|volto (para|pra)|sigo (para|pra)/i.test(t))return null;
-  const m=[['gion',/gion|higashiyama/i],['kyoto',/kyoto|quioto/i],['escola',/t[óo]quio|tokyo/i],['shibuya',/shibuya/i],['avenida',/avenida|sakuragawa|viaduto/i],[er,/escola|col[ée]gio|jujutsu/i]].find(([,r])=>r.test(t));
-  return m?m[0]:null;
+  const m=[['gion',/gion|higashiyama/i],['fushimi',/fushimi|inari/i],['kyoto',/kyoto|quioto/i],['escola',/t[óo]quio|tokyo/i],['shibuya',/shibuya/i],['avenida',/avenida|sakuragawa|viaduto/i],[er,/escola|col[ée]gio|jujutsu/i]].find(([,r])=>r.test(t));
+  if(m)return m[0];
+  const g=LOCAIS.find(l=>!l.pai&&l.kw&&new RegExp(l.kw,'i').test(t));return g?g.id:null;
 }
 async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Abra a página no Claude e permita o uso da IA.'});return;}
@@ -1824,7 +1926,7 @@ COMO NARRAR
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
-- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?ESCOLAS[x.pai].nome+' · '+(x.quarto?x.curto:x.area):x.nome}${ehEscola(x.id)?', corredores':''})`).join(', ')}. As áreas de uma escola (ids que começam com escola- para Tóquio e kyoto- para Kyoto) ficam no mesmo terreno: andar entre elas é rápido. Tóquio (escola, shibuya, avenida) e Kyoto (kyoto, gion) ficam a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}
 
