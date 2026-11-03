@@ -260,6 +260,14 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .dm-bolha.ele{align-self:flex-start;background:#fff;color:#0b0a0c;transform:rotate(-1.5deg)}
 .dm-bolha.eu{align-self:flex-end;background:#0b0a0c;color:#fff;border-color:#fff;transform:rotate(1.5deg)}
 .dm-vazio{color:#fff!important;text-shadow:2px 2px 0 #000}
+.post{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:10px 12px;margin:0 0 10px}
+.post-resps .post{margin-left:14px;box-shadow:3px 3px 0 #d3121c}
+.post-topo{display:flex;gap:8px;align-items:center}.post-quem{display:flex;flex-direction:column;min-width:0}.post-quem small{color:#555;font-size:12px}
+.post-txt{margin:8px 0 6px;white-space:pre-wrap;font-weight:600;overflow-wrap:anywhere}
+.post-acoes{display:flex;gap:6px;flex-wrap:wrap}
+.post-bt{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:800;font-size:13px;padding:3px 10px;cursor:pointer;transform:skew(-6deg)}
+.post-bt.on{background:#d3121c;color:#fff}.post-bt:hover,.post-bt:focus-visible{background:#0b0a0c;color:#fff;outline:none}
+.post-form{margin-bottom:4px}
 .dm-form{display:flex;gap:6px;align-items:stretch;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:6px}
 .dm-form textarea{flex:1;resize:none;border:0;background:#fff;color:#0b0a0c;font:inherit;padding:4px}
 .dm-form textarea:focus{outline:2px solid #d3121c}
@@ -790,6 +798,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
           <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome"><div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div></div></section>
         <section class="cel-app" data-app="ficha" hidden><div class="panel" id="cel-ficha"></div></section>
         <section class="cel-app" data-app="mensagens" hidden><div id="cel-dm"></div></section>
+        <section class="cel-app" data-app="social" hidden><div id="cel-social"></div></section>
         <section class="cel-app" data-app="cacadores" hidden><div class="panel" id="cel-cacadores"></div></section>
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
@@ -2906,7 +2915,7 @@ function esconderCarregando(){const box=$('#carregando');carreg=null;clearInterv
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['social','囁','Sussurros'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;m.classList.remove('detalhe');if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();
   setTimeout(()=>{mapaCentrar(selLoc,ehMobile()?2.1:1);const b=$('#mapa-fechar');b&&b.focus();},30);}
@@ -2942,13 +2951,13 @@ function mapaZoom(f,cx,cy){const svg=$('#map');const r=svg.getBoundingClientRect
 })();
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;m.classList.remove('detalhe');}
 
-const CEL_TIT={home:'Celular',mensagens:'Mensagens',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',config:'Ajustes'};
+const CEL_TIT={home:'Celular',mensagens:'Mensagens',social:'Sussurros',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',config:'Ajustes'};
 function abrirCel(app){
   const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
 }
 function fecharCel(semFoco){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);if(!semFoco){const b=$('#btn-cel');b&&b.focus();}}
-function celIr(app){if(app==='config')celCreditos=false;
+function celIr(app){if(app==='config')celCreditos=false;if(app==='social'&&celApp!=='social')postThread=null;
   if(app==='mapa'){abrirMapa();return;}
   if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
@@ -2959,7 +2968,7 @@ function celIr(app){if(app==='config')celCreditos=false;
 function renderCelApp(){
   const a=celApp;if(!a)return;
   if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
-    $('#cel-grade').innerHTML=CEL_APPS.filter(([k])=>k!=='cacadores'||ehFree(myId())).map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
+    $('#cel-grade').innerHTML=CEL_APPS.filter(([k])=>k!=='cacadores'||ehFree(myId())).map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}${k==='social'&&postsNaoLidos()?`<i class="cel-badge">${Math.min(99,postsNaoLidos())}</i>`:''}</button>`).join('');}
   if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
     if(!mm&&!mp)$('#minha-missao').innerHTML='';}
   if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
@@ -2970,6 +2979,7 @@ function renderCelApp(){
   if(a==='config')renderCelConfig();
   if(a==='cacadores')renderCacadores();
   if(a==='mensagens')renderDM();
+  if(a==='social'){postsMarcarLido();atualizarAlertaDM();renderSocial();}
 }
 /* ---------- Mensagens diretas entre jogadores (só os dois leem) ---------- */
 const dmConv=k=>[myId(),k].sort().join('__');
@@ -2988,7 +2998,7 @@ function assinarDMs(){
       else if(novas.length&&canalAtual)toastChat(`Nova mensagem de ${nomeJog(k)} no celular.`);
       atualizarAlertaDM();if(celApp==='mensagens')renderDM();else if(celApp==='home')renderCelApp();},()=>{}));}
 }
-function atualizarAlertaDM(){const n=dmTotalNaoLidas();['#cel-alerta','#cel-alerta-topo'].forEach(q=>{const el=$(q);if(el){el.hidden=!n;el.textContent=n?String(Math.min(n,99)):'';}});}
+function atualizarAlertaDM(){const n=dmTotalNaoLidas()+(typeof postsNaoLidos==='function'?postsNaoLidos():0);['#cel-alerta','#cel-alerta-topo'].forEach(q=>{const el=$(q);if(el){el.hidden=!n;el.textContent=n?String(Math.min(n,99)):'';}});}
 function renderDM(){
   const box=$('#cel-dm');if(!box)return;
   const ae=document.activeElement;const digitando=ae&&ae.id==='dm-texto'?{v:ae.value,s:ae.selectionStart}:null;
@@ -3025,6 +3035,59 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-dmabrir],[
   if(b.dataset.dmabrir){dmAberto=b.dataset.dmabrir;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
   if(b.dataset.dmvoltar){dmAberto=null;renderDM();}});
 document.addEventListener('submit',e=>{if(e.target.id!=='dm-form')return;e.preventDefault();enviarDM();});
+
+/* ---------- Rede social entre jogadores ("Sussurros"): posts, respostas e curtidas, sem IA ---------- */
+const posts=new Map();let postsUnsub=null,postThread=null,postEnviando=false;
+function postsLidoTs(){try{return +localStorage.getItem('jjk-posts-lido-'+myId())||0;}catch{return 0;}}
+function postsMarcarLido(){const ult=Math.max(0,...[...posts.values()].map(p=>+p.ts||0));try{localStorage.setItem('jjk-posts-lido-'+myId(),String(Math.max(ult,postsLidoTs())));}catch{}}
+const postsNaoLidos=()=>{const l=postsLidoTs();return [...posts.values()].filter(p=>p.autor!==myId()&&+p.ts>l).length;};
+function assinarPosts(){
+  if(!db||postsUnsub)return;
+  postsUnsub=db.collection('posts').orderBy('ts','desc').limit(150).onSnapshot(s=>{posts.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.texto!=null)posts.set(d.id,{id:d.id,...x});});
+    if(celApp==='social'){postsMarcarLido();renderSocial();}else if(celApp==='home')renderCelApp();atualizarAlertaDM();},()=>{});
+}
+const tempoAtras=ts=>{const m=Math.round((Date.now()-ts)/60000);return m<1?'agora':m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});};
+function htmlPost(pp,emThread){
+  const curt=Array.isArray(pp.curtidas)?pp.curtidas:[];const eu=curt.includes(myId());const nResp=[...posts.values()].filter(x=>x.pai===pp.id).length;
+  return `<article class="post"><div class="post-topo"><span class="tok" style="background:${corDe(pp.autor)};color:#141216">${esc(iniciais(pp.autorNome))}</span>
+    <span class="post-quem"><b>${esc(pp.autorNome||'Alguém')}</b><small>${esc(identDe(pp.autor))} · ${tempoAtras(+pp.ts)}</small></span></div>
+    <p class="post-txt">${esc(pp.texto)}</p>
+    <div class="post-acoes"><button type="button" class="post-bt${eu?' on':''}" data-pcurtir="${pp.id}" aria-pressed="${eu}">♥ ${curt.length||''}</button>
+      ${pp.pai||emThread?'':`<button type="button" class="post-bt" data-pthread="${pp.id}">↩ ${nResp?`${nResp} ${nResp>1?'respostas':'resposta'}`:'Responder'}</button>`}
+      ${pp.autor===myId()||souDono?`<button type="button" class="post-bt" data-papagar="${pp.id}">Apagar</button>`:''}</div></article>`;
+}
+function renderSocial(){
+  const box=$('#cel-social');if(!box)return;
+  const ae=document.activeElement;const dig=ae&&ae.id==='post-texto'?{v:ae.value,s:ae.selectionStart}:null;
+  const topo=[...posts.values()].filter(p=>!p.pai).sort((a,b)=>b.ts-a.ts);
+  const form=(ph)=>`<form class="dm-form post-form" id="post-form"><label class="sr" for="post-texto">${ph}</label><textarea id="post-texto" rows="2" maxlength="280" placeholder="${ph}"></textarea><button class="btn primary" type="submit" ${postEnviando?'disabled':''}>${postThread?'Responder':'Postar'}</button></form>`;
+  if(postThread&&posts.has(postThread)){const pai=posts.get(postThread);const resp=[...posts.values()].filter(p=>p.pai===postThread).sort((a,b)=>a.ts-b.ts);
+    box.innerHTML=`<button type="button" class="btn small dm-voltar" data-pvoltar="1">‹ Feed</button>${htmlPost(pai,true)}<div class="post-resps">${resp.map(r=>htmlPost(r,true)).join('')||'<p class="note dm-vazio" style="margin:6px 0">Nenhuma resposta ainda.</p>'}</div>${form('Escreva uma resposta...')}`;}
+  else{postThread=null;
+    box.innerHTML=`${form('O que está acontecendo?')}<p class="note dm-vazio" style="margin:6px 0 10px">Tudo que você posta aqui todos os jogadores veem. O mestre de IA não lê.</p>${topo.length?topo.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ninguém postou nada ainda. Seja o primeiro.</p>'}`;}
+  const ta=$('#post-texto');if(ta&&dig){ta.value=dig.v;ta.focus();try{ta.setSelectionRange(dig.s,dig.s);}catch{}}
+}
+async function enviarPost(){
+  const ta=$('#post-texto');const t=(ta?.value||'').trim();if(!t||postEnviando)return;
+  const pp={autor:myId(),autorNome:F.nome||'Sem nome',texto:t.slice(0,280),ts:Date.now(),curtidas:[],...(postThread?{pai:postThread}:{})};
+  postEnviando=true;ta.value='';
+  try{if(db){await db.collection('posts').add(pp);}else{const id='l'+pp.ts;posts.set(id,{id,...pp});}
+    if(typeof contarConquista==='function')contarConquista('posts',1);}
+  catch{toastChat('Post não enviado. Confira se as regras do Firestore foram publicadas.');if(ta)ta.value=t;}
+  finally{postEnviando=false;renderSocial();}
+}
+async function curtirPost(id){const pp=posts.get(id);if(!pp)return;const c=new Set(Array.isArray(pp.curtidas)?pp.curtidas:[]);c.has(myId())?c.delete(myId()):c.add(myId());
+  pp.curtidas=[...c];renderSocial();if(db){try{await db.doc('posts/'+id).update({curtidas:pp.curtidas});}catch{}}}
+async function apagarPost(id){const pp=posts.get(id);if(!pp||(pp.autor!==myId()&&!souDono))return;
+  posts.delete(id);if(postThread===id)postThread=null;renderSocial();
+  if(db){try{await db.doc('posts/'+id).delete();for(const r of [...posts.values()].filter(x=>x.pai===id)){try{await db.doc('posts/'+r.id).delete();}catch{}}}catch{}}}
+document.addEventListener('submit',e=>{if(e.target.id!=='post-form')return;e.preventDefault();enviarPost();});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pcurtir],[data-pthread],[data-papagar],[data-pvoltar]');if(!b)return;
+  if(b.dataset.pcurtir){curtirPost(b.dataset.pcurtir);return;}
+  if(b.dataset.pthread){postThread=b.dataset.pthread;renderSocial();$('#cel-corpo').scrollTop=0;return;}
+  if(b.dataset.pvoltar){postThread=null;renderSocial();return;}
+  if(b.dataset.papagar){const id=b.dataset.papagar;openModal('Apagar este post?','As respostas dele também somem.','','Apagar',async()=>{closeModal();await apagarPost(id);});}
+});
 document.addEventListener('keydown',e=>{if(e.target.id==='dm-texto'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarDM();}});
 function renderCelFicha(){
   const C=calc();const e=meu?.estado||{},m=meu?.max||{};
@@ -3437,7 +3500,7 @@ async function boot(){
     assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();

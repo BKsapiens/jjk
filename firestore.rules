@@ -54,6 +54,13 @@ service cloud.firestore {
       allow create, update: if logado() && request.resource.data.de == request.auth.uid;
       allow delete: if mestre() || (logado() && (resource.data.de == request.auth.uid || resource.data.para == request.auth.uid));
     }
+    // Rede social (Sussurros): todos leem; cada um posta em nome próprio; qualquer um curte; só o autor ou o mestre apaga.
+    match /posts/{id} {
+      allow read: if logado();
+      allow create: if logado() && request.resource.data.autor == request.auth.uid && request.resource.data.texto is string && request.resource.data.texto.size() <= 280;
+      allow update: if logado() && (resource.data.autor == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curtidas']));
+      allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();
