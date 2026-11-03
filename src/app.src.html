@@ -2276,7 +2276,6 @@ async function narrar(id,g){
 CAMPANHA
 {{CAMPANHA}}
 
-${direcaoMestre()}
 COMO NARRAR
 - Português do Brasil, tom de anime sombrio com momentos leves. 1 a 3 parágrafos curtos (no máximo ~120 palavras), falando com o jogador em segunda pessoa.
 - Nunca decida ações, falas, pensamentos ou sentimentos dos personagens dos jogadores. Descreva o mundo e os NPCs, e termine abrindo espaço para o jogador agir.
@@ -2291,7 +2290,7 @@ COMO NARRAR
   * Não peça teste para a mesma coisa duas vezes. Depois do resultado de um teste, feche aquele assunto com a consequência.
 - TESTES: ações triviais (andar, conversar sem tentar convencer, pegar algo à mão) acontecem sem teste. Mas TODA tentativa de obter informação escondida ou de fazer algo com chance de falhar PEDE TESTE antes do resultado: sentir ou rastrear energia amaldiçoada (Jujutsu ou Percepção), notar algo escondido (Percepção), procurar pistas e examinar (Investigação), saber se alguém mente (Intuição), lembrar de lendas e fatos (História), convencer, enganar ou intimidar (Persuasão, Enganação, Intimidação), se esconder ou passar despercebido (Furtividade), esforço físico arriscado (Atletismo, Acrobacia), tratar ferimentos (Medicina). Nesses casos NUNCA entregue a informação ou o sucesso de graça: preencha "teste" e pare a narração no momento de tensão. Use uma perícia desta lista exata: ${SKILLS.map(s=>s[0]).join(', ')}. CD: 10 fácil, 15 médio, 20 difícil, 25 muito difícil. Quando pedir teste, não narre o resultado: pare antes, no momento de tensão.
 - Quando o jogador rolar, narre sucesso ou falha de acordo com o total.
-- Custos e dano: técnicas gastam PA (no máximo o limite por ativação da ficha), esforço físico intenso gasta PE, ferimentos tiram PV. Use números proporcionais a um personagem de nível ${calc().n}: maldições de grau 4 causam uns 1d6 a 1d8 de dano. Descanso e cura devolvem recursos. Energia Reversa: só quem tem na ficha; cura PV e gasta PA conforme a ficha. Se não houver custo, use 0.
+- Custos e dano: técnicas gastam PA (no máximo o limite por ativação da ficha), esforço físico intenso gasta PE, ferimentos tiram PV. Use números proporcionais ao nível de quem agiu (veja NÍVEL DE QUEM AGIU, abaixo): maldições de grau 4 causam uns 1d6 a 1d8 de dano. Descanso e cura devolvem recursos. Energia Reversa: só quem tem na ficha; cura PV e gasta PA conforme a ficha. Se não houver custo, use 0.
 - INVENTÁRIO: o personagem só usa itens que tem. Desconte munição gasta (cada flecha ou disparo de arma que usa munição), itens consumidos e entregues; adicione o que ele pegar, ganhar ou comprar. Dinheiro em ienes.
 - Respeite a ficha: o personagem só faz o que as habilidades e a técnica dele permitem.
 - COMBATE: comece um combate quando a cena virar luta (emboscada, ataque surpresa, maldição atacando, jogador atacando algo hostil) preenchendo "combate" com os inimigos: nome, grau (4 fraco, 3, 2, 1, 0 = grau especial; para nível 1-3 use quase sempre grau 4 e às vezes 3), qtd (1 a 3) e descrição curta. O sistema cria fichas, iniciativa e turnos sozinho. Durante um combate ativo, use "combate" de novo só para reforços. Técnicas, manobras e ações especiais dos jogadores você resolve: aplique o dano nos inimigos com "danoInimigos" (use o id), e o custo em PA/PE em "efeitos". Se a luta acabar por fuga, rendição ou acordo, use "fimCombate": true. Não peça teste de ataque: ataques com armas usam o botão Atacar.
@@ -2303,16 +2302,18 @@ COMO NARRAR
   * "penalidade": "atk" e/ou "def" negativos (ou positivos) no ataque e na defesa dele.
   "rodadas": null dura até o fim do combate. Leia a técnica na ficha e traduza o efeito para essas regras, com o custo em "efeitos". Se o alvo precisa falhar num teste para o efeito pegar, peça o teste antes e só registre se ele falhar. Os efeitos ativos aparecem no resumo do combate.
 - TÉCNICAS DESBLOQUEADAS: quando a ficha lista técnicas avançadas desbloqueadas pelo mestre, elas são válidas mesmo fugindo das regras normais (ex.: um receptáculo usando o poder de quem abriga). Resolva-as pela descrição, cobre o custo indicado em efeitos.pa e aceite sobrecarga.
-- MISSÕES E RELATÓRIO: chamados ficam no Quadro de Missões da escola. O relatório oficial é entregue pelo botão "Entregar relatório" na Sala dos Professores; o sistema conclui a missão e paga XP, ienes e pontos de graduação a todo o grupo (não dê XP nem ienes por isso). Contar o que aconteceu a outro NPC (a médica, um colega) é só conversa: não vira teste, não paga nada; o NPC reage com bom senso e pode lembrar de entregar o relatório na Sala dos Professores. Se, na Sala dos Professores, ${F.nome} descrever o relatório pelo chat em vez do botão e o objetivo estiver cumprido, use "missaoConcluida": true.
+- MISSÕES E RELATÓRIO: chamados ficam no Quadro de Missões da escola. O relatório oficial é entregue pelo botão "Entregar relatório" na Sala dos Professores; o sistema conclui a missão e paga XP, ienes e pontos de graduação a todo o grupo (não dê XP nem ienes por isso). Contar o que aconteceu a outro NPC (a médica, um colega) é só conversa: não vira teste, não paga nada; o NPC reage com bom senso e pode lembrar de entregar o relatório na Sala dos Professores. Se, na Sala dos Professores, o jogador descrever o relatório pelo chat em vez do botão e o objetivo estiver cumprido, use "missaoConcluida": true.
 - REGRAS DA CASA DE ENERGIA: (1) Recuperar energia: em combate, o jogador pode gastar a ação do turno para recuperar 1d8 PA. Se ele declarar isso no chat durante o turno dele, use "recuperarPA": true (o sistema rola o 1d8 e aplica; não ponha esse PA em efeitos). Fora de combate, descanso continua sendo o jeito de recuperar. (2) Sobrecarga: ao usar a Técnica Inata (ou uma técnica desbloqueada), o jogador pode gastar PA além do custo: CADA 1 PA extra soma +1 dado de dano da técnica. O sistema rola esses dados e informa o total; some esse total exato. Custo base + extra nunca passa do limite por ativação (Nível × 4). Desconte tudo em efeitos.pa e mostre o dano maior na narração e em danoInimigos. Mais PA extra precisa sempre dar bem mais dano.
 - BÔNUS DECLARADOS: quando o jogador usa uma habilidade que dá bônus (ex.: "uso Impulso, +1d8 de dano"), confira na ficha e CONTE o bônus. Se ele escreveu os dados, o sistema já rolou e informa o resultado: use exatamente esse número. Se o bônus vale para o próximo ataque com arma (feito pelo botão Atacar), preencha "bonusProximoAtaque": {"dano":"1d8","acerto":0,"motivo":"Impulso"} e o sistema soma no próximo ataque. Se o bônus vale para uma técnica que você resolve agora, some direto em danoInimigos/danoJogadores.
 - NPCs E FALAS: quando um NPC fala, coloque a fala em "falas" ([{"npc":"Nome","texto":"o que ele diz"}]), e não dentro da narração. Cada fala aparece no chat com o nome do NPC, logo depois da narração. A narração descreve a cena e os gestos; as falas são só as palavras. Todo NPC novo com nome, ou NPC conhecido com quem acontece algo marcante, vai em "npcs" ([{"nome":"Nome","descricao":"quem é, aparência e jeito, 1 frase","nota":"o que ele vai lembrar desta cena, 1 frase"}]). Use os nomes do LIVRO DE NPCs exatamente iguais quando eles voltarem, e faça eles lembrarem do que está anotado.
-- DINHEIRO ENTRE JOGADORES: se ${F.nome} der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
+- DINHEIRO ENTRE JOGADORES: se quem agiu der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
 - RITMO: nunca prenda os jogadores em ondas infinitas de inimigos. Respeite o limite de criaturas da missão e não invente combates novos só para ter luta. Se uma cena virou repetição, avance a história.
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
-- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+{{FIXO_FIM}}
+${direcaoMestre()}NÍVEL DE QUEM AGIU: ${calc().n}.
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
@@ -2825,7 +2826,7 @@ function abrirCel(app){
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
 }
 function fecharCel(semFoco){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);if(!semFoco){const b=$('#btn-cel');b&&b.focus();}}
-function celIr(app){
+function celIr(app){if(app==='config')celCreditos=false;
   if(app==='mapa'){abrirMapa();return;}
   if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
@@ -2910,13 +2911,32 @@ function renderCelFicha(){
     <p class="note" style="margin:6px 0">Técnica: ${esc(C.hasTec&&F.tecnica.nome?F.tecnica.nome:'nenhuma')}${variacoes().filter(x=>x&&x.nome).length?` · Variações: ${esc(variacoes().filter((x,i)=>x&&x.nome&&i<slotsVariacao(C.n)).map(x=>x.nome).join(', '))}`:''}${(F.especiais||[]).length?` · Desbloqueadas: ${esc(F.especiais.map(x=>x.nome).join(', '))}`:''}</p>
     <button class="btn primary" data-celficha="1">Abrir ficha completa</button>`;
 }
+/* Créditos (Ajustes > Créditos). Preencha os nomes aqui. */
+const CREDITOS={
+  sistemaAutor:'[nome do criador do Era dos Feiticeiros]',
+  adaptacao:'[seu nome ou apelido]',
+};
+let celCreditos=false;
+function htmlCreditos(){
+  const bloco=(t,txt)=>`<div style="border:1px solid var(--line);padding:10px 12px"><div style="font-family:var(--display);font-size:1.05em;margin-bottom:4px">${t}</div><div style="color:var(--ink);opacity:.82;line-height:1.45">${txt}</div></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:10px">
+    <button class="btn" data-celcfg="voltar" style="align-self:flex-start">‹ Ajustes</button>
+    ${bloco('Sistema de regras',`Baseado no sistema <b>Era dos Feiticeiros</b>, criado por ${esc(CREDITOS.sistemaAutor)}. Versão 0.3, uma adaptação simplificada feita por ${esc(CREDITOS.adaptacao)} com autorização do criador.`)}
+    ${bloco('Campanha e mundo',`História, NPCs e linha do tempo da campanha por ${esc(CREDITOS.adaptacao)}.`)}
+    ${bloco('Mestre de IA',`As narrações são geradas pelo <b>Claude</b>, da Anthropic. A IA pode errar: o mestre humano tem a palavra final.`)}
+    ${bloco('Projeto de fã',`Inspirado em <b>Jujutsu Kaisen</b>, obra de Gege Akutami publicada pela Shueisha. Este é um projeto de fã, gratuito e sem fins lucrativos, sem nenhum vínculo com os detentores dos direitos. Todos os personagens e marcas da obra pertencem aos seus donos.`)}
+    ${bloco('Feito com',`Firebase (contas e dados) e Vercel (hospedagem).`)}
+  </div>`;
+}
 function renderCelConfig(){
+  if(celCreditos){$('#cel-config').innerHTML=htmlCreditos();return;}
   const anim=document.body.classList.contains('sem-animacao'),grande=document.body.classList.contains('texto-grande');
   $('#cel-config').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
     <button class="btn" data-celcfg="anim">${anim?'Ligar':'Desligar'} animação do celular</button>
     <button class="btn" data-celcfg="texto">Texto do chat: ${grande?'grande':'normal'}</button>
     <button class="btn" data-celficha="1">Abrir ficha completa</button>
     ${souDono?'<a class="btn" href="#admin" data-celfechar="1">Painel do mestre</a>':''}
+    <button class="btn" data-celcfg="creditos">Créditos</button>
     <button class="btn" data-celcfg="sair" style="border-color:var(--seal);color:var(--seal)">Sair da conta</button></div>`;
 }
 (()=>{try{if(localStorage.getItem('jjk-cfg-anim')==='0')document.body.classList.add('sem-animacao');if(localStorage.getItem('jjk-cfg-texto')==='g')document.body.classList.add('texto-grande');}catch{}})();
@@ -2931,6 +2951,7 @@ document.addEventListener('click',e=>{
   if(t.dataset.celquarto){fecharCel();irPara(quartoId(myId()));return;}
   if(t.dataset.celcfg==='anim'){const on=document.body.classList.toggle('sem-animacao');try{localStorage.setItem('jjk-cfg-anim',on?'0':'1');}catch{}renderCelConfig();return;}
   if(t.dataset.celcfg==='texto'){const on=document.body.classList.toggle('texto-grande');try{localStorage.setItem('jjk-cfg-texto',on?'g':'n');}catch{}renderCelConfig();return;}
+  if(t.dataset.celcfg==='creditos'||t.dataset.celcfg==='voltar'){celCreditos=t.dataset.celcfg==='creditos';renderCelConfig();$('#cel-config').scrollTop=0;return;}
   if(t.dataset.celcfg==='sair'){const b=document.getElementById('btn-sair');if(b)b.click();return;}
   if(t.dataset.celfechar){fecharCel();return;}
 });

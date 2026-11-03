@@ -40,6 +40,19 @@ function escolherProvedor() {
 }
 
 // ---------- Claude ----------
+// Cache do prompt: tudo antes de {{FIXO_FIM}} (regras, campanha, "como narrar") é igual em todo pedido.
+// O Claude guarda essa parte por 5 minutos (renovados a cada uso) e cobra 1/10 do preço para relê-la.
+const MARCA_FIXO = "{{FIXO_FIM}}";
+function blocosClaude(prompt) {
+  const i = prompt.indexOf(MARCA_FIXO);
+  if (i < 0) return prompt;
+  const fixo = prompt.slice(0, i), resto = prompt.slice(i + MARCA_FIXO.length);
+  return [
+    { type: "text", text: fixo, cache_control: { type: "ephemeral" } },
+    { type: "text", text: resto }
+  ];
+}
+
 async function responderClaude(prompt, rapido) {
   const modelo = (rapido ? process.env.CLAUDE_MODEL_RAPIDO : process.env.CLAUDE_MODEL) || "claude-haiku-5-5";
   let r;
@@ -54,7 +67,7 @@ async function responderClaude(prompt, rapido) {
       body: JSON.stringify({
         model: modelo,
         max_tokens: rapido ? 1024 : 4096,
-        messages: [{ role: "user", content: prompt }]
+        messages: [{ role: "user", content: blocosClaude(prompt) }]
       })
     });
   } catch { return { status: 502, erro: "Falha de rede ao falar com o Claude." }; }
@@ -68,7 +81,7 @@ async function responderClaude(prompt, rapido) {
   if (!r.ok) return { status: 502, erro: `Claude respondeu ${r.status}: ${(await r.text()).slice(0, 300)}` };
   const j = await r.json();
   const texto = (j.content || []).filter(b => b.type === "text").map(b => b.text).join("");
-  return { status: 200, texto, modelo };
+  return { status: 200, texto, modelo, uso: j.usage };
 }
 
 // ---------- Gemini ----------
@@ -117,7 +130,8 @@ export default async function handler(req, res) {
   prompt = prompt.replace(/\{\{ROTEIRO:([a-z0-9]+)\}\}/g, (_, k) => ROTEIROS[k] || "(roteiro não encontrado: conduza como missão comum)");
   const rapido = body.tier === "quick";
 
-  const r = provedor === "claude" ? await responderClaude(prompt, rapido) : await responderGemini(prompt, rapido);
+  const r = provedor === "claude" ? await responderClaude(prompt, rapido) : await responderGemini(prompt.replace(MARCA_FIXO, ""), rapido);
   if (r.status !== 200) { res.status(r.status).send(r.erro); return; }
-  res.status(200).json({ text: r.texto, modelo: r.modelo, provedor });
+  const u = r.uso || {};
+  res.status(200).json({ text: r.texto, modelo: r.modelo, provedor, uso: r.uso ? { entrada: u.input_tokens, cacheLido: u.cache_read_input_tokens || 0, cacheGravado: u.cache_creation_input_tokens || 0, saida: u.output_tokens } : undefined });
 }
