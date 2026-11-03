@@ -260,6 +260,14 @@ body.sem-animacao .mapa-tela{animation:none}
 .mapa-tela .map-frame{max-height:calc(100vh - 90px)}
 .mapa-tela #map{max-height:calc(100vh - 96px);width:100%}
 body.sem-animacao .cel-mao,body.sem-animacao .cel-fundo{transition:none}
+/* textos do celular ~50% maiores */
+.cel .cel-app:not([data-app="home"]){zoom:1.5}
+.cel-topo h2{font-size:32px!important}
+.cel-hora{font-size:18px!important;padding:6px 10px!important}
+.cel-bt{width:46px!important;height:46px!important;font-size:24px!important}
+.cel-ic span{font-size:19px!important;padding:4px 9px!important}
+.cel-ic .q{width:96px!important;height:96px!important;font-size:46px!important}
+.cel-grade{gap:34px 14px!important}
 body.texto-grande .chat-log{font-size:17px}
 body:has(#view-mundo:not([hidden])) #btn-sair{display:none}
 @media (max-width:760px){.cel-mao{width:180vw;left:62%}.cel-tela{font-size:13px}}
