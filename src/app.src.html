@@ -206,7 +206,7 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel.show .cel-mao{transform:translate(-50%,3%) rotate(0deg)}
 .cel-mao img{position:absolute;inset:0;width:100%;height:100%;user-select:none}
 .cel-maos{pointer-events:none}
-.cel-mascara{position:absolute;inset:0;-webkit-mask-image:url(/img/celular-mascara.png);mask-image:url(/img/celular-mascara.png);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.cel-mascara{position:absolute;inset:0;-webkit-mask-image:url(img/celular-mascara.png);mask-image:url(img/celular-mascara.png);-webkit-mask-size:100% 100%;mask-size:100% 100%}
 .cel-tela{position:absolute;left:24.8%;top:3.3%;width:48.3%;height:78%;transform:rotate(7.5deg);transform-origin:0 0;display:flex;flex-direction:column;padding:2.2% 3% 0 9%;color:#fff;font-size:14px}
 .cel-topo{display:flex;align-items:center;gap:8px;padding:6px 0 8px;border-bottom:3px solid #000}
 .cel-topo h2{flex:1;margin:0;font:900 italic 22px/1 var(--display);color:#fff;text-shadow:3px 3px 0 #000;letter-spacing:.5px}
@@ -549,7 +549,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 <div class="cel" id="cel" hidden>
   <div class="cel-fundo" data-celfechar="1"></div>
   <div class="cel-mao" role="dialog" aria-modal="true" aria-labelledby="cel-titulo">
-    <img class="cel-base" src="/img/celular.png" alt="" draggable="false">
+    <img class="cel-base" src="img/celular.png" alt="" draggable="false">
     <div class="cel-mascara"><div class="cel-tela">
       <div class="cel-topo"><button type="button" class="cel-bt" id="cel-voltar" aria-label="Voltar">‹</button><h2 id="cel-titulo">Celular</h2><span class="cel-hora" id="cel-hora"></span><button type="button" class="cel-bt" data-celfechar="1" aria-label="Guardar o celular">✕</button></div>
       <div class="cel-corpo" id="cel-corpo">
@@ -566,7 +566,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
     </div></div>
-    <img class="cel-maos" src="/img/celular-maos.png" alt="" draggable="false">
+    <img class="cel-maos" src="img/celular-maos.png" alt="" draggable="false">
   </div>
 </div>
 
@@ -2845,6 +2845,7 @@ async function boot(){
   for(let i=0;i<30&&!(w&&typeof w.use==='function');i++){await new Promise(r=>setTimeout(r,100));w=window.claude;}
   if(!w||typeof w.use!=='function'){clearTimeout(timer);$('#save-status').textContent='Modo local: a ficha fica salva neste navegador.';route();return;}
   [db,user,sample]=await Promise.all([w.use('db'),w.use('user'),w.use('sample')]);
+  if(sample&&typeof window.__embrulharSample==='function')sample=window.__embrulharSample(sample);
   clearTimeout(timer);
   if(user)try{uid=await user.id();}catch{}
   if(db&&!uid)db=null;
