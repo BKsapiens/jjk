@@ -2757,14 +2757,16 @@ function renderCombate(){
 }
 
 /* ---------- Carregando ao trocar de cidade ---------- */
-const ANDANTES={passante1:'img/andante-passante1.png',passante2:'img/andante-passante2.png',passante3:'img/andante-passante3.png',gojo:'img/andante-gojo.png',itadori:'img/andante-itadori.png'};
+const ANDANTES={passante1:'img/andante-passante1.png',passante2:'img/andante-passante2.png',passante3:'img/andante-passante3.png',passante4:'img/andante-passante4.png',passante5:'img/andante-passante5.png',passante6:'img/andante-passante6.png',passante7:'img/andante-passante7.png',gojo:'img/andante-gojo.png',itadori:'img/andante-itadori.png',nobara:'img/andante-nobara.png'};
 let carreg=null,carregTimer=null;
 function mostrarCarregando(id,precisaNarrar){
   const box=$('#carregando');if(!box)return;const l=locById(raiz(id));
   $('#car-nome').textContent=l?.curto||'Tóquio';
-  const comuns=['passante1','passante2','passante3'];const lista=[];const n=4+Math.floor(Math.random()*2);
-  for(let i=0;i<n;i++)lista.push({k:comuns[Math.floor(Math.random()*comuns.length)],conhecido:false});
-  const r=Math.random();if(r<0.30)lista.push({k:Math.random()<0.5?'gojo':'itadori',conhecido:true});if(r<0.06)lista.push({k:'gojo',conhecido:true},{k:'itadori',conhecido:true});
+  const comuns=['passante1','passante2','passante3','passante4','passante5','passante6','passante7'].sort(()=>Math.random()-.5);const lista=[];const n=4+Math.floor(Math.random()*2);
+  for(let i=0;i<n;i++)lista.push({k:comuns[i%comuns.length],conhecido:false});
+  /* personagens conhecidos: Gojo ou Itadori às vezes, os dois juntos bem às vezes, Nobara raríssima */
+  const r=Math.random();if(r<0.05)lista.push({k:'gojo',conhecido:true},{k:'itadori',conhecido:true});else if(r<0.28)lista.push({k:Math.random()<0.5?'gojo':'itadori',conhecido:true});
+  if(Math.random()<0.08)lista.push({k:'nobara',conhecido:true});
   const larg=box.parentElement.clientWidth||1000;
   $('#car-cena').innerHTML=lista.sort(()=>Math.random()-.5).map((a,i)=>{const prof=0.6+Math.random()*0.4;const dur=(7+Math.random()*7)/(prof);const esq=Math.random()<0.5;
     return `<div class="andante${esq?' esq':''}${a.conhecido?' conhecido':''}" style="--h:${Math.round(54+prof*34)}%;--dur:${dur.toFixed(1)}s;--atraso:-${(Math.random()*dur).toFixed(1)}s;--larg:${larg}px;--x0:${Math.round(Math.random()*80)}vw;z-index:${Math.round(prof*10)};opacity:${(0.75+prof*0.25).toFixed(2)}"><img src="${ANDANTES[a.k]}" alt="" draggable="false"></div>`;}).join('');
