@@ -425,6 +425,27 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .areas button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ash);font-size:13px;display:flex;gap:6px;align-items:center}
 .areas button.on{border-color:var(--seal);color:var(--bone);background:var(--ink-2)}
 .areas button .k{font-family:var(--display);color:var(--seal)}
+.dom-aviso{margin:0;padding:6px 10px;background:var(--dom-cor,#6a1fb0);color:#fff;font-size:13px;border:2px solid #000;text-shadow:1px 1px 0 #000}
+.dom-bt{background:var(--dom-cor)!important;color:#fff!important;border:2px solid #000!important;font-weight:900;text-shadow:1px 1px 0 #000}
+body.em-dominio #canal-view{--dc:var(--dom-cor,#6a1fb0)}
+body.em-dominio #canal-view #chat-log{background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--dc) 45%,transparent),transparent 70%),repeating-conic-gradient(from 0deg at 50% 120%,color-mix(in srgb,var(--dc) 14%,transparent) 0 4deg,transparent 4deg 12deg),#08070a!important;box-shadow:inset 0 0 0 3px var(--dc),inset 0 0 60px color-mix(in srgb,var(--dc) 60%,transparent);transition:background .6s}
+body.em-dominio #canal-view #chat-log .msg{border-color:color-mix(in srgb,var(--dc) 70%,#000)}
+body.em-dominio #canal-view .chat::before{content:"領域展開 · " var(--dom-nome,"");display:block;text-align:center;font:900 13px/1 var(--body);letter-spacing:2px;color:#fff;background:var(--dc);padding:6px;border:2px solid #000;margin-bottom:6px;text-shadow:1px 1px 0 #000}
+.dom-abre{position:fixed;inset:0;z-index:9998;pointer-events:none;display:grid;place-items:center;overflow:hidden}
+.dom-onda{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;background:radial-gradient(circle,var(--dom-cor) 0 55%,#000 56% 60%,var(--dom-cor) 61%);animation:domOnda 2.4s cubic-bezier(.2,.8,.2,1) forwards;opacity:.92}
+.dom-titulo{position:relative;display:flex;flex-direction:column;align-items:center;gap:4px;background:#0b0a0c;color:#fff;border:3px solid #fff;box-shadow:8px 8px 0 var(--dom-cor);padding:14px 24px;transform:skew(-6deg) scale(.6);opacity:0;animation:domTit 2.4s ease forwards;text-align:center;max-width:90vw}
+.dom-titulo small{font-size:12px;letter-spacing:2px;opacity:.85}.dom-titulo b{font-family:var(--display);font-size:clamp(22px,5vw,40px)}.dom-titulo span{font-size:13px;opacity:.8}
+@keyframes domOnda{0%{transform:scale(0)}60%{transform:scale(60);opacity:.9}100%{transform:scale(60);opacity:0}}
+@keyframes domTit{0%,15%{opacity:0;transform:skew(-6deg) scale(.6)}30%{opacity:1;transform:skew(-6deg) scale(1.05)}40%,80%{opacity:1;transform:skew(-6deg) scale(1)}100%{opacity:0;transform:skew(-6deg) scale(1.1)}}
+.ordem li{position:relative}
+.ordem li.bf-hit{animation:bfTreme .5s linear 3;background:#1a0306!important;box-shadow:0 0 0 2px #e8101c,0 0 18px #e8101c}
+.bf-raios{position:absolute;inset:-6px -4px;pointer-events:none;display:grid;place-items:center;animation:bfPisca .16s steps(2) 9}
+.bf-raios svg{position:absolute;inset:0;width:100%;height:100%}
+.bf-raios b{position:relative;font:900 italic 18px/1 var(--body);color:#fff;background:#e8101c;border:2px solid #000;padding:2px 8px;transform:skew(-12deg) rotate(-4deg);letter-spacing:1px;text-shadow:2px 2px 0 #000}
+@keyframes bfTreme{0%,100%{transform:translate(0,0)}20%{transform:translate(-4px,2px) rotate(-1deg)}40%{transform:translate(4px,-2px) rotate(1deg)}60%{transform:translate(-3px,-1px)}80%{transform:translate(3px,1px)}}
+@keyframes bfPisca{0%{opacity:1}50%{opacity:.35}100%{opacity:1}}
+body.sem-animacao .ordem li.bf-hit,body.sem-animacao .bf-raios{animation:none}
+@media (prefers-reduced-motion:reduce){.ordem li.bf-hit,.bf-raios,.dom-onda,.dom-titulo{animation-duration:.01s!important;animation-iteration-count:1!important}}
 .conq-g{font-size:15px;margin:12px 0 6px}
 .conq{display:flex;gap:10px;align-items:flex-start;border:2px solid #0b0a0c;background:#f1eeea;color:#0b0a0c;padding:8px 10px;margin-bottom:6px;opacity:.85}
 .conq.ok{background:#fff;opacity:1;box-shadow:3px 3px 0 #d3121c}
@@ -783,6 +804,11 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
     <section class="panel"><h2>Variações</h2>
       <p class="note" style="margin:0">Pelo livro, a cada 3 níveis (3, 6, 9, 12…) você ganha espaço para uma variação: um efeito novo com regra própria em cima da base. Escolha um modificador do capítulo 6.2 ou descreva uma variação temática, e valide com a IA.</p>
       <div id="variacoes-body" class="variacoes"></div></section>
+    <section class="panel"><h2>Expansão de Domínio</h2>
+      <p class="note" style="margin:0">Se o seu personagem tem uma Expansão de Domínio, dê um nome e uma cor. Em combate, abrir o domínio pinta o chat de todos com essa cor. O efeito e o custo são resolvidos pelo mestre a partir desta descrição.</p>
+      <div class="grid g2"><label class="f" for="d-nome">Nome do domínio<input type="text" id="d-nome" data-dbind="nome" maxlength="60" placeholder="Ex.: Santuário das Mil Correntes"></label>
+        <label class="f" for="d-cor">Cor do domínio<input type="color" id="d-cor" data-dbind="cor" value="#6a1fb0"></label></div>
+      <label class="f" for="d-desc">O que acontece dentro do domínio<textarea id="d-desc" data-dbind="desc" maxlength="600" placeholder="Ex.: correntes surgem do chão; dentro da barreira a técnica sempre acerta, mas o domínio dura poucos turnos."></textarea></label></section>
   </div>
 </div>
 
@@ -1224,7 +1250,7 @@ function renderAll(){
   const C=calc();
   $('#idade-efeito').innerHTML=esc(C.idade.txt);
   $('#armaprof-box').innerHTML=F.armaProf?`<label class="f" for="f-armanome">Arma<input type="text" id="f-armanome" data-bind="armaNome" value="${esc(F.armaNome)}" placeholder="Ex.: Katana, Pistola"></label>`:'';
-  renderRaca();renderAttrs(C);renderClasse(C);renderAnt(C);renderTraits();renderSkills(C);renderTecnica(C);renderTecResumo(C);renderVariacoes(C);renderEspeciais();renderEquip(C);renderItens();renderSheet(C);
+  renderRaca();renderAttrs(C);renderClasse(C);renderAnt(C);renderTraits();renderSkills(C);renderTecnica(C);renderTecResumo(C);renderVariacoes(C);renderDominioFicha();renderEspeciais();renderEquip(C);renderItens();renderSheet(C);
   saveDraft();
 }
 function refreshLight(){const C=calc();$('#idade-efeito').innerHTML=esc(C.idade.txt);renderAttrs(C);renderSkills(C);renderTecnica(C);renderTecResumo(C);renderEquip(C);renderSheet(C);saveDraft();}
@@ -1240,6 +1266,7 @@ document.addEventListener('input',e=>{
     if(el.tagName==='SELECT'){renderAll();return;}
     refreshLight();return;}
   if(el.dataset.tbind){F.tecnica[el.dataset.tbind]=el.value;refreshLight();return;}
+  if(el.dataset.dbind){F.dominio=F.dominio||{nome:'',cor:'#6a1fb0',desc:''};F.dominio[el.dataset.dbind]=el.value;saveDraft();return;}
   if(el.dataset.item!==undefined){const it=F.itens[+el.dataset.item];if(!it)return;it[el.dataset.k]=el.dataset.k==='qtd'?Math.max(1,parseInt(el.value)||1):el.value;refreshLight();}
 });
 document.addEventListener('change',e=>{
@@ -1292,7 +1319,7 @@ function closeModal(){$('#modal').classList.remove('show');}
 $('#modal-ok').addEventListener('click',()=>modalOk&&modalOk());
 
 function loadFicha(o){
-  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};F.escolaOrigem=['kyoto','freelancer'].includes(o.escolaOrigem)?o.escolaOrigem:'toquio';const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
+  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.dominio=Object.assign({nome:'',cor:'#6a1fb0',desc:''},o.dominio||{});F.rolagens=o.rolagens||{};F.escolaOrigem=['kyoto','freelancer'].includes(o.escolaOrigem)?o.escolaOrigem:'toquio';const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
   document.querySelectorAll('[data-bind]').forEach(el=>{if(el.closest('#raca-sub,#ant-sub,#armaprof-box'))return;el.value=el.type==='color'?(corValida(F[el.dataset.bind])||'#e0b354'):(F[el.dataset.bind]??'');});
   $('#tecnica-body').dataset.built='';renderAll();
 }
@@ -1311,6 +1338,7 @@ function renderTecResumo(C){
       <p class="note" style="margin:0">Variações: <b>${vs.length}</b> de <b>${sl}</b> espaço(s) no nível ${C.n}${sl?'':' (a primeira libera no nível 3)'}.</p></div>
     <a class="btn primary" href="#tecnica" style="align-self:flex-start">Abrir página da técnica</a></div>`;
 }
+function renderDominioFicha(){const d=F.dominio||{};[['#d-nome','nome',''],['#d-cor','cor','#6a1fb0'],['#d-desc','desc','']].forEach(([q,k,pad])=>{const el=$(q);if(el&&document.activeElement!==el)el.value=d[k]||pad;});}
 function renderVariacoes(C){
   const box=$('#variacoes-body');if(!box)return;
   if(!C.hasTec){box.innerHTML='<p class="note">Sem Técnica Inata, não há variações.</p>';return;}
@@ -2084,7 +2112,7 @@ async function aplicarDescanso(final,motivo){
   finally{descOcupado=false;}
 }
 setInterval(()=>{atualizarRelogio();if(meu?.descanso){aplicarDescanso(false);if(celApp==='descanso'||canalAtual===meu.descanso.local)renderDescanso();}},20000);
-atualizarRelogio();
+setTimeout(atualizarRelogio,0);
 
 /* App Caçadores (só freelancers): contratos rápidos de eliminar 1 a 5 criaturas, sem investigação nem relatório.
    Os contratos mudam a cada dia do jogo e são gerados aqui, sem gastar IA. */
@@ -2482,7 +2510,8 @@ ${ehFree(myId())?`FEITICEIRO FREELANCER: não pertence a nenhuma escola Jujutsu.
 Experiência: ${xpAtual()} XP${xpInfo().prox?` (próximo nível em ${xpInfo().prox})`:''}.
 Recursos atuais: PV ${meu.estado.pv}/${meu.max.pv}, PA ${meu.estado.pa}/${meu.max.pa}, PE ${meu.estado.pe}/${meu.max.pe}. Deslocamento ${C.desl} m, RD ${C.rd}, dano desarmado ${C.desarm}.
 Perícias (* = treinada): ${per}.
-${(()=>{const a=DATA.antecedentes.find(x=>x.nome===F.antecedente);return a?`Antecedente ${a.nome}: ${a.desc} Traços: ${a.tracos.map(t=>t.nome+' — '+t.texto).join(' | ')}\n`:'';})()}Habilidade de classe nível 1: ${C.classe?`${C.classe.l1.nome} — ${C.classe.l1.texto}`:'-'}. Habilidades simples: ${F.simples.join(', ')||'-'}.
+${(()=>{const a=DATA.antecedentes.find(x=>x.nome===F.antecedente);return a?`Antecedente ${a.nome}: ${a.desc} Traços: ${a.tracos.map(t=>t.nome+' — '+t.texto).join(' | ')}\n`:'';})()}Habilidade de classe nível 1: ${C.classe?`${C.classe.l1.nome} — ${C.classe.l1.texto}`:'-'}. Habilidades simples: ${F.simples.join(', ')||'-'}.${F.dominio?.nome?`
+Expansão de Domínio: ${F.dominio.nome}${F.dominio.desc?` — ${F.dominio.desc}`:''}.`:''}
 Vantagens: ${F.vantagens.join(', ')||'-'}. Desvantagens: ${F.desvantagens.join(', ')||'-'}. ${F.traitNotas?`Notas: ${F.traitNotas}`:''}
 ${(F.especiais||[]).length?`Técnicas avançadas DESBLOQUEADAS PELO MESTRE (valem mesmo fora das regras normais de criação; use o custo indicado e a CD ${C.tec.cd}): ${F.especiais.map(e=>`${e.nome}${e.custo?` [${e.custo}]`:''}${e.fonte?` (origem: ${e.fonte})`:''} — ${e.descricao}`).join(' || ')}\n`:''}Técnica Inata: ${C.hasTec&&t.nome?`${t.nome} — ${t.descricao}${t.habilidadeUnica?` | Habilidade Única: ${t.habilidadeUnica}`:''} (CD ${C.tec.cd}, linha ${C.tec.linha} m, área ${C.tec.area} m, cone ${C.tec.cone} m, máximo ${C.tec.limite} PA por ativação)${variacoes().filter((x,i)=>x&&x.nome&&x.descricao&&i<slotsVariacao(C.n)).length?`. Variações da técnica: ${variacoes().filter((x,i)=>x&&x.nome&&x.descricao&&i<slotsVariacao(C.n)).map(x=>`${x.nome} [${x.tipo||'Instantânea'}${x.custo?', '+x.custo:''}]${x.modificador?` (modificador ${x.modificador})`:''} — ${x.descricao}`).join(' || ')}`:''}`:'nenhuma'}.
 ${C.reversa?`Energia Reversa (maestria da Família Gojo): cura ${C.reversa.dados}${C.reversa.dado} PV em um alvo com Ação Padrão (em si mesmo pode ser Ação Bônus), custo 1 PA por dado (${C.reversa.custo} PA). Fetos Amaldiçoados não podem ser curados por ela.\n`:''}História: ${F.historia||'-'}`;
@@ -2576,12 +2605,14 @@ COMO NARRAR
 - NPCs E FALAS: quando um NPC fala, coloque a fala em "falas" ([{"npc":"Nome","texto":"o que ele diz"}]), e não dentro da narração. Cada fala aparece no chat com o nome do NPC, logo depois da narração. A narração descreve a cena e os gestos; as falas são só as palavras. Todo NPC novo com nome, ou NPC conhecido com quem acontece algo marcante, vai em "npcs" ([{"nome":"Nome","descricao":"quem é, aparência e jeito, 1 frase","nota":"o que ele vai lembrar desta cena, 1 frase"}]). Use os nomes do LIVRO DE NPCs exatamente iguais quando eles voltarem, e faça eles lembrarem do que está anotado.
 - DINHEIRO ENTRE JOGADORES: se quem agiu der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
 - RITMO: nunca prenda os jogadores em ondas infinitas de inimigos. Respeite o limite de criaturas da missão e não invente combates novos só para ter luta. Se uma cena virou repetição, avance a história.
+- BLACK FLASH: o sistema rola sozinho nos ataques corpo a corpo (20 natural; Humano Determinado 18 a 20) e avisa no histórico com "BLACK FLASH". Narre com peso quando aparecer, mas não invente Black Flash por conta própria.
+- EXPANSÃO DE DOMÍNIO: o jogador abre pelo botão do combate; o sistema mostra a barreira e avisa você. Resolva o efeito pela ficha e cobre o PA em "efeitos".
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 {{FIXO_FIM}}
-${direcaoMestre()}HORA NO JOGO: ${relogioTxt()} (${periodoDia()}).${ehNoite()?' À noite as ruas esvaziam e as maldições ficam mais ativas e ousadas.':''} NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
+${direcaoMestre()}${dominioAtivo()&&combateLocal===id?`EXPANSÃO DE DOMÍNIO ATIVA: "${dominioAtivo().nome}" de ${dominioAtivo().donoNome} (até a rodada ${dominioAtivo().ate})${dominioAtivo().desc?`: ${dominioAtivo().desc}`:''}. Dentro da barreira, aplique o efeito do domínio.\n`:''}HORA NO JOGO: ${relogioTxt()} (${periodoDia()}).${ehNoite()?' À noite as ruas esvaziam e as maldições ficam mais ativas e ousadas.':''} NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
@@ -2940,18 +2971,19 @@ async function atacar(alvoId,armaNome){
   if(alvo.tipo==='jogador'){
     if(ra===1){const txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}: 1 natural. Falha crítica: o golpe sai totalmente errado.`;turnoLog.push(txt);await postMsg(combateLocal,{tipo:'combate',texto:txt});checarPassagemAuto();return;}
     const pid=`p${Date.now().toString(36)}${dN(999)}`;
-    await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20,t:Date.now()}}});
+    await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20||ehBlackFlash(ra,arma),bf:ehBlackFlash(ra,arma),t:Date.now()}}});
     await postMsg(combateLocal,{tipo:'combate',pedido:true,alvoId:alvo.id,texto:`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at}${ra===20?' (20 natural!)':''}. ${alvo.nome}, role Esquiva ou Bloqueio (Luta) para se defender.`});
     return;}
   const defA=(alvo.def||0)+modCond(alvo,'def');const rd=d20();const df=rd+defA;
   let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${defA} = ${df}.`;
   const patch={};
-  if(ra!==1&&(ra===20||at>df)){const p=parseDados(arma.dados);const crit=ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+bonusDano;const dano=Math.max(1,bruto-(alvo.rd||0));
-    const novo=Math.max(0,alvo.pv-dano);patch.participantes={[alvoId]:{pv:novo}};
-    txt+=` ${crit?'CRÍTICO! ':''}Acerta: ${dados.join('+')}+${bonusDano} = ${bruto}${alvo.rd?` − ${alvo.rd} de RD`:''} → ${dano} de dano.${novo<=0?` ${alvo.nome} é exorcizado.`:''}`;}
+  const bf=ehBlackFlash(ra,arma);
+  if(ra!==1&&(bf||ra===20||at>df)){const p=parseDados(arma.dados);const crit=bf||ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+bonusDano*(bf?2:1);const dano=Math.max(1,bruto-(alvo.rd||0));
+    const novo=Math.max(0,alvo.pv-dano);patch.participantes={[alvoId]:{pv:novo}};if(bf){patch.ultimoBF={alvo:alvoId,de:myId(),t:Date.now()};contarConquista('blackflash',1);}
+    txt+=` ${bf?'⚡ BLACK FLASH! A energia amaldiçoada colide com o golpe numa faísca negra (dano dobrado). ':crit?'CRÍTICO! ':''}Acerta: ${dados.join('+')}+${bonusDano} = ${bruto}${alvo.rd?` − ${alvo.rd} de RD`:''} → ${dano} de dano.${novo<=0?` ${alvo.nome} é exorcizado.`:''}`;}
   else txt+=ra===1?' Falha crítica: o golpe sai totalmente errado.':` ${alvo.nome} se defende.`;
   turnoLog.push(txt);
-  await postMsg(combateLocal,{tipo:'combate',texto:txt});
+  await postMsg(combateLocal,{tipo:'combate',texto:txt,...(bf&&patch.participantes?{efeito:'blackflash',alvoId}:{})});
   if(patch.participantes)await combateWrite(patch);
   if(await checarFim()){const log=[...turnoLog];turnoLog=[];if(temInimigos())narrar(combateLocal,{tipo:'turno',eventos:log,fim:true});return;}
   checarPassagemAuto();
@@ -2967,10 +2999,11 @@ async function resolverDefesa(pid,tipoDef){
     const r=d20();const df=r+b;
     let txt=`${alvo.nome} ${auto?'(defesa automática) ':''}rola ${nomeDef}: ${r}+${b}${pen?` (−${pen} por defesas nesta rodada)`:''} = ${df} contra ${pe.total}.`;
     const patch={pendentes:{[pid]:null},participantes:{[alvo.id]:{defesas:{rodada:combate.rodada,n:pen+1}}}};
-    if(pe.crit||pe.total>df){const p=parseDados(pe.dados);const dados=rolarDados(p.q*(pe.crit?2:1),p.l);const bruto=dados.reduce((a,c)=>a+c,0)+(+pe.bonusDano||0);const red=rolarRD(st.rd||'1d4');const dano=Math.max(1,bruto-red);
+    if(pe.crit||pe.total>df){const p=parseDados(pe.dados);const dados=rolarDados(p.q*(pe.crit?2:1),p.l);const bruto=dados.reduce((a,c)=>a+c,0)+(+pe.bonusDano||0)*(pe.bf?2:1);const red=rolarRD(st.rd||'1d4');const dano=Math.max(1,bruto-red);
       const novo=Math.max(0,alvo.pv-dano);patch.participantes[alvo.id].pv=novo;
       patch.golpes={[`g${Date.now().toString(36)}${dN(9999)}`]:{alvo:alvo.id,pv:-dano,de:pe.atacanteNome,t:Date.now()}};
-      txt+=` ${pe.crit?'CRÍTICO! ':''}${pe.atacanteNome} acerta: ${dados.join('+')}+${pe.bonusDano} = ${bruto} − ${red} de RD = ${dano} de dano.${novo<=0?` ${alvo.nome} cai.`:''}`;}
+      if(pe.bf)patch.ultimoBF={alvo:alvo.id,de:pe.atacante,t:Date.now()};
+      txt+=` ${pe.bf?'⚡ BLACK FLASH! ':pe.crit?'CRÍTICO! ':''}${pe.atacanteNome} acerta: ${dados.join('+')}+${pe.bonusDano} = ${bruto} − ${red} de RD = ${dano} de dano.${novo<=0?` ${alvo.nome} cai.`:''}`;}
     else txt+=` ${alvo.nome} se defende do golpe de ${pe.atacanteNome}.`;
     await combateWrite(patch);
     await postMsg(combateLocal,{tipo:'combate',texto:txt});
@@ -3002,16 +3035,56 @@ function resumoCombate(){
 Participantes (id · nome · PV): ${ordem().map(p=>`${p.id} · ${p.nome}${p.tipo==='inimigo'?` (${GRAUS[p.grau]?.label})`:' (jogador)'} · ${p.pv}/${p.pvMax}${p.pv<=0?' CAÍDO':''}${condAtivas(p).length?` [efeitos ativos: ${condAtivas(p).map(c=>`${c.nome}: ${descCond(c)}`).join('; ')}]`:''}`).join('; ')}.
 Ataques com armas, defesas e dano são resolvidos pelo sistema (não refaça essas contas). Técnicas e ações especiais você resolve e aplica com "danoInimigos" (inimigos) ou "danoJogadores" (jogadores).`;
 }
+/* ---------- Cenas especiais (sem IA extra) ---------- */
+/* Black Flash: golpe corpo a corpo (Luta) com 20 natural; Humano Determinado tem margem 18-20 (+10%). Conta como crítico e dobra também o bônus de dano. */
+const ehDeterminado=()=>F.semTecArq==='determinado'||F.receptArq==='determinado';
+const ehBlackFlash=(ra,arma)=>arma?.skill==='Luta'&&ra!==1&&ra>=(ehDeterminado()?18:20);
+const dominioAtivo=()=>{const d=combate&&combate.ativo&&combate.dominio;return d&&(+combate.rodada||1)<=(+d.ate||0)?d:null;};
+async function abrirDominio(){
+  const d=F.dominio||{};if(!d.nome||!combate||!combate.ativo||!minhaVez()||dominioAtivo())return;
+  const cor=corValida(d.cor)||'#6a1fb0';const dom={dono:myId(),donoNome:F.nome,nome:String(d.nome).slice(0,60),cor,desc:String(d.desc||'').slice(0,600),rodada:combate.rodada,ate:(+combate.rodada||1)+3,t:Date.now()};
+  await combateWrite({dominio:dom});contarConquista('dominios',1);
+  await postMsg(combateLocal,{tipo:'combate',efeito:'dominio',texto:`領域展開 — ${F.nome} abre a Expansão de Domínio: ${dom.nome}! A barreira dura até o fim da rodada ${dom.ate}.`});
+  narrar(combateLocal,{tipo:'acao',texto:`(abre a Expansão de Domínio "${dom.nome}"${dom.desc?`: ${dom.desc}`:''}. O sistema já mostrou a barreira. Resolva o efeito dentro do domínio pela ficha e cobre o custo em PA em "efeitos".)`});
+}
+async function fecharDominio(){const d=dominioAtivo();if(!d||d.dono!==myId())return;await combateWrite({dominio:{...d,ate:0}});await postMsg(combateLocal,{tipo:'combate',texto:`${F.nome} desfaz a Expansão de Domínio.`});}
+/* aparência do domínio no canal: a cor do dono pinta o chat de todos enquanto dura */
+let dominioVisto='';
+function aplicarTemaDominio(){
+  const d=combateLocal===canalAtual?dominioAtivo():null;const cv=$('#canal-view');
+  document.body.classList.toggle('em-dominio',!!d);
+  if(cv){if(d){cv.style.setProperty('--dom-cor',d.cor);cv.style.setProperty('--dom-nome',JSON.stringify(String(d.nome)));}else{cv.style.removeProperty('--dom-cor');cv.style.removeProperty('--dom-nome');}}
+  const chave=d?`${d.dono}-${d.t}`:'';if(d&&chave!==dominioVisto&&Date.now()-(+d.t||0)<20000)tocarDominio(d);dominioVisto=chave;
+}
+function tocarDominio(d){
+  if(document.body.classList.contains('sem-animacao'))return;
+  const el=document.createElement('div');el.className='dom-abre';el.style.setProperty('--dom-cor',d.cor);el.setAttribute('aria-hidden','true');
+  el.innerHTML=`<i class="dom-onda"></i><div class="dom-titulo"><small>領域展開 · Expansão de Domínio</small><b>${esc(d.nome)}</b><span>${esc(d.donoNome||'')}</span></div>`;
+  document.body.appendChild(el);setTimeout(()=>el.remove(),2600);
+}
+/* Black Flash: o card do inimigo treme com raios vermelhos e pretos (para todos que estão vendo o combate) */
+let bfVisto=0,bfAtivo=null;
+const BF_SVG=`<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#e8101c" stroke-width="5"/><path d="M6 40 L30 30 L46 48 L70 24 L92 42 L116 26 L136 50 L158 28 L196 42" fill="none" stroke="#0b0a0c" stroke-width="4"/><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#fff" stroke-width="1.5"/></svg><b>BLACK FLASH</b>`;
+function tocarBlackFlash(){
+  const u=combate&&combate.ultimoBF;
+  if(u&&+u.t>bfVisto){bfVisto=+u.t;if(Date.now()-(+u.t||0)<15000)bfAtivo={alvo:u.alvo,ate:Date.now()+1700};}
+  if(!bfAtivo||Date.now()>bfAtivo.ate){bfAtivo=null;return;}
+  const li=document.querySelector(`#combate-panel li[data-pid="${CSS.escape(bfAtivo.alvo)}"]`);if(!li||li.querySelector('.bf-raios'))return;
+  li.classList.add('bf-hit');const raio=document.createElement('span');raio.className='bf-raios';raio.setAttribute('aria-hidden','true');raio.innerHTML=BF_SVG;li.appendChild(raio);
+  const fim=bfAtivo.ate;setTimeout(()=>{if(bfAtivo&&bfAtivo.ate!==fim)return;raio.remove();li.classList.remove('bf-hit');},Math.max(0,fim-Date.now()));
+}
 function renderCombate(){
   const box=$('#combate-panel');if(!box)return;
+  aplicarTemaDominio();
   if(!combate||!combate.ativo||combateLocal!==canalAtual){box.hidden=true;box.innerHTML='';return;}
+  setTimeout(tocarBlackFlash,0);
   box.hidden=false;const o=ordem();const eu=souParticipante();const vez=combate.participantes[combate.vez];
   const armas=eu?minhasArmas():[];const alvos=eu?alvosPara(myId()):[];
   const meusPend=pendentes().filter(x=>x.alvo===myId());const aguardo=pendentes().find(x=>x.atacante===myId());
   const C=calc();
-  box.innerHTML=`<h2>${ehDuelo()?'Duelo':'Combate'} <span class="note" style="font-family:var(--body);font-size:13px;font-weight:400">rodada ${combate.rodada}</span></h2>
+  box.innerHTML=`<h2>${ehDuelo()?'Duelo':'Combate'} <span class="note" style="font-family:var(--body);font-size:13px;font-weight:400">rodada ${combate.rodada}</span></h2>${dominioAtivo()?`<p class="dom-aviso">領域 Domínio de ${esc(dominioAtivo().donoNome||'')}: <b>${esc(dominioAtivo().nome)}</b> · até a rodada ${dominioAtivo().ate}</p>`:''}
    <ol class="ordem">${o.map(p=>{const pct=p.pvMax?Math.max(0,p.pv/p.pvMax*100):0;
-     return `<li class="${p.id===combate.vez?'vez':''}${p.pv<=0?' caido':''}"><span class="ini">${p.ini}</span><span class="nm"><span>${esc(p.nome)}${p.tipo==='inimigo'?` <span class="pill warn">${esc(GRAUS[p.grau]?.label||'')}</span>`:p.id===myId()?' <span class="pill info">você</span>':''}${condAtivas(p).map(c=>` <span class="pill" title="${esc(descCond(c))}">${esc(c.nome)}${c.rodadas?` ${c.rodadas}r`:''}</span>`).join('')}</span><span class="mini ${p.tipo}"><span style="width:${pct}%"></span></span></span><span class="pvn">${p.pv}/${p.pvMax}</span></li>`;}).join('')}</ol>
+     return `<li data-pid="${esc(p.id)}" class="${p.id===combate.vez?'vez':''}${p.pv<=0?' caido':''}"><span class="ini">${p.ini}</span><span class="nm"><span>${esc(p.nome)}${p.tipo==='inimigo'?` <span class="pill warn">${esc(GRAUS[p.grau]?.label||'')}</span>`:p.id===myId()?' <span class="pill info">você</span>':''}${condAtivas(p).map(c=>` <span class="pill" title="${esc(descCond(c))}">${esc(c.nome)}${c.rodadas?` ${c.rodadas}r`:''}</span>`).join('')}</span><span class="mini ${p.tipo}"><span style="width:${pct}%"></span></span></span><span class="pvn">${p.pv}/${p.pvMax}</span></li>`;}).join('')}</ol>
    ${meusPend.map(x=>`<div class="pedido defesa"><b>${esc(x.atacanteNome)}</b> ataca você com ${esc(x.arma)}: <b>${x.total}</b>${x.crit?' (20 natural, acerta de qualquer jeito)':''}. Role sua defesa:
      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn primary small" data-defesa="${x.id}|esquiva" ${defendendo?'disabled':''}>Esquiva ${C.skill['Esquiva'].v>=0?'+':''}${C.skill['Esquiva'].v}</button><button class="btn primary small" data-defesa="${x.id}|luta" ${defendendo?'disabled':''}>Bloqueio (Luta) ${C.skill['Luta'].v>=0?'+':''}${C.skill['Luta'].v}</button></div></div>`).join('')}
    ${!eu?`<button class="btn primary" id="btn-entrar-combate">Entrar no combate</button>`:''}
@@ -3021,6 +3094,8 @@ function renderCombate(){
      <label class="f" for="cb-arma">Arma<select id="cb-arma">${armas.map(a=>`<option value="${esc(a.nome)}" ${a.nome===cbArma?'selected':''}>${esc(a.nome)} · ${a.dados}+${C.a[a.attr]+a.flat} · ${a.skill}</option>`).join('')}</select></label>
      <label class="f" for="cb-extra">Dano extra neste ataque (opcional)<input type="text" id="cb-extra" value="${esc(cbExtra)}" placeholder="Ex.: 1d8 ou 3"></label>
      ${meu?.bonusAtaque&&(meu.bonusAtaque.dano||meu.bonusAtaque.acerto)?`<p class="note" style="margin:0">Guardado para o próximo ataque: ${esc(meu.bonusAtaque.motivo||'bônus')}${meu.bonusAtaque.dano?` +${esc(meu.bonusAtaque.dano)} de dano`:''}${meu.bonusAtaque.acerto?` ${meu.bonusAtaque.acerto>0?'+':''}${meu.bonusAtaque.acerto} no acerto`:''}.</p>`:''}
+     ${F.dominio?.nome&&!dominioAtivo()?`<button class="btn dom-bt" id="btn-dominio" style="--dom-cor:${esc(corValida(F.dominio.cor)||'#6a1fb0')}" ${narrando?'disabled':''}>領域展開 Expansão de Domínio: ${esc(F.dominio.nome)}</button>`:''}
+     ${dominioAtivo()?.dono===myId()?'<button class="btn small" id="btn-fechardominio">Desfazer domínio</button>':''}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="btn-atacar" ${narrando||!alvos.length||aguardo?'disabled':''}>Atacar</button><button class="btn" id="btn-fimturno" ${narrando||aguardo?'disabled':''}>Encerrar turno</button></div>
      ${C.celestial?'':`<button class="btn" id="btn-recuperar" ${narrando||ataquesTurno>0||recuperouTurno?'disabled':''} title="Regra da casa: gasta a ação do turno">Recuperar energia (1d8 PA)</button>`}
      <p class="note" style="margin:0">Recuperar energia usa a ação do turno no lugar dos ataques. Para técnicas (com PA extra para mais dano), manobras ou Energia Reversa, descreva no chat para o mestre.</p>`
@@ -3392,6 +3467,8 @@ document.addEventListener('click',e=>{
   if(b.id==='btn-atacar'){atacar($('#cb-alvo').value,$('#cb-arma').value);return;}
   if(b.id==='btn-fimturno'){passarVez(false);return;}
   if(b.id==='btn-recuperar'){recuperarPA(true);return;}
+  if(b.id==='btn-dominio'){openModal(`Abrir a Expansão de Domínio "${F.dominio.nome}"?`,'A barreira dura 3 rodadas e o chat de todos muda para a cor do seu domínio. O mestre resolve o efeito e cobra o PA pela sua ficha.','','Abrir domínio',async()=>{closeModal();await abrirDominio();});return;}
+  if(b.id==='btn-fechardominio'){fecharDominio();return;}
   if(b.dataset.defesa){const [pid,t]=b.dataset.defesa.split('|');resolverDefesa(pid,t);return;}
   if(b.dataset.defauto){resolverDefesa(b.dataset.defauto,null);return;}
   if(b.dataset.cac){const a=b.dataset.cac;if(a==='aceitar')aceitarCacada(+b.dataset.i);else if(a==='desistir')desistirCacada();else if(a==='comecar')comecarCacada();else if(a==='ir'&&meu?.cacada){fecharCel(true);irPara(meu.cacada.destino);}return;}
