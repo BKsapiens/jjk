@@ -48,6 +48,12 @@ service cloud.firestore {
       allow read, create: if logado() && request.auth.uid in conversa.split('__');
       allow delete: if mestre();
     }
+    // Convite de um aluno para um freelancer entrar na escola (id "uidDoFreelancer__escola").
+    match /convites/{id} {
+      allow read: if logado();
+      allow create, update: if logado() && request.resource.data.de == request.auth.uid;
+      allow delete: if mestre() || (logado() && (resource.data.de == request.auth.uid || resource.data.para == request.auth.uid));
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();

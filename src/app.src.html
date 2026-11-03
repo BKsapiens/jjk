@@ -339,6 +339,7 @@ body:has(#view-mundo:not([hidden])) #btn-sair{display:none}
 .msg.jogador.aos .body{border-style:dashed}
 .msg .meta .nm{font-weight:700}
 .grau.kyoto{border-color:#5a3b52;color:#d9a3c8}
+.grau.free{border-color:#3b5a44;color:#9fd9ae}
 .grau{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:0 6px;color:var(--ash);font-weight:600;white-space:nowrap}
 .msg.npc{border-left:3px solid var(--npc,#8a7f8c);padding-left:12px}
 .msg.npc .meta b{font-family:var(--display)}
@@ -406,6 +407,14 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .areas button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ash);font-size:13px;display:flex;gap:6px;align-items:center}
 .areas button.on{border-color:var(--seal);color:var(--bone);background:var(--ink-2)}
 .areas button .k{font-family:var(--display);color:var(--seal)}
+.cac-card{border:2px solid #0b0a0c;padding:10px 12px;margin-bottom:8px;background:#fff;color:#0b0a0c;box-shadow:4px 4px 0 #0b0a0c}
+.cac-card.usada{opacity:.5}
+.cac-card .note{color:#3a3536}
+.cac-top{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.cac-grau{font-size:12px;font-weight:900;padding:1px 8px;background:#0b0a0c;color:#fff;white-space:nowrap}
+.cac-grau.g3{background:#b4141c}.cac-grau.g2{background:#5b0d8f}
+.cac-info{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:13px;margin-top:6px;font-weight:700}
+.areas button.trancada{opacity:.45;cursor:not-allowed;border-style:dashed}
 .areas button .n{font-size:11px;background:#1d2e2a;color:var(--cursed);border-radius:99px;padding:0 6px}
 .missao{border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--ink);display:flex;flex-direction:column;gap:6px;font-size:14px}
 .missao.minha{border-color:var(--cursed)}
@@ -579,7 +588,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div class="grid g2">
         <label class="f" for="f-nome">Nome do personagem<input type="text" id="f-nome" data-bind="nome" placeholder="Ex.: Kenji Arakawa"></label>
         <label class="f" for="f-jogador">Jogador<input type="text" id="f-jogador" data-bind="jogador" placeholder="Seu nome"></label>
-        <label class="f" for="f-escola">Escola Jujutsu<select id="f-escola" data-bind="escolaOrigem"><option value="toquio">Estudante de Tóquio</option><option value="kyoto">Estudante de Kyoto</option></select></label>
+        <label class="f" for="f-escola">Escola Jujutsu<select id="f-escola" data-bind="escolaOrigem"><option value="toquio">Estudante de Tóquio</option><option value="kyoto">Estudante de Kyoto</option><option value="freelancer">Feiticeiro freelancer (sem escola)</option></select></label>
         <label class="f" for="f-cor">Cor do nome no chat<input type="color" id="f-cor" data-bind="cor" value="#e0b354" style="height:40px;padding:2px 4px"></label>
         <label class="f" for="f-idade">Idade (11 a 100)<input type="number" id="f-idade" data-bind="idade" min="11" max="100"></label>
         <label class="f" for="f-nivel">Nível inicial<input type="number" id="f-nivel" data-bind="nivel" min="1" max="20"></label>
@@ -781,6 +790,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
           <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome"><div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div></div></section>
         <section class="cel-app" data-app="ficha" hidden><div class="panel" id="cel-ficha"></div></section>
         <section class="cel-app" data-app="mensagens" hidden><div id="cel-dm"></div></section>
+        <section class="cel-app" data-app="cacadores" hidden><div class="panel" id="cel-cacadores"></div></section>
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
     </div></div>
@@ -1250,7 +1260,7 @@ function closeModal(){$('#modal').classList.remove('show');}
 $('#modal-ok').addEventListener('click',()=>modalOk&&modalOk());
 
 function loadFicha(o){
-  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};F.escolaOrigem=o.escolaOrigem==='kyoto'?'kyoto':'toquio';const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
+  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};F.escolaOrigem=['kyoto','freelancer'].includes(o.escolaOrigem)?o.escolaOrigem:'toquio';const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
   document.querySelectorAll('[data-bind]').forEach(el=>{if(el.closest('#raca-sub,#ant-sub,#armaprof-box'))return;el.value=el.type==='color'?(corValida(F[el.dataset.bind])||'#e0b354'):(F[el.dataset.bind]??'');});
   $('#tecnica-body').dataset.built='';renderAll();
 }
@@ -1471,6 +1481,11 @@ LOCAIS.push(
   subArea('gion','casadecha','Casa de Chá','茶','casa de ch[áa]|ch[áa]','Casa de chá tradicional em Gion: tatames, jardim interno, cerimônia do chá, uma anfitriã elegante que ouve tudo e esquece nada. Clãs de Kyoto marcam encontros discretos aqui.',['conversa','tradição']),
   subArea('fushimi','trilha','Trilha dos Torii','鳥','trilha|t[úu]nel de torii|montanha','Trilha que sobe o monte Inari por túneis de torii vermelhos: degraus de pedra, altares pequenos, estátuas de raposa, lanternas. Quanto mais alto, mais vazio e mais escuro.',['montanha','espíritos'])
 );
+/* Áreas exclusivas de freelancers, liberadas com caçadas concluídas (app Caçadores) */
+LOCAIS.push(
+  {...subArea('shinjuku','mercado','Mercado Negro','闇','mercado negro|contrabando|receptador','Mercado Negro de Shinjuku: um estacionamento subterrâneo atrás de Kabukichō que vira feira à meia-noite. Barracas de lona vendem ferramentas amaldiçoadas de segunda mão, talismãs falsificados, informação e restos de maldições. Ninguém pergunta nomes; quem paga em dinheiro vivo é atendido primeiro. Feiticeiros de escola não são bem-vindos.',['comércio','ilegal']),restrito:{cacadas:3}},
+  {...subArea('roppongi','arena','Arena Clandestina','闘','arena|luta clandestina|apost','Arena Clandestina no subsolo de uma boate fechada de Roppongi: um ringue de concreto cercado de grades, apostadores ricos nos camarotes, lutas entre feiticeiros de aluguel e maldições capturadas. Quem vence ganha dinheiro e nome entre os caçadores.',['luta','apostas']),restrito:{cacadas:6}}
+);
 /* posições no mapa (viewBox 1000 x 640) */
 Object.entries({escola:[110,150],shinjuku:[300,170],akihabara:[590,130],asakusa:[760,95],shibuya:[285,330],roppongi:[455,385],avenida:[610,300],odaiba:[620,480],yokohama:[175,500],miura:[405,565],kyoto:[835,440],gion:[945,430],fushimi:[890,545]})
   .forEach(([id,[x,y]])=>{const l=LOCAIS.find(z=>z.id===id);if(l){l.x=x;l.y=y;}});
@@ -1492,15 +1507,23 @@ const LINHAS=[
 
 const ESCOLAS={escola:{chave:'toquio',nome:'Escola de Tóquio',curta:'Tóquio'},kyoto:{chave:'kyoto',nome:'Escola de Kyoto',curta:'Kyoto'}};
 const ehEscola=r=>!!ESCOLAS[r];
-const raizDaEscola=ch=>ch==='kyoto'?'kyoto':'escola';
-const escolaDe=id=>id===myId()?(F.escolaOrigem==='kyoto'?'kyoto':'toquio'):(jogadores.get(id)?.escola==='kyoto'?'kyoto':'toquio');
-const escolaCurta=ch=>ch==='kyoto'?'Kyoto':'Tóquio';
+/* área exclusiva de freelancer: só aparece para freelancers que já fizeram caçadas suficientes */
+const areaLiberada=l=>!l||!l.restrito||(ehFree(myId())&&(+meu?.cacadasFeitas||0)>=(+l.restrito.cacadas||0));
+const areaVisivel=l=>!l||!l.restrito||ehFree(myId());
+const raizDaEscola=ch=>ch==='kyoto'?'kyoto':ch==='freelancer'?'shinjuku':'escola';
+const escolaDe=id=>{const v=id===myId()?F.escolaOrigem:jogadores.get(id)?.escola;return v==='kyoto'||v==='freelancer'?v:'toquio';};
+const ehFree=id=>escolaDe(id)==='freelancer';
+const escolaCurta=ch=>ch==='kyoto'?'Kyoto':ch==='freelancer'?'Freelancer':'Tóquio';
 const slugId=k=>String(k||'').replace(/[^A-Za-z0-9-]/g,'x');
-const casaDe=k=>typeof faseEfetiva==='function'&&faseEfetiva()==='kyoto'?'kyoto':raizDaEscola(escolaDe(k));
+const casaDe=k=>ehFree(k)?'shinjuku':typeof faseEfetiva==='function'&&faseEfetiva()==='kyoto'?'kyoto':raizDaEscola(escolaDe(k));
 const quartoId=(k,ch)=>`${ch?raizDaEscola(ch):casaDe(k)}-quarto-${slugId(k)}`;
-const ehQuarto=id=>/^(escola|kyoto)-quarto-/.test(String(id||''));
-const donoQuarto=id=>{const s=String(id||'').replace(/^(escola|kyoto)-quarto-/,'');return [...jogadores.keys()].find(k=>slugId(k)===s)||(slugId(myId())===s?myId():null);};
-function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'estudante';const meuQ=dono===myId();const pai=String(id).startsWith('kyoto-')?'kyoto':'escola';const E=ESCOLAS[pai];
+const ehQuarto=id=>/^(escola|kyoto|shinjuku)-quarto-/.test(String(id||''));
+const donoQuarto=id=>{const s=String(id||'').replace(/^(escola|kyoto|shinjuku)-quarto-/,'');return [...jogadores.keys()].find(k=>slugId(k)===s)||(slugId(myId())===s?myId():null);};
+function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'estudante';const meuQ=dono===myId();
+  if(String(id).startsWith('shinjuku-'))return {id,pai:'shinjuku',quarto:true,dono,area:meuQ?'Meu apartamento':`Apartamento de ${nome}`,nome:`Shinjuku · Apartamento de ${nome}`,curto:`Apartamento de ${nome}`,kanji:'家',tags:['casa','descanso'],
+    desc:`O apartamento de ${nome}, um quitinete no quarto andar de um prédio velho de Shinjuku: futon, fogareiro, janela para os letreiros de neon. Lugar para descansar longe de tudo.`,
+    contexto:`Apartamento de ${nome}, um feiticeiro freelancer: quitinete num prédio velho de Shinjuku (futon, fogareiro, armas encostadas na parede, janela para os letreiros de neon, vizinhos barulhentos). É o espaço pessoal de ${nome}; outros só entram se forem convidados. Descanso acontece pelo app de Descanso.`};
+  const pai=String(id).startsWith('kyoto-')?'kyoto':'escola';const E=ESCOLAS[pai];
   const janela=pai==='kyoto'?'janela para o jardim de pedras':'janela para a floresta';
   return {id,pai,quarto:true,dono,area:meuQ?'Meu quarto':`Quarto de ${nome}`,nome:`${E.nome} · Quarto de ${nome}`,curto:`Quarto de ${nome}`,kanji:'寮',tags:['dormitório','descanso'],
     desc:`O quarto de ${nome} no dormitório dos estudantes: ${pai==='kyoto'?'tatame, futon dobrado, mesa baixa':'cama estreita, escrivaninha'}, ${janela}. Lugar para descansar e conversar longe dos professores.`,
@@ -1523,7 +1546,7 @@ function corDe(id){return corValida(dadosJog(id).cor)||PALETA[hashStr(id)%PALETA
 const corNpc=n=>PALETA_NPC[hashStr(String(n||'').toLowerCase())%PALETA_NPC.length];
 const grauDe=id=>grauEscola(dadosJog(id).pg);
 const identDe=id=>`${escolaCurta(escolaDe(id))} · ${grauDe(id)}`;
-const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau${escolaDe(id)==='kyoto'?' kyoto':''}" title="Escola e grau">${esc(identDe(id))}</span>`;
+const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau${escolaDe(id)==='kyoto'?' kyoto':ehFree(id)?' free':''}" title="Escola e grau">${esc(identDe(id))}</span>`;
 const jogadores=new Map();let meu=null;let writeChain=Promise.resolve();const localMsgs={};
 let canalAtual=null,canalUnsub=null,msgs=[],selLoc='escola',narrando=false,rollMode=0,rollSkill='Percepção';
 const iniciais=n=>(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
@@ -1602,7 +1625,7 @@ function renderMapa(){
     s+=`<path d="${d}" fill="none" stroke="#0b0a0c" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${L.cor}" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>`;
     for(let k=1;k<pts.length;k++){const [x1,y1]=pts[k-1],[x2,y2]=pts[k];s+=`<circle cx="${(x1+x2)/2}" cy="${(y1+y2)/2}" r="3.6" fill="#fff"/>`;}});
   MAPA().forEach(l=>{const here=meu?.local&&raiz(meu.local)===l.id;const sel=selLoc===l.id;const ps=present(l.id);const r=rot(l.id);
-    const w=Math.max(70,l.curto.length*9+22);const nAreas=LOCAIS.filter(z=>z.pai===l.id).length;
+    const w=Math.max(70,l.curto.length*9+22);const nAreas=LOCAIS.filter(z=>z.pai===l.id&&areaVisivel(z)).length;
     s+=`<g class="node${sel?' sel':''}${here?' here':''}" data-loc="${l.id}" tabindex="0" role="button" aria-label="${esc(l.nome)}">
       <g class="ico" transform="translate(${l.x} ${l.y}) rotate(${r})">
         ${here?`<circle class="pulse" r="40" fill="none" stroke="#fff" stroke-width="3"/>`:''}
@@ -1619,15 +1642,21 @@ function renderMapa(){
   $('#map').innerHTML=s;
   const l=locById(raiz(selLoc));const ps=present(l.id);const here=meu?.local&&raiz(meu.local)===l.id;
   const minhaE=casaDe(myId());
-  $('#loc-card').innerHTML=`<button type="button" class="btn small so-mob mapa-voltar" data-mapavoltar="1">‹ Voltar ao mapa</button><h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
-    ${(()=>{const ar=LOCAIS.filter(z=>z.pai===l.id);return ar.length?`<p class="note" style="margin:0"><b style="color:var(--bone)">Áreas:</b> ${esc([l.area||'Centro',...ar.map(z=>z.area)].join(' · '))}</p>`:'';})()}
+  $('#loc-card').innerHTML=`<button type="button" class="btn small so-mob mapa-voltar" data-mapavoltar="1">‹ Voltar ao mapa</button><h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${ehFree(myId())?(conviteValido(myId(),l.id)?`Você foi convidado por ${esc(conviteValido(myId(),l.id).deNome||'um aluno')} e pode entrar até ${new Date(+conviteValido(myId(),l.id).t+CONVITE_MS).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'})}.`:'Você é freelancer: só entra aqui se um aluno desta escola te convidar (o convite vale 24 horas).'):l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:l.id==='shinjuku'&&ehFree(myId())?'<p class="note" style="margin:0">Seu apartamento fica aqui.</p>':''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
+    ${(()=>{const ar=LOCAIS.filter(z=>z.pai===l.id&&areaVisivel(z));return ar.length?`<p class="note" style="margin:0"><b style="color:var(--bone)">Áreas:</b> ${esc([l.area||'Centro',...ar.map(z=>z.area+(areaLiberada(z)?'':' (trancada)'))].join(' · '))}</p>`:'';})()}
     <div><h3 style="font-size:14px;margin-bottom:6px">Quem está lá</h3><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}${locById(j.local)?.pai?` <span class="note">· ${esc(nomeLocal(j.local))}</span>`:''}</div>`).join(''):'<div class="note">Ninguém por enquanto.</div>'}</div></div>
     <button class="btn primary" data-entrar="${here?meu.local:l.id}">${here?'Voltar para o canal':'Ir para '+esc(l.curto)}</button>
     <p class="note">${meu?.local?`Você está em ${esc(locById(raiz(meu.local))?.curto||'')}${locById(meu.local)?.pai?` · ${esc(nomeLocal(meu.local))}`:''}.`:'Escolha onde começar. Clique em um local no mapa.'}</p>`;
 }
 
+function bloqueioDe(id){
+  if(ehEscola(raiz(id))&&!podeEntrarEscola(raiz(id)))return `Você é freelancer: só entra na ${ESCOLAS[raiz(id)].nome} se um aluno de lá te convidar.`;
+  const l=locById(id);if(!areaLiberada(l))return `${l.area} só abre para freelancers com ${l.restrito.cacadas} caçadas concluídas (você tem ${+meu?.cacadasFeitas||0}).`;
+  return '';}
 async function irPara(id,anterior){
   if(!meu)await ensureJogador();
+  const bloqueio=bloqueioDe(id);
+  if(bloqueio){toastChat(bloqueio);location.hash=meu.local?'local-'+meu.local:'mapa';return false;}
   const mudou=meu.local!==id;
   const vis=new Set([...(meu.visitados||[]),...(meu.diario||[]).map(d=>d.local).filter(Boolean)]);
   const primeira=!vis.has(id);
@@ -1641,6 +1670,7 @@ async function irPara(id,anterior){
   const de0=meu.__de;
   if(mudou&&emboscadaElmos(id,de0)){await atualizarMeu({ultimaEmboscada:Date.now()});setTimeout(()=>narrar(id,{tipo:'emboscada',primeira,anterior:anterior||''}),500);return;}
   if(mudou){if(primeira)setTimeout(()=>narrar(id,{tipo:'chegada',anterior:anterior||''}),500);else chegadaRecente={local:id,anterior:anterior||'',t:Date.now()};}
+  if(mudou&&meu.cacada?.destino===id)setTimeout(()=>toastChat('O alvo do seu contrato está por aqui. Abra o app Caçadores e toque em "Começar a caçada".'),1800);
 }
 /* Clã Elmos: chance de os caçadores do clã tentarem capturar o herdeiro quando ele circula longe da escola */
 function emboscadaElmos(id,de){
@@ -1897,6 +1927,95 @@ function assinarTransferencias(){if(!db)return;db.collection('transferencias').o
 /* Livro de NPCs */
 const npcs=new Map();
 const npcId=n=>String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+/* Relógio do jogo: 1 dia do jogo = 2 horas reais, igual para todos.
+   A época começa à meia-noite no Japão (15:00 UTC). */
+const DIA_MS=2*3600000,RELOGIO_EPOCH=Date.UTC(2026,10,1,15,0);
+const diaJogo=(t=Date.now())=>Math.floor((t-RELOGIO_EPOCH)/DIA_MS);
+const horaJogo=(t=Date.now())=>((((t-RELOGIO_EPOCH)%DIA_MS)+DIA_MS)%DIA_MS)/DIA_MS*24;
+const msAteProximoDia=(t=Date.now())=>DIA_MS-((((t-RELOGIO_EPOCH)%DIA_MS)+DIA_MS)%DIA_MS);
+
+/* App Caçadores (só freelancers): contratos rápidos de eliminar 1 a 5 criaturas, sem investigação nem relatório.
+   Os contratos mudam a cada dia do jogo e são gerados aqui, sem gastar IA. */
+const CRIATURAS=[
+  ['Maldição de Esgoto','massa cinzenta de olhos e dentes que vive nas galerias e puxa quem chega perto dos bueiros'],
+  ['Rastejante de Plataforma','maldição comprida de dedos finos que se esconde sob as plataformas e agarra tornozelos'],
+  ['Boneca Ressentida','boneca de porcelana possuída que aparece em vitrines e arranha quem a encara'],
+  ['Cão de Ressentimento','cão negro sem olhos, nascido do medo de cães de rua, que caça em matilha'],
+  ['Maldição do Elevador','coisa que vive no poço do elevador e para a cabine entre andares'],
+  ['Enxame Varejeira','nuvem de moscas com rostos humanos que cerca quem anda sozinho à noite'],
+  ['Sombra de Ponte','vulto molhado que sobe pelos pilares das pontes e empurra pessoas para a água'],
+  ['Fantasma de Konbini','maldição pálida atrás do balcão que repete "irasshaimase" e ataca clientes da madrugada'],
+  ['Espantalho de Concreto','maldição de cimento e vergalhões que se forma em obras abandonadas'],
+  ['Engolidor de Guarda-chuvas','criatura de boca enorme que aparece nas noites de chuva em becos estreitos']];
+const RECOMP_CACADA={4:{ienes:2000,xp:2,pg:3},3:{ienes:5000,xp:5,pg:6},2:{ienes:12000,xp:10,pg:12}};
+function rngSeed(seed){let x=hashStr(seed)||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
+function ofertasCacada(){
+  const dia=diaJogo();const r=rngSeed(myId()+'|caca|'+dia);const n=calc().n;
+  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&!l.restrito&&!(faseEfetiva()==='kyoto'&&raiz(l.id)==='shibuya'));
+  const usadas=meu?.cacadasDia?.dia===dia?(meu.cacadasDia.usadas||[]):[];
+  return [0,1,2,3].map(i=>{const [alvo,desc]=CRIATURAS[Math.floor(r()*CRIATURAS.length)];const d=destinos[Math.floor(r()*destinos.length)];
+    const x=r();const grau=n>=6?(x<.3?2:3):n>=4?(x<.7?3:4):n>=2?(x<.2?3:4):4;
+    const qtd=grau===2?1+Math.floor(r()*2):grau===3?1+Math.floor(r()*3):1+Math.floor(r()*5);const R=RECOMP_CACADA[grau];
+    const id=`${dia}-${i}`;return {id,alvo,desc,destino:d.id,grau,qtd,ienes:R.ienes*qtd,xp:R.xp*qtd,pg:R.pg*qtd,usada:usadas.includes(id)};});
+}
+async function aceitarCacada(i){
+  if(!meu||meu.cacada||!ehFree(myId()))return;const o=ofertasCacada()[i];if(!o||o.usada)return;const dia=diaJogo();
+  const usadas=meu.cacadasDia?.dia===dia?(meu.cacadasDia.usadas||[]):[];const {usada,...c}=o;
+  await atualizarMeu({cacada:{...c,aceita:Date.now()},cacadasDia:{dia,usadas:[...usadas,o.id]}});renderCacadores();
+}
+async function desistirCacada(){if(!meu?.cacada)return;await atualizarMeu({cacada:null});renderCacadores();}
+async function comecarCacada(){
+  const c=meu?.cacada;if(!c||!canalAtual||meu.local!==c.destino)return;
+  if(combate&&combate.ativo&&combateLocal===canalAtual){toastChat('Já tem um combate acontecendo aqui.');return;}
+  fecharCel(true);
+  await narrar(canalAtual,{tipo:'cacada',c});
+  if(combate&&combate.ativo&&combateLocal===canalAtual)return;
+  await iniciarCombate(canalAtual,[{nome:c.alvo,grau:c.grau,qtd:c.qtd,descricao:c.desc}],[],{cacada:{dono:myId(),id:c.id}});
+}
+let pagandoCacada=false;
+async function pagarCacada(){
+  const c=meu?.cacada;
+  if(!c||pagandoCacada||!combate||combate.ativo||combate.resultado!=='vitoria'||combate.cacada?.id!==c.id||combate.cacada?.dono!==myId())return;
+  pagandoCacada=true;
+  try{const feitas=(+meu.cacadasFeitas||0)+1;const loc=combateLocal;
+    await atualizarMeu({cacada:null,cacadasFeitas:feitas,ienes:(meu.ienes||0)+c.ienes,pg:(+meu.pg||0)+c.pg});
+    await postMsg(loc,{tipo:'sistema',texto:`Caçada concluída (app Caçadores): ${c.qtd}× ${c.alvo}. ${F.nome} recebe ¥ ${c.ienes.toLocaleString('pt-BR')}, ${c.xp} XP e ${c.pg} pontos de reputação.`});
+    if(c.xp)await ganharXP(c.xp,`caçada: ${c.alvo}`,loc);
+    LOCAIS.filter(l=>l.restrito&&+l.restrito.cacadas===feitas).forEach(l=>postMsg(loc,{tipo:'sistema',texto:`${F.nome} ganhou nome entre os caçadores. Área desbloqueada: ${l.nome}.`}));
+    if(typeof checarConquistas==='function')checarConquistas();
+    if(celApp==='cacadores')renderCacadores();renderAreas();}
+  finally{pagandoCacada=false;}
+}
+function renderCacadores(){
+  const box=$('#cel-cacadores');if(!box||!meu)return;
+  if(!ehFree(myId())){box.innerHTML='<p class="note" style="margin:0">O Caçadores é um app para feiticeiros freelancers.</p>';return;}
+  const c=meu.cacada;const feitas=+meu.cacadasFeitas||0;
+  const prox=LOCAIS.filter(l=>l.restrito&&+l.restrito.cacadas>feitas).sort((a,b)=>a.restrito.cacadas-b.restrito.cacadas)[0];
+  const grauTxt=g=>`grau ${g}`;const rec=o=>`¥ ${o.ienes.toLocaleString('pt-BR')} · ${o.xp} XP · ${o.pg} rep.`;
+  const card=(o,btn)=>`<div class="cac-card${o.usada?' usada':''}"><div class="cac-top"><b>${o.qtd}× ${esc(o.alvo)}</b><span class="cac-grau g${o.grau}">${grauTxt(o.grau)}</span></div>
+    <div class="note">${esc(o.desc)}.</div><div class="cac-info"><span>📍 ${esc(nomeDestino(o.destino))}</span><span>${rec(o)}</span></div>${btn}</div>`;
+  const min=Math.ceil(msAteProximoDia()/60000);
+  box.innerHTML=`<p class="note" style="margin:0 0 8px">Contratos rápidos: chegue no local, elimine o alvo, receba na hora. Sem investigação, sem relatório.</p>
+    <p class="counter" style="margin:0 0 10px">Caçadas concluídas: <b>${feitas}</b>${prox?` · ${esc(prox.area)} libera com ${prox.restrito.cacadas}`:''}</p>
+    ${c?`<h3 style="margin:0 0 6px;font-size:15px">Contrato ativo</h3>${card(c,`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${meu.local===c.destino?'<button class="btn primary small" data-cac="comecar">Começar a caçada</button>':'<button class="btn primary small" data-cac="ir">Ir para lá</button>'}<button class="btn small" data-cac="desistir">Desistir</button></div>`)}`
+    :`<h3 style="margin:0 0 6px;font-size:15px">Contratos de hoje</h3>${ofertasCacada().map((o,i)=>card(o,o.usada?'<p class="note" style="margin:6px 0 0">Já pego hoje.</p>':`<button class="btn small" data-cac="aceitar" data-i="${i}" style="margin-top:8px">Aceitar contrato</button>`)).join('')}
+    <p class="note" style="margin:8px 0 0">Novos contratos em ${min} min (a cada dia do jogo).</p>`}`;
+}
+
+/* Convites para freelancers entrarem numa escola (doc "uidDoFreelancer__escola", vale 24 horas) */
+const convites=new Map();const CONVITE_MS=24*3600000;
+function assinarConvites(){if(!db)return;db.collection('convites').onSnapshot(s=>{convites.clear();s.docs.forEach(d=>{const x=d.data();if(x)convites.set(d.id,{id:d.id,...x});});if(canalAtual)renderPresentes();if(mapaAberto)renderMapa();},()=>{});}
+const conviteId=(para,escola)=>`${slugId(para)}__${escola}`;
+const conviteValido=(para,escola)=>{const c=convites.get(conviteId(para,escola));return c&&Date.now()-(+c.t||0)<CONVITE_MS?c:null;};
+const podeEntrarEscola=rz=>!ehFree(myId())||!!conviteValido(myId(),rz)||raiz(meu?.local||'')===rz;
+async function convidarEscola(pid){
+  const rz=casaDe(myId());if(!ehEscola(rz)||ehFree(myId())||!ehFree(pid))return;
+  const c={de:myId(),deNome:F.nome||'',para:pid,escola:rz,t:Date.now()};
+  convites.set(conviteId(pid,rz),{id:conviteId(pid,rz),...c});
+  if(db){try{await db.doc('convites/'+conviteId(pid,rz)).set(c);}catch{toastChat('Não consegui enviar o convite. Confira se as regras do Firestore foram publicadas.');return;}}
+  await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} convidou ${nomeJog(pid)} para entrar na ${ESCOLAS[rz].nome}. O convite vale 24 horas.`});
+  renderPresentes();
+}
 function assinarNpcs(){if(!db)return;db.collection('npcs').onSnapshot(s=>{npcs.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.nome)npcs.set(d.id,{id:d.id,...x});});if(celApp==='npcs')renderNpcs();},()=>{});}
 async function registrarNpcs(lista,local){
   for(const x of (lista||[]).slice(0,8)){const nome=String(x?.nome||'').trim().slice(0,60);const id=npcId(nome);if(!id)continue;
@@ -2139,12 +2258,12 @@ function renderAreas(){
   const rz=raiz(id);if(!id||(!ehEscola(rz)&&!LOCAIS.some(l=>l.pai===rz))){bar.hidden=true;bar.innerHTML='';return;}
   bar.hidden=false;const cont=a=>[...jogadores.values()].filter(j=>j.local===a).length;
   const quartos=[quartoId(myId()),...[...jogadores.keys()].map(k=>quartoId(k)),...(ehQuarto(id)?[id]:[])].filter(q=>raiz(q)===rz);
-  const lista=[...LOCAIS.filter(l=>l.id===rz||l.pai===rz),...(ehEscola(rz)?[...new Set(quartos)].map(locById):[])];
-  bar.innerHTML=lista.map(l=>`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
+  const lista=[...LOCAIS.filter(l=>(l.id===rz||l.pai===rz)&&areaVisivel(l)),...[...new Set(quartos)].filter(q=>ehEscola(rz)||q===quartoId(myId())||q===id).map(locById)];
+  bar.innerHTML=lista.map(l=>!areaLiberada(l)?`<button type="button" class="trancada" disabled title="Libera com ${l.restrito.cacadas} caçadas concluídas"><span class="k">${l.kanji}</span>${esc(l.area)} · ${+meu?.cacadasFeitas||0}/${l.restrito.cacadas}</button>`:`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
-  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span>${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}" style="margin-left:auto">Desafiar</button>`:''}</div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
+  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${k!==(uid||'eu')&&ehFree(k)&&!ehFree(myId())&&ehEscola(casaDe(myId()))?(conviteValido(k,casaDe(myId()))?'<span class="note">Convidado à escola</span>':`<button class="btn small" data-convidar="${esc(k)}">Convidar à escola</button>`):''}${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}">Desafiar</button>`:''}</span></div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
   const l=locById(id);
   $('#loc-info').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p class="note" style="margin:0;font-size:13px">${esc(l.desc)}</p><a class="btn small" href="#mapa">Voltar ao mapa</a>`;
 }
@@ -2211,7 +2330,7 @@ function resumoFicha(){
   const per=SKILLS.map(([n])=>`${n} ${C.skill[n].v>=0?'+':''}${C.skill[n].v}${C.skill[n].t?'*':''}`).join(', ');
   return `${F.nome||'Sem nome'} — ${C.raca?.n||'?'}${F.raca==='feto'&&F.fetoVar?` (${F.fetoVar})`:''}, ${F.classe||'sem classe'}, nível ${C.n}, idade ${F.idade}, antecedente ${F.antecedente||'-'}${F.restricao?`, Restrição Celestial ${F.restricao==='fraco'?'Corpo Fraco':'Corpo Celestial'}`:''}.
 Atributos: FOR ${C.a.for}, VEL ${C.a.vel}, CON ${C.a.con}, ESP ${C.a.esp}, SAB ${C.a.sab}, CAR ${C.a.car}. Proficiência +${C.prof}.
-Aluno da ${ESCOLAS[raizDaEscola(escolaDe(myId()))].nome}. Grau: ${grauEscola(meu?.pg)} (${+meu?.pg||0} Pontos de Graduação).
+${ehFree(myId())?`FEITICEIRO FREELANCER: não pertence a nenhuma escola Jujutsu. Mora num apartamento em Shinjuku e ganha a vida com caçadas (app Caçadores do celular). Sem toque de recolher, sem relatório, sem professor: tem mais liberdade, mas também não tem a proteção da escola. Só entra numa escola se um aluno de lá o convidar; lá dentro é visitante de fora e os professores ficam de olho. Grau: ${grauEscola(meu?.pg)} (${+meu?.pg||0} pontos de reputação). Caçadas concluídas: ${+meu?.cacadasFeitas||0}.`:`Aluno da ${ESCOLAS[raizDaEscola(escolaDe(myId()))].nome}. Grau: ${grauEscola(meu?.pg)} (${+meu?.pg||0} Pontos de Graduação).`}
 Experiência: ${xpAtual()} XP${xpInfo().prox?` (próximo nível em ${xpInfo().prox})`:''}.
 Recursos atuais: PV ${meu.estado.pv}/${meu.max.pv}, PA ${meu.estado.pa}/${meu.max.pa}, PE ${meu.estado.pe}/${meu.max.pe}. Deslocamento ${C.desl} m, RD ${C.rd}, dano desarmado ${C.desarm}.
 Perícias (* = treinada): ${per}.
@@ -2238,8 +2357,8 @@ function memoriaCampanha(){
 function detectarViagem(t){
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até|ao|à|na|no)|indo (para|pra)|volto (para|pra)|sigo (para|pra)|entro na|entro no|entro em|des[çc]\w* (para|pra|até|ao|à|aos|às|na|no|nos)|subo (para|pra|até|ao|à|na|no)/i.test(t))return null;
   const atualR=raiz(canalAtual||meu?.local);const er=ehEscola(atualR)?atualR:casaDe(myId());
-  if(!ehEscola(atualR)){const f=LOCAIS.find(l=>l.pai===atualR&&l.kw&&new RegExp(l.kw,'i').test(t));if(f)return f.id;if(new RegExp(`cruzamento|${locById(atualR)?.area||'@@'}`,'i').test(t)&&LOCAIS.some(l=>l.pai===atualR))return atualR;}
-  const sub=[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],[`${er}-enfermaria`,/enfermaria|shoko|curandeiro/i],[`${er}-professores`,/sala dos? professor/i],[`${er}-missoes`,/quadro|mural de miss/i],[`${er}-treino`,/sala de treino|dojo|tatame|treinamento/i],...(er==='kyoto'?[['kyoto-biblioteca',/biblioteca|pergaminho/i]]:[]),[er,/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
+  if(!ehEscola(atualR)){const f=LOCAIS.find(l=>l.pai===atualR&&l.kw&&areaLiberada(l)&&new RegExp(l.kw,'i').test(t));if(f)return f.id;if(new RegExp(`cruzamento|${locById(atualR)?.area||'@@'}`,'i').test(t)&&LOCAIS.some(l=>l.pai===atualR))return atualR;}
+  const sub=ehFree(myId())&&!ehEscola(atualR)?[[quartoId(myId()),/meu (quarto|apartamento)|minha (casa|cama)|apartamento/i]].find(([,r])=>r.test(t)):[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],[`${er}-enfermaria`,/enfermaria|shoko|curandeiro/i],[`${er}-professores`,/sala dos? professor/i],[`${er}-missoes`,/quadro|mural de miss/i],[`${er}-treino`,/sala de treino|dojo|tatame|treinamento/i],...(er==='kyoto'?[['kyoto-biblioteca',/biblioteca|pergaminho/i]]:[]),[er,/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
   if(sub&&!/kyoto|quioto|t[óo]quio|tokyo/i.test(t))return sub[0];
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até)|indo (para|pra)|volto (para|pra)|sigo (para|pra)/i.test(t))return null;
   const m=[['gion',/gion|higashiyama/i],['fushimi',/fushimi|inari/i],['kyoto',/kyoto|quioto/i],['escola',/t[óo]quio|tokyo/i],['shibuya',/shibuya/i],['avenida',/avenida|sakuragawa|viaduto/i],[er,/escola|col[ée]gio|jujutsu/i]].find(([,r])=>r.test(t));
@@ -2257,7 +2376,7 @@ async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Abra a página no Claude e permita o uso da IA.'});return;}
   if(narrando)return;narrando=true;const obs=g.tipo==='observar'||g.tipo==='duelo'||g.tipo==='retorno';if(!obs){$('#chat-thinking').hidden=false;}renderRoll();renderCombate();
   let viajar=null,anteriorTxt='',iniciarDepois=null;
-  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (aluno de ${escolaCurta(escolaDe(k))}, ${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
+  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (${ehFree(k)?'feiticeiro freelancer':'aluno de '+escolaCurta(escolaDe(k))}, ${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
   const so=g.sobreRolagem;const txtSobre=g.sobrecarga?(so?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga). O SISTEMA JÁ ROLOU o dano extra: ${so.q}${so.dado} = ${so.dados.join('+')} = ${so.total}. Some EXATAMENTE +${so.total} ao dano que a técnica causaria (em danoInimigos/danoJogadores e na narração) e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:` Ele investe +${g.sobrecarga} PA extra na técnica.`):'';
   const txtDados=(g.dados||[]).length?` Dados que ele escreveu na mensagem, JÁ ROLADOS pelo sistema (use exatamente estes valores, não role de novo nem ignore): ${g.dados.map(d=>`${d.expr} = ${d.total}`).join('; ')}.`:'';
   const gat=g.tipo==='relatorio'?`${F.nome} acabou de ENTREGAR O RELATÓRIO OFICIAL da missão "${g.missao}" na Sala dos Professores. O sistema já concluiu a missão e pagou o grupo. Relatório dele: "${g.texto||'(entregue por escrito, sem comentários)'}". Narre em 1 ou 2 parágrafos curtos o professor recebendo o relatório: reação coerente com o que aconteceu na missão (use a memória e o roteiro), uma pergunta ou comentário que mostre que ele leu, e se houver algo estranho (como uma pista da campanha), ele registra e decide o que fazer. Não peça teste. Não use "missaoConcluida". Coloque falas do professor em "falas".`
@@ -2268,6 +2387,7 @@ async function narrar(id,g){
     :g.tipo==='retorno'?`${F.nome} voltou a este local, onde já esteve antes. NÃO descreva o lugar de novo nem faça introdução.${g.anterior?' Logo antes, no local de onde ele veio, aconteceu isto:\n'+g.anterior+'\n':''} Só narre se um NPC o acompanhou ou seguiu até aqui, se alguém presente reage à chegada dele de um jeito que importa, ou se algo urgente acontece agora (ataque, emergência). Nesses casos, narre só isso, em poucas frases. Caso contrário responda apenas {"intervir":false}.`
     :g.tipo==='duelo'?`Está acontecendo um DUELO entre jogadores. O sistema cuida de iniciativa, ataques, defesas e dano, e o mestre NÃO narra o duelo. ${F.nome} escreveu: "${g.texto}"${g.rolagem?` (rolou ${g.rolagem.pericia}: total ${g.rolagem.total})`:''}.${txtSobre}${txtDados} Se for Técnica Inata ou ação especial contra outro jogador, resolva SÓ a mecânica: dano em "danoJogadores" ([{"id":"id do jogador","dano":N}]), custos em "efeitos", e em "resumo" uma frase seca do resultado (ex.: "Explosão de Mitsnari acerta Ino: 9 de dano"). Deixe "narracao" vazia. Escreva "narracao" só se algo de fora intervier (um professor separa a briga, uma maldição aparece; use "combate" para trazer inimigos ou "fimCombate"). Se for só fala ou provocação, responda {"intervir":false}.${combate&&combate.vez!==myId()?' ATENÇÃO: não é o turno dele. Se ele tentar técnica ou ataque fora do turno, não aplique dano e diga em "resumo" que precisa esperar a vez.':''}`
     :g.tipo==='turno'?`Acabou de acontecer no combate (resolvido pelo sistema, números já aplicados):\n${g.eventos.join('\n')}\n${g.fim?'O combate terminou. Narre o desfecho.':'Narre isso de forma viva e curta (até 2 parágrafos), sem alterar números. Termine indicando de quem é a vez.'} Não peça teste. Use "efeitos" só se algo além dos golpes acontecer.`
+    :g.tipo==='cacada'?`${F.nome}, feiticeiro freelancer, está cumprindo um contrato do app Caçadores aqui: eliminar ${g.c.qtd}× ${g.c.alvo} (grau ${g.c.grau}): ${g.c.desc}. Narre em 1 ou 2 parágrafos curtos ele encontrando o alvo e as criaturas surgindo, prontas para lutar. NÃO preencha "combate" (o sistema inicia a luta logo depois com essas criaturas), não peça teste e não dê recompensa.`
     :g.foraHint?`${F.nome} escreveu: "${g.texto}". A mensagem chama o MESTRE pelo nome. Decida: se ele está falando com você, o mestre, fora do jogo (pergunta, dúvida de regra, confirmação do que o personagem percebe, pedido de esclarecimento), responda FORA DO JOGO com "foraDoJogo": true. Se "mestre" faz parte da fala ou ação do personagem (ex.: falando de um sensei), trate como ação normal com "foraDoJogo": false.`
     :`${chegadaRecente&&chegadaRecente.local===id&&Date.now()-chegadaRecente.t<30*60000?`(Contexto: ${F.nome} acabou de voltar para este local, que já conhece; não descreva o lugar de novo. Se algum NPC da cena anterior o seguiu até aqui, ele pode aparecer agora.${chegadaRecente.anterior?' Logo antes aconteceu: '+chegadaRecente.anterior.replace(/\n/g,' | '):''}) `:''}${F.nome} declarou: "${g.texto}"${g.rolagem?` e rolou ${g.rolagem.pericia}: total ${g.rolagem.total}${g.rolagem.cd!=null?` contra CD ${g.rolagem.cd} (${g.rolagem.total>=g.rolagem.cd?'SUCESSO':'FALHA'})`:' (julgue o resultado contra a dificuldade da ação; não peça outro teste para a mesma coisa)'}`:''}. Responda à ação.${txtSobre}${txtDados}${!g.rolagem&&dicaTeste(g.texto)?` ATENÇÃO: esta ação parece pedir teste (${dicaTeste(g.texto)}). A menos que seja realmente trivial, NÃO dê o resultado: peça o teste em "teste" e pare antes.`:''}${combate&&combate.ativo&&combate.vez!==myId()?' Atenção: não é o turno dele no combate; só permita falas, reações ou ações livres.':''}`;
   const inv=(meu.inventario||[]).map(i=>`${i.nome} ×${i.qtd}${i.nota?` (${i.nota})`:''}`).join('; ');
@@ -2311,9 +2431,9 @@ COMO NARRAR
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
-- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+- VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 {{FIXO_FIM}}
-${direcaoMestre()}NÍVEL DE QUEM AGIU: ${calc().n}.
+${direcaoMestre()}NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
@@ -2442,7 +2562,7 @@ function assinarCombate(local){
   if(db){combateUnsub=db.doc('combates/'+local).onSnapshot(s=>{combate=s.exists?s.data():null;aposMudancaCombate();},()=>{});}
   else{combate=(window.__combatesLocais||{})[local]||null;renderCombate();}
 }
-function aposMudancaCombate(){aplicarGolpes();aplicarXpCombate();renderCombate();checarPassagemAuto();}
+function aposMudancaCombate(){aplicarGolpes();aplicarXpCombate();pagarCacada();renderCombate();checarPassagemAuto();}
 async function combateWrite(patch,full){
   const local=combateLocal;if(!local)return;
   combate=full?patch:deepMerge(combate||{},patch);
@@ -2462,9 +2582,9 @@ const pendentes=()=>Object.values((combate&&combate.pendentes)||{}).filter(Boole
 function alvosPara(id){const eu=combate.participantes[id];if(!eu)return [];const l=ladoDe(eu);return vivosTodos().filter(p=>p.id!==id&&ladoDe(p)!==l);}
 function statsDoJogador(id){if(id===myId())return meusStats();return {...STATS_PADRAO,...(jogadores.get(id)?.stats||combate?.participantes?.[id]?.stats||{})};}
 
-async function iniciarCombate(local,lista,outrosJogadores){
+async function iniciarCombate(local,lista,outrosJogadores,extra){
   const parts={};let i=0;
-  (lista||[]).slice(0,6).forEach(e=>{const g=GRAUS[e.grau]!=null?e.grau:4;const G=GRAUS[g];const q=Math.max(1,Math.min(4,+e.qtd||1));
+  (lista||[]).slice(0,6).forEach(e=>{const g=GRAUS[e.grau]!=null?e.grau:4;const G=GRAUS[g];const q=Math.max(1,Math.min(5,+e.qtd||1));
     for(let k=0;k<q;k++){const id=`e${Date.now().toString(36)}${i++}`;const nome=(String(e.nome||'Maldição').slice(0,40))+(q>1?` ${String.fromCharCode(65+k)}`:'');
       const olho=e.olho===true&&k===0;const pv=G.pv+(olho?100:0);
       parts[id]={id,nome:nome+(olho&&!/olho/i.test(nome)?' (comeu um olho)':''),tipo:'inimigo',lado:'inimigos',grau:g,pv,pvMax:pv,atk:G.atk+(olho?2:0),def:G.def+(olho?1:0),dano:G.dano,rd:G.rd,ini:d20()+G.ini,descricao:String(e.descricao||'').slice(0,160),...(olho?{olho:true}:{})};}});
@@ -2481,7 +2601,7 @@ async function iniciarCombate(local,lista,outrosJogadores){
   outros.forEach(id=>{const j=jogadores.get(id);const s2=statsDoJogador(id);const r=d20();
     parts[id]={id,nome:j.nome,tipo:'jogador',lado:pvp?id:'jogadores',ini:r+(+s2.iniciativa||0),pv:j.estado?.pv??0,pvMax:j.max?.pv??0,stats:s2};rolls.push(`${j.nome} ${r}+${+s2.iniciativa||0}`);});
   assinarCombate(local);
-  const doc={ativo:true,pvp,rodada:1,vez:null,participantes:parts,golpes:{},pendentes:{},iniciado:Date.now()};
+  const doc={ativo:true,pvp,rodada:1,vez:null,participantes:parts,golpes:{},pendentes:{},iniciado:Date.now(),...(extra||{})};
   combate=doc;doc.vez=ordem()[0].id;
   await combateWrite(doc,true);
   await postMsg(local,{tipo:'combate',texto:`${pvp?`Duelo! ${Object.values(parts).map(p=>p.nome).join(' contra ')}.`:'Combate!'} Iniciativa: ${rolls.join(', ')}. Ordem: ${ordem().map(p=>`${p.nome} (${p.ini})`).join(' → ')}.`});
@@ -2784,7 +2904,7 @@ function esconderCarregando(){const box=$('#carregando');carreg=null;clearInterv
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;m.classList.remove('detalhe');if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();
   setTimeout(()=>{mapaCentrar(selLoc,ehMobile()?2.1:1);const b=$('#mapa-fechar');b&&b.focus();},30);}
@@ -2820,7 +2940,7 @@ function mapaZoom(f,cx,cy){const svg=$('#map');const r=svg.getBoundingClientRect
 })();
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;m.classList.remove('detalhe');}
 
-const CEL_TIT={home:'Celular',mensagens:'Mensagens',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',config:'Ajustes'};
+const CEL_TIT={home:'Celular',mensagens:'Mensagens',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',config:'Ajustes'};
 function abrirCel(app){
   const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
@@ -2837,7 +2957,7 @@ function celIr(app){if(app==='config')celCreditos=false;
 function renderCelApp(){
   const a=celApp;if(!a)return;
   if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
-    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
+    $('#cel-grade').innerHTML=CEL_APPS.filter(([k])=>k!=='cacadores'||ehFree(myId())).map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><img class="qi" src="img/app-${k}.png" alt="" draggable="false"><span>${n}</span>${k==='mensagens'&&dmTotalNaoLidas()?`<i class="cel-badge">${dmTotalNaoLidas()}</i>`:''}</button>`).join('');}
   if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
     if(!mm&&!mp)$('#minha-missao').innerHTML='';}
   if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
@@ -2846,6 +2966,7 @@ function renderCelApp(){
   if(a==='npcs')renderNpcs();
   if(a==='ficha')renderCelFicha();
   if(a==='config')renderCelConfig();
+  if(a==='cacadores')renderCacadores();
   if(a==='mensagens')renderDM();
 }
 /* ---------- Mensagens diretas entre jogadores (só os dois leem) ---------- */
@@ -2996,7 +3117,8 @@ document.addEventListener('click',e=>{
   if(e.target.closest('[data-mapavoltar]')){$('#mapa-tela').classList.remove('detalhe');return;}
   if(e.target.closest('[data-mapazoom]')){const z=e.target.closest('[data-mapazoom]').dataset.mapazoom;if(z==='c')mapaCentrar(meu?.local||casaDe(myId()),ehMobile()?2.1:1.6);else mapaZoom(z==='+'?1.35:1/1.35);return;}
   const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.entrar){fecharCel(true);fecharMapa();irPara(b.dataset.entrar);return;}
+  if(b.dataset.entrar){const bl=bloqueioDe(b.dataset.entrar);if(bl){const c=$('#loc-card');if(c&&!c.querySelector('.bloqueio'))c.insertAdjacentHTML('beforeend',`<p class="note bloqueio" style="color:var(--seal)">${esc(bl)}</p>`);return;}
+    fecharCel(true);fecharMapa();irPara(b.dataset.entrar);return;}
   if(b.dataset.maceitar){aceitarMissao(b.dataset.maceitar);return;}
   if(b.dataset.mentrar){entrarMissao(b.dataset.mentrar);return;}
   if(b.dataset.msair){sairMissao(b.dataset.msair);return;}
@@ -3025,6 +3147,8 @@ document.addEventListener('click',e=>{
   if(b.id==='btn-recuperar'){recuperarPA(true);return;}
   if(b.dataset.defesa){const [pid,t]=b.dataset.defesa.split('|');resolverDefesa(pid,t);return;}
   if(b.dataset.defauto){resolverDefesa(b.dataset.defauto,null);return;}
+  if(b.dataset.cac){const a=b.dataset.cac;if(a==='aceitar')aceitarCacada(+b.dataset.i);else if(a==='desistir')desistirCacada();else if(a==='comecar')comecarCacada();else if(a==='ir'&&meu?.cacada){fecharCel(true);irPara(meu.cacada.destino);}return;}
+  if(b.dataset.convidar){convidarEscola(b.dataset.convidar);return;}
   if(b.dataset.desafiar){const j=jogadores.get(b.dataset.desafiar);openModal(`Desafiar ${j?.nome||'jogador'} para um duelo?`,'O duelo começa na hora: iniciativa, turnos, ataques e defesas pelo sistema, sem narração do mestre.','','Começar duelo',async()=>{closeModal();await desafiar(b.dataset.desafiar);});return;}
   if(b.id==='btn-passar'){passarVez(true);return;}
   if(b.dataset.admsel){admSel=b.dataset.admsel;renderAdmLista();renderAdmEditor();return;}
@@ -3311,7 +3435,7 @@ async function boot(){
     assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();
