@@ -33,8 +33,14 @@ MISSÕES PESSOAIS
 - Cada jogador pode ter uma missão pessoal (aparece na ficha dele no pedido). Dê espaço para ela em cenas e pistas.
 - Clã Elmos: o herdeiro receptáculo de Cérberus (hoje, Ino) busca as outras cabeças de Cérberus (Inércia é a que ele já domina). As cabeças estão espalhadas como objetos amaldiçoados ou presas em maldições. O próprio clã quer capturar o herdeiro para devolver Cérberus ao receptáculo "correto"; caçadores Elmos (roupas cinza, máscaras de cão de ferro, correntes seladas) podem emboscá-lo quando ele circula longe da escola.
 
+AS DUAS ESCOLAS
+- Há alunos da Escola de Tóquio e alunos da Escola de Kyoto (a ficha diz de qual escola cada um é). As duas escolas são rivais: Kyoto é tradicional, ligada aos grandes clãs, e olha Tóquio como indisciplinada. O diretor de Kyoto, Gakuganji Yoshinobu, desconfia de Tóquio; a professora Utahime Iori é exigente mas protege os alunos.
+- Use a rivalidade: provocações, desafios no dojo, cooperação forçada em missões conjuntas e, em algum momento, o Intercâmbio de Boa Vontade (torneio entre as escolas), que o mestre pode anunciar quando fizer sentido.
+- A Biblioteca de Pergaminhos de Kyoto guarda registros antigos: é o melhor lugar para descobrir, aos poucos, a lenda de Kokonoe Sōgen (páginas arrancadas, nomes riscados). Membros da seita do Lótus Fechado podem ter infiltrados em qualquer uma das escolas.
+- Gion, em Kyoto, é antigo e cheio de rancores de séculos: um bom lugar para olhos de Sōgen escondidos em lojas e templos.
+
 O QUE VEM NO FUTURO (só prepare o terreno; não faça acontecer até o sistema dizer que a fase mudou)
-- Um evento destrói Shibuya e a Escola de Tóquio (Nakigara e a seita agem ao mesmo tempo, cada um por seu motivo). Depois disso, os alunos de Tóquio são transferidos para a Escola de Kyoto.
+- Um evento destrói Shibuya e a Escola de Tóquio (Nakigara e a seita agem ao mesmo tempo, cada um por seu motivo). Depois disso, os alunos de Tóquio são transferidos para a Escola de Kyoto (que já existe no mapa e tem seus próprios alunos), com atrito entre os dois grupos.
 - Até lá: rachaduras nas barreiras da escola, professores preocupados, reuniões fechadas, maldições testando os limites de Shibuya.
 
 TOM

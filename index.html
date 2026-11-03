@@ -225,6 +225,7 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .msg .para{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--cursed)}
 .msg.jogador.aos .body{border-style:dashed}
 .msg .meta .nm{font-weight:700}
+.grau.kyoto{border-color:#5a3b52;color:#d9a3c8}
 .grau{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:0 6px;color:var(--ash);font-weight:600;white-space:nowrap}
 .msg.npc{border-left:3px solid var(--npc,#8a7f8c);padding-left:12px}
 .msg.npc .meta b{font-family:var(--display)}
@@ -339,6 +340,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div class="grid g2">
         <label class="f" for="f-nome">Nome do personagem<input type="text" id="f-nome" data-bind="nome" placeholder="Ex.: Kenji Arakawa"></label>
         <label class="f" for="f-jogador">Jogador<input type="text" id="f-jogador" data-bind="jogador" placeholder="Seu nome"></label>
+        <label class="f" for="f-escola">Escola Jujutsu<select id="f-escola" data-bind="escolaOrigem"><option value="toquio">Estudante de Tóquio</option><option value="kyoto">Estudante de Kyoto</option></select></label>
         <label class="f" for="f-cor">Cor do nome no chat<input type="color" id="f-cor" data-bind="cor" value="#e0b354" style="height:40px;padding:2px 4px"></label>
         <label class="f" for="f-idade">Idade (11 a 100)<input type="number" id="f-idade" data-bind="idade" min="11" max="100"></label>
         <label class="f" for="f-nivel">Nível inicial<input type="number" id="f-nivel" data-bind="nivel" min="1" max="20"></label>
@@ -462,7 +464,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div class="hud" id="hud" aria-label="Seu personagem"></div>
     </header>
     <div id="mapa-view" class="mapa-grid">
-      <div class="map-frame"><svg id="map" viewBox="0 0 800 520" role="img" aria-label="Mapa de Tóquio com três locais"></svg></div>
+      <div class="map-frame"><svg id="map" viewBox="0 0 800 520" role="img" aria-label="Mapa de Tóquio e Kyoto"></svg></div>
       <div class="loc-card" id="loc-card"></div>
     </div>
     <nav class="areas" id="areas-bar" aria-label="Áreas da escola" hidden></nav>
@@ -585,7 +587,7 @@ const blank=()=>({v:1,nome:'',jogador:'',idade:17,nivel:1,aparencia:'',historia:
   attrs:{for:0,vel:0,con:0,esp:0,sab:0,car:0},
   classe:'',simples:[],antecedente:'',antEscolhas:[],trabalhador:'',
   vantagens:[],desvantagens:[],traitNotas:'',pericias:[],armaProf:false,armaNome:'',arma:'',itens:[],
-  tecnica:{nome:'',descricao:'',habilidadeUnica:'',dado:'d6',validacao:null},xp:0,especiais:[],cor:'',treino:{luta:0,pontaria:0,prog:{luta:0,pontaria:0},pronto:true}});
+  tecnica:{nome:'',descricao:'',habilidadeUnica:'',dado:'d6',validacao:null},xp:0,especiais:[],cor:'',escolaOrigem:'toquio',treino:{luta:0,pontaria:0,prog:{luta:0,pontaria:0},pronto:true}});
 let F=blank();
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -990,7 +992,7 @@ function closeModal(){$('#modal').classList.remove('show');}
 $('#modal-ok').addEventListener('click',()=>modalOk&&modalOk());
 
 function loadFicha(o){
-  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
+  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};F.escolaOrigem=o.escolaOrigem==='kyoto'?'kyoto':'toquio';const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
   document.querySelectorAll('[data-bind]').forEach(el=>{if(el.closest('#raca-sub,#ant-sub,#armaprof-box'))return;el.value=el.type==='color'?(corValida(F[el.dataset.bind])||'#e0b354'):(F[el.dataset.bind]??'');});
   $('#tecnica-body').dataset.built='';renderAll();
 }
@@ -1036,7 +1038,7 @@ Se a técnica for forte demais mas a ideia for boa, use "ajustar" e reescreva pa
 
 /* ---------- Mundo ---------- */
 const LOCAIS=[
-  {id:'escola',nome:'Escola Técnica Jujutsu de Tóquio',curto:'Escola Jujutsu',kanji:'校',x:175,y:165,
+  {id:'escola',nome:'Escola Técnica Jujutsu de Tóquio',curto:'Escola de Tóquio',kanji:'校',x:175,y:165,
    tags:['zona segura','treino','missões'],
    desc:'Escondida nas montanhas a oeste da cidade, parece um templo antigo cercado de floresta. Uma barreira protege o terreno. É aqui que os feiticeiros estudam, treinam e recebem missões.',
    contexto:'Campus em estilo de templo nas montanhas a oeste de Tóquio, cercado de floresta e protegido por uma barreira. Tem campo de treino, dormitórios, sala dos professores, enfermaria e depósito de ferramentas amaldiçoadas. Alunos, professores e funcionários circulam por lá. É uma zona segura: maldições não entram sem algo muito grave acontecer. Professores podem passar missões para Shibuya ou para a Avenida Sakuragawa.'},
@@ -1051,26 +1053,57 @@ const LOCAIS=[
 LOCAIS[0].area='Corredores';
 LOCAIS[0].contexto+=' Este canal são os CORREDORES e o pátio da escola: dormitórios, passagens entre as salas, alunos indo e vindo. Dali dá para ir ao Quadro de Missões, à Sala dos Professores, à Enfermaria e à Sala de Treinos.';
 LOCAIS.push(
-  {id:'escola-missoes',pai:'escola',area:'Quadro de Missões',nome:'Escola Jujutsu · Quadro de Missões',curto:'Quadro de Missões',kanji:'任',tags:['missões','grupos'],
+  {id:'escola-missoes',pai:'escola',tipo:'missoes',area:'Quadro de Missões',nome:'Escola de Tóquio · Quadro de Missões',curto:'Quadro de Missões',kanji:'任',tags:['missões','grupos'],
    desc:'Um mural de cortiça perto da secretaria, cheio de chamados carimbados pelos professores. Aqui você escolhe uma missão e monta o grupo.',
    contexto:'Quadro de missões da Escola Técnica Jujutsu de Tóquio, num corredor perto da secretaria. Chamados oficiais com carimbo, grau estimado e destino. Um funcionário cuida do registro. Missões aceitas aqui viram missões ativas do grupo.'},
-  {id:'escola-professores',pai:'escola',area:'Sala dos Professores',nome:'Escola Jujutsu · Sala dos Professores',curto:'Sala dos Professores',kanji:'師',tags:['relatórios','pagamento','conversa'],
+  {id:'escola-professores',pai:'escola',tipo:'professores',area:'Sala dos Professores',nome:'Escola de Tóquio · Sala dos Professores',curto:'Sala dos Professores',kanji:'師',tags:['relatórios','pagamento','conversa'],
    desc:'Mesas abarrotadas de papéis, café frio e o professor de olheiras fundas que cuida dos registros. É aqui que relatórios são entregues e pagos.',
    contexto:'Sala dos professores: mesas com papelada, café frio, quadro com escala de missões. O professor de olheiras fundas cuida dos registros, exige relatório de toda missão e só libera pagamento com o relatório carimbado. Outros professores passam por aqui. Bom lugar para conversar, pedir orientação e entregar relatórios.'},
-  {id:'escola-enfermaria',pai:'escola',area:'Enfermaria',nome:'Escola Jujutsu · Enfermaria',curto:'Enfermaria',kanji:'療',tags:['cura','descanso'],
+  {id:'escola-enfermaria',pai:'escola',tipo:'enfermaria',area:'Enfermaria',nome:'Escola de Tóquio · Enfermaria',curto:'Enfermaria',kanji:'療',tags:['cura','descanso'],
    desc:'Cheiro de álcool e cigarro apagado. Shoko Ieiri, a médica da escola, cura ferimentos com Energia Reversa, mas sempre quer saber o que aconteceu.',
    contexto:'Enfermaria da escola: macas, armário de remédios, cheiro de álcool. Shoko Ieiri, a médica da escola, cura com Energia Amaldiçoada Reversa e faz perguntas sobre como os alunos se feriram. Tratamento aqui recupera PV de forma generosa (use efeitos.pv positivos) e descanso recupera PA e PE. Lembre: Fetos Amaldiçoados não podem ser curados por energia reversa, só por descanso e cuidados comuns.'},
-  {id:'escola-treino',pai:'escola',area:'Sala de Treinos',nome:'Escola Jujutsu · Sala de Treinos',curto:'Sala de Treinos',kanji:'練',tags:['treino','duelos'],
+  {id:'escola-treino',pai:'escola',tipo:'treino',area:'Sala de Treinos',nome:'Escola de Tóquio · Sala de Treinos',curto:'Sala de Treinos',kanji:'練',tags:['treino','duelos'],
    desc:'Tatame gasto, bonecos de palha marcados por energia amaldiçoada e armas de treino na parede. Duelos aqui são treino.',
    contexto:'Sala de treinos: tatame, bonecos de palha marcados, armas de madeira na parede, alvos para arco. Duelos entre alunos aqui são treino supervisionado. Bom lugar para praticar técnicas, testar limites e conversar enquanto treina.'});
+LOCAIS.push(
+  {id:'kyoto',nome:'Escola Técnica Jujutsu de Kyoto',curto:'Escola de Kyoto',kanji:'京',x:100,y:418,area:'Corredores',
+   tags:['zona segura','tradição','missões'],
+   desc:'A escola irmã, nos arredores de Kyoto: portões vermelhos, pátios de cascalho e salões de madeira escura com séculos de história. Mais tradicional e hierárquica que Tóquio, e rival declarada dela.',
+   contexto:'Escola Técnica Jujutsu de Kyoto, nos arredores da cidade: portões torii vermelhos, pátios de cascalho varrido, salões de madeira escura, jardim de pedras e um pagode antigo. Ligada aos grandes clãs e muito mais tradicional e hierárquica que Tóquio; o diretor Gakuganji Yoshinobu é rígido e desconfia dos métodos de Tóquio, e a professora Utahime Iori cuida dos alunos de perto. Há rivalidade aberta com a escola de Tóquio (o Intercâmbio de Boa Vontade entre as duas escolas é uma tradição). É uma zona segura protegida por barreira. Este canal são os CORREDORES e o pátio: dali dá para ir ao Quadro de Missões, à Sala dos Professores, à Enfermaria, ao Dojo de Treinos, à Biblioteca de Pergaminhos e aos dormitórios. Missões de Kyoto costumam ir para Gion e os templos da cidade antiga.'},
+  {id:'gion',nome:'Gion e Higashiyama',curto:'Gion',kanji:'祇',x:238,y:432,
+   tags:['cidade antiga','templos','rancor antigo'],
+   desc:'Ruas de pedra, casas de chá com lanternas de papel, templos no morro e turistas por todo lado. Em Kyoto, os rancores são antigos, e as maldições também.',
+   contexto:'Gion e Higashiyama, em Kyoto: ruelas de pedra, casas de madeira com lanternas de papel, casas de chá, gueixas e turistas, templos e cemitérios no morro, o rio Kamo ao lado. Energia amaldiçoada acumulada há séculos: maldições que imitam costumes antigos, assombrações ligadas a templos e famílias tradicionais, objetos amaldiçoados guardados em depósitos de lojas antigas. Lutar aqui exige discrição: é cheio de civis e de olhos dos clãs.'},
+  {id:'kyoto-missoes',pai:'kyoto',tipo:'missoes',area:'Quadro de Missões',nome:'Escola de Kyoto · Quadro de Missões',curto:'Quadro de Missões',kanji:'任',tags:['missões','grupos'],
+   desc:'Um painel de madeira laqueada com chamados presos por pregos de bronze. Cada chamado tem o carimbo do diretor.',
+   contexto:'Quadro de missões da Escola de Kyoto, num corredor de madeira perto da secretaria: chamados com o carimbo do diretor Gakuganji, grau estimado e destino. Um funcionário anota quem aceita. Missões aceitas aqui viram missões ativas do grupo.'},
+  {id:'kyoto-professores',pai:'kyoto',tipo:'professores',area:'Sala dos Professores',nome:'Escola de Kyoto · Sala dos Professores',curto:'Sala dos Professores',kanji:'師',tags:['relatórios','pagamento','conversa'],
+   desc:'Tatames, mesas baixas e chá verde. A professora Utahime Iori confere cada relatório; o diretor Gakuganji às vezes aparece para "conversar".',
+   contexto:'Sala dos professores da Escola de Kyoto: tatames, mesas baixas, armários de pergaminhos, chá verde. A professora Utahime Iori confere e carimba relatórios e só libera pagamento com relatório entregue. O diretor Gakuganji Yoshinobu aparece de vez em quando, sempre com comentários sobre os alunos de Tóquio. Bom lugar para entregar relatórios, pedir orientação e ouvir política dos clãs.'},
+  {id:'kyoto-enfermaria',pai:'kyoto',tipo:'enfermaria',area:'Enfermaria',nome:'Escola de Kyoto · Enfermaria',curto:'Enfermaria',kanji:'療',tags:['cura','descanso'],
+   desc:'Futons brancos, cheiro de ervas e incenso. Kyoto não tem uma Shoko: aqui o tratamento é com talismãs, ervas e um curandeiro idoso de poucas palavras.',
+   contexto:'Enfermaria da Escola de Kyoto: futons brancos, cheiro de ervas e incenso, talismãs de cura nas paredes. Quem cuida é um curandeiro idoso de poucas palavras (o mestre dá nome a ele na primeira vez), que trata com talismãs, ervas e bandagens; energia reversa é raríssima aqui. O tratamento recupera PV de forma moderada (efeitos.pv positivos, menos que na enfermaria de Tóquio) e descanso recupera PA e PE.'},
+  {id:'kyoto-treino',pai:'kyoto',tipo:'treino',area:'Dojo de Treinos',nome:'Escola de Kyoto · Dojo de Treinos',curto:'Dojo de Treinos',kanji:'練',tags:['treino','duelos'],
+   desc:'Um dojo de assoalho polido com armas de madeira na parede e alvos de arquearia no pátio. Os veteranos de Kyoto treinam com disciplina militar.',
+   contexto:'Dojo de treinos da Escola de Kyoto: assoalho polido, armas de madeira e lanças na parede, pátio com alvos de arquearia (kyudo). Treinos com disciplina rígida e veteranos que adoram testar os novatos. Duelos entre alunos aqui são treino supervisionado.'},
+  {id:'kyoto-biblioteca',pai:'kyoto',tipo:'biblioteca',area:'Biblioteca de Pergaminhos',nome:'Escola de Kyoto · Biblioteca de Pergaminhos',curto:'Biblioteca',kanji:'書',tags:['pesquisa','história','segredos'],
+   desc:'Estantes até o teto com pergaminhos e registros dos clãs, alguns selados. A bibliotecária vigia quem mexe no que não deve.',
+   contexto:'Biblioteca de Pergaminhos da Escola de Kyoto: estantes até o teto, pergaminhos da era Heian, registros dos grandes clãs, uma ala selada com talismãs. Uma bibliotecária severa vigia tudo (o mestre dá nome a ela na primeira vez). Lugar de investigação: testes de História, Investigação e Jujutsu revelam lendas antigas, técnicas de clãs e pistas sobre a campanha (registros com páginas arrancadas, menções a um feiticeiro de muitos olhos), mas nunca a verdade inteira de uma vez.'});
+const ESCOLAS={escola:{chave:'toquio',nome:'Escola de Tóquio',curta:'Tóquio'},kyoto:{chave:'kyoto',nome:'Escola de Kyoto',curta:'Kyoto'}};
+const ehEscola=r=>!!ESCOLAS[r];
+const raizDaEscola=ch=>ch==='kyoto'?'kyoto':'escola';
+const escolaDe=id=>id===myId()?(F.escolaOrigem==='kyoto'?'kyoto':'toquio'):(jogadores.get(id)?.escola==='kyoto'?'kyoto':'toquio');
+const escolaCurta=ch=>ch==='kyoto'?'Kyoto':'Tóquio';
 const slugId=k=>String(k||'').replace(/[^A-Za-z0-9-]/g,'x');
-const quartoId=k=>'escola-quarto-'+slugId(k);
-const donoQuarto=id=>{const s=String(id||'').replace(/^escola-quarto-/,'');return [...jogadores.keys()].find(k=>slugId(k)===s)||(slugId(myId())===s?myId():null);};
-function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'estudante';const meuQ=dono===myId();
-  return {id,pai:'escola',quarto:true,dono,area:meuQ?'Meu quarto':`Quarto de ${nome}`,nome:`Escola Jujutsu · Quarto de ${nome}`,curto:`Quarto de ${nome}`,kanji:'寮',tags:['dormitório','descanso'],
-    desc:`O quarto de ${nome} no dormitório dos estudantes: cama estreita, escrivaninha, janela para a floresta. Lugar para descansar e conversar longe dos professores.`,
-    contexto:`Quarto de ${nome} no dormitório dos estudantes da Escola Jujutsu de Tóquio: cama estreita, escrivaninha, armário, janela para a floresta. É o espaço pessoal de ${nome}; outros alunos só entram se forem convidados. Descanso acontece pelo botão de descanso (o sistema aplica a recuperação); converse e narre o clima, mas não dê PV/PA/PE por descanso.`};}
-const locById=id=>LOCAIS.find(l=>l.id===id)||(String(id||'').startsWith('escola-quarto-')?quartoLoc(id):undefined);
+const quartoId=(k,ch)=>`${raizDaEscola(ch||escolaDe(k))}-quarto-${slugId(k)}`;
+const ehQuarto=id=>/^(escola|kyoto)-quarto-/.test(String(id||''));
+const donoQuarto=id=>{const s=String(id||'').replace(/^(escola|kyoto)-quarto-/,'');return [...jogadores.keys()].find(k=>slugId(k)===s)||(slugId(myId())===s?myId():null);};
+function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'estudante';const meuQ=dono===myId();const pai=String(id).startsWith('kyoto-')?'kyoto':'escola';const E=ESCOLAS[pai];
+  const janela=pai==='kyoto'?'janela para o jardim de pedras':'janela para a floresta';
+  return {id,pai,quarto:true,dono,area:meuQ?'Meu quarto':`Quarto de ${nome}`,nome:`${E.nome} · Quarto de ${nome}`,curto:`Quarto de ${nome}`,kanji:'寮',tags:['dormitório','descanso'],
+    desc:`O quarto de ${nome} no dormitório dos estudantes: ${pai==='kyoto'?'tatame, futon dobrado, mesa baixa':'cama estreita, escrivaninha'}, ${janela}. Lugar para descansar e conversar longe dos professores.`,
+    contexto:`Quarto de ${nome} no dormitório dos estudantes da Escola Jujutsu de ${E.curta}: ${pai==='kyoto'?'tatame, futon, mesa baixa, armário de correr':'cama estreita, escrivaninha, armário'}, ${janela}. É o espaço pessoal de ${nome}; outros alunos só entram se forem convidados. Descanso acontece pelo botão de descanso (o sistema aplica a recuperação); converse e narre o clima, mas não dê PV/PA/PE por descanso.`};}
+const locById=id=>LOCAIS.find(l=>l.id===id)||(ehQuarto(id)?quartoLoc(id):undefined);
 const raiz=id=>(locById(id)?.pai)||id;
 const MAPA=()=>LOCAIS.filter(l=>!l.pai);
 const nomeLocal=id=>{const l=locById(id);if(!l)return '';return l.pai?l.area:l.curto;};
@@ -1086,7 +1119,8 @@ function dadosJog(id){return id===(uid||'eu')?{...(meu||{}),cor:F.cor}:(jogadore
 function corDe(id){return corValida(dadosJog(id).cor)||PALETA[hashStr(id)%PALETA.length];}
 const corNpc=n=>PALETA_NPC[hashStr(String(n||'').toLowerCase())%PALETA_NPC.length];
 const grauDe=id=>grauEscola(dadosJog(id).pg);
-const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau" title="Grau na Escola Jujutsu">${esc(grauDe(id))}</span>`;
+const identDe=id=>`${escolaCurta(escolaDe(id))} · ${grauDe(id)}`;
+const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau${escolaDe(id)==='kyoto'?' kyoto':''}" title="Escola e grau">${esc(identDe(id))}</span>`;
 const jogadores=new Map();let meu=null;let writeChain=Promise.resolve();const localMsgs={};
 let canalAtual=null,canalUnsub=null,msgs=[],selLoc='escola',narrando=false,rollMode=0,rollSkill='Percepção';
 const iniciais=n=>(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
@@ -1097,11 +1131,11 @@ async function ensureJogador(){
   if(db&&uid){
     try{const s=await db.doc('jogadores/'+uid).get();
       if(s.exists){const d=s.data();aplicarAdminNoJogador(d);const mx=maximos(d.bonusMax);meu={...d,max:mx,nome:F.nome,estado:{pv:Math.min(d.estado?.pv??mx.pv,mx.pv),pa:Math.min(d.estado?.pa??mx.pa,mx.pa),pe:Math.min(d.estado?.pe??mx.pe,mx.pe)}};
-        const patch={max:mx,nome:F.nome,cor:corValida(F.cor)||'',estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};if(d.pg==null){patch.pg=0;meu.pg=0;}meu.cor=patch.cor;
+        const patch={max:mx,nome:F.nome,escola:escolaDe(myId()),cor:corValida(F.cor)||'',estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};if(d.pg==null){patch.pg=0;meu.pg=0;}meu.cor=patch.cor;meu.escola=patch.escola;
         if(!Array.isArray(d.inventario)){Object.assign(patch,invInicial());Object.assign(meu,invInicial());}
         if(!Array.isArray(d.diario)){patch.diario=[];meu.diario=[];}
         await db.doc('jogadores/'+uid).update(patch);}
-      else{meu={nome:F.nome,cor:corValida(F.cor)||'',pg:0,local:'',estado:{...mx},max:mx,stats:meusStats(),diario:[],...invInicial(),atualizado:new Date().toISOString()};await db.doc('jogadores/'+uid).set(meu);}
+      else{meu={nome:F.nome,escola:escolaDe(myId()),cor:corValida(F.cor)||'',pg:0,local:'',estado:{...mx},max:mx,stats:meusStats(),diario:[],...invInicial(),atualizado:new Date().toISOString()};await db.doc('jogadores/'+uid).set(meu);}
     }catch(e){meu=meu||{nome:F.nome,local:'',estado:{...mx},max:mx,diario:[],...invInicial()};}
   }else{
     try{meu=JSON.parse(localStorage.getItem('jjk-jogador')||'null');}catch{}
@@ -1133,14 +1167,14 @@ function renderHud(){
   const bar=(k,lbl)=>{const pct=m[k]>0?Math.max(0,Math.min(100,e[k]/m[k]*100)):0;
     return `<div class="bar ${k}"><span class="k">${lbl}</span><span class="track" role="progressbar" aria-label="${lbl}" aria-valuemin="0" aria-valuemax="${m[k]}" aria-valuenow="${e[k]}"><span class="fill" style="width:${pct}%;display:block"></span></span><span class="num">${e[k]} / ${m[k]}</span></div>`;};
   const X=xpInfo();
-  $('#hud').innerHTML=`<div class="nm"><span style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</span><small>${esc(F.classe||'')} · nv ${C.n} · ${esc(grauEscola(meu.pg))}</small></div>${bar('pv','PV')}${bar('pa','PA')}${bar('pe','PE')}
+  $('#hud').innerHTML=`<div class="nm"><span style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</span><small>${esc(F.classe||'')} · nv ${C.n} · ${esc(identDe(myId()))}</small></div>${bar('pv','PV')}${bar('pa','PA')}${bar('pe','PE')}
     <div class="bar xp"><span class="k">XP</span><span class="track" role="progressbar" aria-label="Experiência" aria-valuemin="${X.base}" aria-valuemax="${X.prox||X.x}" aria-valuenow="${X.x}"><span class="fill" style="width:${X.pct}%;display:block"></span></span><span class="num">${X.prox?`${X.x}/${X.prox}`:X.x}</span></div>`;
 }
 
 /* Mapa */
 function renderMapa(){
   const present=id=>[...jogadores.entries()].filter(([k,j])=>j.local&&raiz(j.local)===id);
-  const roads=[['escola','shibuya'],['shibuya','avenida'],['escola','avenida']];
+  const roads=[['escola','shibuya'],['shibuya','avenida'],['escola','avenida'],['kyoto','gion']];
   let s=`<defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#1d1a20" stroke-width="1"/></pattern>
     <radialGradient id="glow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#d2402f" stop-opacity=".35"/><stop offset="1" stop-color="#d2402f" stop-opacity="0"/></radialGradient></defs>
     <rect width="800" height="520" fill="#0c0b0e"/><rect width="800" height="520" fill="url(#grid)"/>
@@ -1150,9 +1184,13 @@ function renderMapa(){
     <g fill="none" stroke="#1f3a26" stroke-width="1.5">${[[70,110],[130,80],[95,170],[180,120],[55,220]].map(([x,y])=>`<path d="M${x-12} ${y+8} L${x} ${y-10} L${x+12} ${y+8}"/>`).join('')}</g>
     <ellipse cx="500" cy="280" rx="190" ry="140" fill="none" stroke="#3a3238" stroke-width="2" stroke-dasharray="2 7"/>
     <text x="640" y="160" fill="#4a424c" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">LINHA YAMANOTE</text>
-    <text x="40" y="360" fill="#2f4a36" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">MONTANHAS DO OESTE</text>
-    <text x="400" y="505" fill="#2a4a54" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">BAÍA DE TÓQUIO</text>`;
-  roads.forEach(([a,b])=>{const A=locById(a),B=locById(b);const mx=(A.x+B.x)/2+(a==='escola'&&b==='avenida'?-40:20),my=(A.y+B.y)/2+(a==='escola'&&b==='avenida'?90:-30);
+    <text x="40" y="330" fill="#2f4a36" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">MONTANHAS DO OESTE</text>
+    <text x="400" y="505" fill="#2a4a54" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">BAÍA DE TÓQUIO</text>
+    <rect x="18" y="350" width="300" height="152" rx="10" fill="#120f13" stroke="#3a3238" stroke-width="1.5"/>
+    <text x="30" y="368" fill="#6b5f68" font-size="11" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="2">KYOTO · ~2h15 DE SHINKANSEN</text>
+    <path d="M318 430 C380 420 430 330 520 250" fill="none" stroke="#3d3540" stroke-width="2" stroke-dasharray="3 6"/>
+    <text x="350" y="395" fill="#4a424c" font-size="10" font-family="Zen Kaku Gothic New, sans-serif" letter-spacing="1" transform="rotate(-38 350 395)">SHINKANSEN</text>`;
+  roads.forEach(([a,b])=>{const A=locById(a),B=locById(b);const mx=(A.x+B.x)/2+(a==='escola'&&b==='avenida'?-40:a==='kyoto'?0:20),my=(A.y+B.y)/2+(a==='escola'&&b==='avenida'?90:a==='kyoto'?-14:-30);
     s+=`<path d="M${A.x} ${A.y} Q${mx} ${my} ${B.x} ${B.y}" fill="none" stroke="#4a3f45" stroke-width="3" stroke-dasharray="10 6"/>`;});
   MAPA().forEach(l=>{const here=meu?.local&&raiz(meu.local)===l.id;const sel=selLoc===l.id;const ps=present(l.id);
     s+=`<g class="node${sel?' sel':''}" data-loc="${l.id}" tabindex="0" role="button" aria-label="${esc(l.nome)}">
@@ -1164,7 +1202,8 @@ function renderMapa(){
     </g>`;});
   $('#map').innerHTML=s;
   const l=locById(raiz(selLoc));const ps=present(l.id);const here=meu?.local&&raiz(meu.local)===l.id;
-  $('#loc-card').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
+  const minhaE=raizDaEscola(escolaDe(myId()));
+  $('#loc-card').innerHTML=`<h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
     <div><h3 style="font-size:14px;margin-bottom:6px">Quem está lá</h3><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}${locById(j.local)?.pai?` <span class="note">· ${esc(nomeLocal(j.local))}</span>`:''}</div>`).join(''):'<div class="note">Ninguém por enquanto.</div>'}</div></div>
     <button class="btn primary" data-entrar="${here?meu.local:l.id}">${here?'Voltar para o canal':'Ir para '+esc(l.curto)}</button>
     <p class="note">${meu?.local?`Você está em ${esc(locById(raiz(meu.local))?.curto||'')}${locById(meu.local)?.pai?` · ${esc(nomeLocal(meu.local))}`:''}.`:'Escolha onde começar. Clique em um local no mapa.'}</p>`;
@@ -1176,7 +1215,7 @@ async function irPara(id,anterior){
   const vis=new Set([...(meu.visitados||[]),...(meu.diario||[]).map(d=>d.local).filter(Boolean)]);
   const primeira=!vis.has(id);
   meu.__de=meu.local;
-  if(mudou){const de=meu.local;const nl=x=>raiz(x)==='escola'&&raiz(de)==='escola'&&raiz(id)==='escola'?(locById(x)?.area||nomeLocal(x)):nomeLocal(x);
+  if(mudou){const de=meu.local;const nl=x=>ehEscola(raiz(x))&&raiz(de)===raiz(id)?(locById(x)?.area||nomeLocal(x)):(locById(x)?.pai?`${ESCOLAS[raiz(x)]?.nome||''} · ${nomeLocal(x)}`:nomeLocal(x));
     if(de)await postMsg(de,{tipo:'sistema',texto:`${F.nome||'Alguém'} saiu em direção a ${nl(id)}.`});
     vis.add(id);await atualizarMeu({local:id,visitados:[...vis].slice(-60)});
     await postMsg(id,{tipo:'sistema',texto:`${F.nome||'Alguém'} chegou${de?` vindo de ${nl(de)}`:''}.`});}
@@ -1187,7 +1226,7 @@ async function irPara(id,anterior){
 }
 /* Clã Elmos: chance de os caçadores do clã tentarem capturar o herdeiro quando ele circula longe da escola */
 function emboscadaElmos(id,de){
-  if(F.antecedente!=='Clã Elmos'||raiz(id)==='escola'||(de&&raiz(de)===raiz(id)))return false;
+  if(F.antecedente!=='Clã Elmos'||ehEscola(raiz(id))||(de&&raiz(de)===raiz(id)))return false;
   if(combate&&combate.ativo)return false;
   if(Date.now()-(+meu.ultimaEmboscada||0)<4*3600000)return false;
   return Math.random()<0.2;
@@ -1226,6 +1265,7 @@ async function missaoCriar(m){
 }
 const MISSAO_PESSOAL_PADRAO={'Clã Elmos':'Encontrar as outras cabeças de Cérberus espalhadas pelo Japão (Inércia já está com você), antes que o Clã Elmos o capture para devolver Cérberus a outro receptáculo.'};
 const missaoPessoal=()=>String(meu?.missaoPessoal||MISSAO_PESSOAL_PADRAO[F.antecedente]||'').trim();
+const quadroAtual=()=>locById(canalAtual)?.tipo==='missoes'?canalAtual:`${raizDaEscola(escolaDe(myId()))}-missoes`;
 const minhaMissao=()=>[...missoes.values()].find(m=>m.status==='andamento'&&(m.membros||[]).includes(myId()));
 const nomeJog=id=>id===myId()?F.nome:(jogadores.get(id)?.nome||party.get(id)?.resumo?.nome||'alguém');
 function renderMissoes(){
@@ -1233,12 +1273,12 @@ function renderMissoes(){
   if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p><p>Para receber, entregue o relatório na Sala dos Professores.</p></div>`:'')
     +(mp?`<h2 style="margin-top:${mm?'10px':'0'}">Missão pessoal</h2><p class="note" style="margin:0">${esc(mp)}</p>`:'');}
   const p=$('#missoes-panel');if(!p)return;
-  if(canalAtual!=='escola-missoes'){p.hidden=true;p.innerHTML='';return;}
-  p.hidden=false;
-  const lista=[...missoes.values()].filter(m=>m.status!=='concluida').sort((a,b)=>(a.criada||0)-(b.criada||0));
-  const abertas=lista.filter(m=>m.status==='aberta').length;
+  if(locById(canalAtual)?.tipo!=='missoes'){p.hidden=true;p.innerHTML='';return;}
+  p.hidden=false;const quadro=raiz(canalAtual);
+  const lista=[...missoes.values()].filter(m=>m.status!=='concluida'&&(m.quadro==='todos'||(m.quadro||'escola')===quadro)).sort((a,b)=>(a.criada||0)-(b.criada||0));
+  const abertas=lista.filter(m=>m.status==='aberta'&&!m.olho).length;
   const candidatos=[...jogadores.entries()].filter(([k])=>k!==myId());
-  p.innerHTML=`<h2>Quadro de missões</h2>${lista.length?lista.map(m=>{const membro=(m.membros||[]).includes(myId());const fora=candidatos.filter(([k])=>!(m.membros||[]).includes(k));
+  p.innerHTML=`<h2>Quadro de missões · ${esc(ESCOLAS[quadro]?.curta||'')}</h2>${lista.length?lista.map(m=>{const membro=(m.membros||[]).includes(myId());const fora=candidatos.filter(([k])=>!(m.membros||[]).includes(k));
     return `<div class="missao${membro?' minha':''}"><div class="tt"><b>${esc(m.titulo)}</b>${m.olho?'<span class="pill warn">Semana dos Olhos</span>':''}<span class="pill ${m.status==='aberta'?'ok':'info'}">${m.status==='aberta'?'aberta':'em andamento'}</span></div>
       <p>${esc(m.descricao)}</p><p>Grau ${esc(m.grau)} · Destino: ${esc(nomeLocal(m.destino)||m.destino)} · Recompensa: ${m.xp||0} XP, ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} e ${pgDaMissao(m)} PG por membro</p>
       ${m.status==='andamento'?`<p>Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')||'ninguém'}</p>`:''}
@@ -1249,17 +1289,17 @@ function renderMissoes(){
 }
 async function aceitarMissao(id){const m=missoes.get(id);if(!m||m.status!=='aberta'||minhaMissao())return;
   await missaoWrite(id,{status:'andamento',lider:myId(),membros:[myId()],aceita:Date.now()});
-  await postMsg('escola-missoes',{tipo:'sistema',texto:`${F.nome} aceitou a missão "${m.titulo}".`});}
+  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} aceitou a missão "${m.titulo}".`});}
 async function entrarMissao(id){const m=missoes.get(id);if(!m||minhaMissao())return;
   await missaoWrite(id,{membros:[...new Set([...(m.membros||[]),myId()])]});
-  await postMsg('escola-missoes',{tipo:'sistema',texto:`${F.nome} entrou no grupo da missão "${m.titulo}".`});}
+  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} entrou no grupo da missão "${m.titulo}".`});}
 async function adicionarMissao(id,pid){const m=missoes.get(id);if(!m||!pid)return;
   if([...missoes.values()].some(x=>x.status==='andamento'&&(x.membros||[]).includes(pid))){toastChat(`${nomeJog(pid)} já está em outra missão.`);return;}
   await missaoWrite(id,{membros:[...new Set([...(m.membros||[]),pid])]});
-  await postMsg('escola-missoes',{tipo:'sistema',texto:`${F.nome} colocou ${nomeJog(pid)} no grupo da missão "${m.titulo}".`});}
+  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} colocou ${nomeJog(pid)} no grupo da missão "${m.titulo}".`});}
 async function sairMissao(id){const m=missoes.get(id);if(!m)return;const mem=(m.membros||[]).filter(x=>x!==myId());
   await missaoWrite(id,mem.length?{membros:mem,lider:m.lider===myId()?mem[0]:m.lider}:{membros:[],lider:null,status:'aberta'});
-  await postMsg('escola-missoes',{tipo:'sistema',texto:`${F.nome} saiu da missão "${m.titulo}".`});}
+  await postMsg(quadroAtual(),{tipo:'sistema',texto:`${F.nome} saiu da missão "${m.titulo}".`});}
 async function concluirMissao(m,local){
   if(!m||m.status!=='andamento')return;
   await missaoWrite(m.id,{status:'concluida',concluida:Date.now()});
@@ -1279,10 +1319,11 @@ async function pagarMissoes(){
 }
 async function gerarMissoes(){
   if(!sample||gerandoMissoes)return;gerandoMissoes=true;renderMissoes();
+  const quadro=raiz(canalAtual)==='kyoto'?'kyoto':'escola';const kyotoQ=quadro==='kyoto';
   const niveis=[...party.values()].map(p=>+p.resumo?.nivel||1);const nv=Math.max(1,...(niveis.length?niveis:[calc().n]));
   const existentes=[...missoes.values()].map(m=>`${m.titulo} (${m.status})`).join('; ');
-  const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros). Crie 3 chamados novos para o quadro de missões da Escola Técnica Jujutsu de Tóquio, para alunos de nível ${nv}.
-Destinos possíveis (use o id): shibuya (Shibuya: cruzamento, estação com subsolos, becos), avenida (Avenida Sakuragawa: comércio, viaduto ferroviário), escola-treino (Sala de Treinos da escola).
+  const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros). Crie 3 chamados novos para o quadro de missões da ${kyotoQ?'Escola Técnica Jujutsu de Kyoto':'Escola Técnica Jujutsu de Tóquio'}, para alunos de nível ${nv}.
+Destinos possíveis (use o id): ${kyotoQ?'gion (Gion e Higashiyama: cidade antiga, templos, casas de chá), kyoto-biblioteca (Biblioteca de Pergaminhos da escola), kyoto-treino (Dojo de Treinos da escola), shibuya (Shibuya, em Tóquio: só às vezes, viagem de Shinkansen)':'shibuya (Shibuya: cruzamento, estação com subsolos, becos), avenida (Avenida Sakuragawa: comércio, viaduto ferroviário), escola-treino (Sala de Treinos da escola), gion (Gion, em Kyoto: só às vezes, viagem de Shinkansen)'}.
 {{CAMPANHA}}
 
 ${direcaoMestre()}
@@ -1294,10 +1335,10 @@ Estas são missões comuns (não são das Semanas dos Olhos): nada de olhos de S
 Regras: grau 4 na maioria (às vezes 3) para nível 1-3. Recompensa do livro: grau 4 = 10 a 30 XP, grau 3 = 31 a 80 XP. Dinheiro entre 10000 e 60000 ienes. Descrição em 1 ou 2 frases, como um chamado oficial, com um gancho de mistério.
 Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""}}]}`;
   try{const res=await chamarIA(prompt,'default');const m=(res.text||'').match(/\{[\s\S]*\}/);const j=JSON.parse(m[0]);
-    for(const x of (j.missoes||[]).slice(0,3)){const destino=locById(x.destino)?x.destino:'shibuya';
+    for(const x of (j.missoes||[]).slice(0,3)){const destino=locById(x.destino)?x.destino:(kyotoQ?'gion':'shibuya');
       if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Ligado ao chamado "${String(x.titulo||'').slice(0,80)}".`}],destino);
-      await missaoCriar({titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:+x.grau===3?3:4,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now()});}
-    await postMsg('escola-missoes',{tipo:'sistema',texto:'Novos chamados foram pregados no quadro.'});
+      await missaoCriar({titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:+x.grau===3?3:4,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now(),quadro});}
+    await postMsg(`${quadro}-missoes`,{tipo:'sistema',texto:'Novos chamados foram pregados no quadro.'});
   }catch{toastChat('Os professores não conseguiram preparar chamados agora. Tente de novo.');}
   finally{gerandoMissoes=false;renderMissoes();}
 }
@@ -1417,7 +1458,7 @@ function assinarCampanha(){if(!db)return;db.doc('config/campanha').onSnapshot(s=
 const direcaoMestre=()=>campanha.notas&&campanha.notas.trim()?`DIREÇÃO DO MESTRE HUMANO (siga): ${campanha.notas.trim()}\n`:'';
 async function lancarSemanaOlhos(sem){
   if(!sample)return 'A IA não está disponível.';
-  const destinos=['shibuya','avenida','shibuya'];const achavel=sem===2?Math.floor(Math.random()*3):-1;
+  const destinos=['shibuya','avenida','gion'];const achavel=sem===2?Math.floor(Math.random()*3):-1;
   const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros).
 {{CAMPANHA}}
 
@@ -1431,8 +1472,9 @@ Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc"
   const lista=(j.missoes||[]).slice(0,3);if(lista.length<3)return 'A IA respondeu com menos de 3 chamados. Tente de novo.';
   for(let i=0;i<3;i++){const x=lista[i];
     if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Contato do chamado "${String(x.titulo||'').slice(0,80)}" (Semana dos Olhos ${sem}).`}],destinos[i]);
-    await missaoCriar({titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now()});}
+    await missaoCriar({titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now(),quadro:'todos'});}
   try{await db.doc('config/campanha').set({...campanha,semana:sem});}catch{}
+  await postMsg('kyoto-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
   await postMsg('escola-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
   return '';
 }
@@ -1446,7 +1488,7 @@ function instrucaoOlho(mm){
 /* Treino de força (Sala de Treinos) */
 function renderTreino(){
   const p=$('#treino-panel');if(!p)return;
-  if(canalAtual!=='escola-treino'||!meu){p.hidden=true;p.innerHTML='';return;}
+  if(locById(canalAtual)?.tipo!=='treino'||!meu){p.hidden=true;p.innerHTML='';return;}
   const T=F.treino||blank().treino;const pronto=T.pronto!==false;const C=calc();
   p.hidden=false;p.innerHTML=`<h2>Treino de força</h2><p class="note" style="margin:0">Cada sessão gasta 4 PE: d20 + perícia contra a CD do treino. 4 sessões boas = +1 permanente (máximo +3). Depois de treinar, só dá para treinar de novo após um descanso intermediário ou longo.</p>
     ${[['luta','Luta'],['pontaria','Pontaria']].map(([k,n])=>`<div class="treino-row"><span><b>${n}</b> +${T[k]||0} · progresso ${T.prog?.[k]||0}/4<br><span class="note">CD ${12+3*(T[k]||0)} · rola d20 ${C.skill[n].v>=0?'+':''}${C.skill[n].v}</span></span><button class="btn small" data-treino="${k}" ${!pronto||(T[k]||0)>=3||meu.estado.pe<4||narrando?'disabled':''}>${(T[k]||0)>=3?'No máximo':'Treinar'}</button></div>`).join('')}
@@ -1555,15 +1597,15 @@ async function descansar(tipo){
 }
 function renderAreas(){
   const bar=$('#areas-bar');if(!bar)return;const id=canalAtual;
-  if(!id||raiz(id)!=='escola'){bar.hidden=true;bar.innerHTML='';return;}
+  const rz=raiz(id);if(!id||!ehEscola(rz)){bar.hidden=true;bar.innerHTML='';return;}
   bar.hidden=false;const cont=a=>[...jogadores.values()].filter(j=>j.local===a).length;
-  const quartos=[quartoId(myId()),...[...jogadores.keys()].map(quartoId),...(id.startsWith('escola-quarto-')?[id]:[])];
-  const lista=[...LOCAIS.filter(l=>l.id==='escola'||l.pai==='escola'),...[...new Set(quartos)].map(locById)];
+  const quartos=[quartoId(myId()),...[...jogadores.keys()].map(k=>quartoId(k)),...(ehQuarto(id)?[id]:[])].filter(q=>raiz(q)===rz);
+  const lista=[...LOCAIS.filter(l=>l.id===rz||l.pai===rz),...[...new Set(quartos)].map(locById)];
   bar.innerHTML=lista.map(l=>`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
-  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(grauDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span>${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}" style="margin-left:auto">Desafiar</button>`:''}</div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
+  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span>${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}" style="margin-left:auto">Desafiar</button>`:''}</div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
   const l=locById(id);
   $('#loc-info').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p class="note" style="margin:0;font-size:13px">${esc(l.desc)}</p><a class="btn small" href="#mapa">Voltar ao mapa</a>`;
 }
@@ -1630,7 +1672,7 @@ function resumoFicha(){
   const per=SKILLS.map(([n])=>`${n} ${C.skill[n].v>=0?'+':''}${C.skill[n].v}${C.skill[n].t?'*':''}`).join(', ');
   return `${F.nome||'Sem nome'} — ${C.raca?.n||'?'}${F.raca==='feto'&&F.fetoVar?` (${F.fetoVar})`:''}, ${F.classe||'sem classe'}, nível ${C.n}, idade ${F.idade}, antecedente ${F.antecedente||'-'}${F.restricao?`, Restrição Celestial ${F.restricao==='fraco'?'Corpo Fraco':'Corpo Celestial'}`:''}.
 Atributos: FOR ${C.a.for}, VEL ${C.a.vel}, CON ${C.a.con}, ESP ${C.a.esp}, SAB ${C.a.sab}, CAR ${C.a.car}. Proficiência +${C.prof}.
-Grau na Escola Jujutsu: ${grauEscola(meu?.pg)} (${+meu?.pg||0} Pontos de Graduação).
+Aluno da ${ESCOLAS[raizDaEscola(escolaDe(myId()))].nome}. Grau: ${grauEscola(meu?.pg)} (${+meu?.pg||0} Pontos de Graduação).
 Experiência: ${xpAtual()} XP${xpInfo().prox?` (próximo nível em ${xpInfo().prox})`:''}.
 Recursos atuais: PV ${meu.estado.pv}/${meu.max.pv}, PA ${meu.estado.pa}/${meu.max.pa}, PE ${meu.estado.pe}/${meu.max.pe}. Deslocamento ${C.desl} m, RD ${C.rd}, dano desarmado ${C.desarm}.
 Perícias (* = treinada): ${per}.
@@ -1656,17 +1698,18 @@ function memoriaCampanha(){
 }
 function detectarViagem(t){
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até|ao|à|na|no)|indo (para|pra)|volto (para|pra)|sigo (para|pra)|entro na|entro no/i.test(t))return null;
-  const sub=[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],['escola-enfermaria',/enfermaria|shoko/i],['escola-professores',/sala dos? professor/i],['escola-missoes',/quadro|mural de miss/i],['escola-treino',/sala de treino|tatame|treinamento/i],['escola',/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
-  if(sub)return sub[0];
+  const atualR=raiz(canalAtual||meu?.local);const er=ehEscola(atualR)?atualR:raizDaEscola(escolaDe(myId()));
+  const sub=[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],[`${er}-enfermaria`,/enfermaria|shoko|curandeiro/i],[`${er}-professores`,/sala dos? professor/i],[`${er}-missoes`,/quadro|mural de miss/i],[`${er}-treino`,/sala de treino|dojo|tatame|treinamento/i],...(er==='kyoto'?[['kyoto-biblioteca',/biblioteca|pergaminho/i]]:[]),[er,/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
+  if(sub&&!/kyoto|quioto|t[óo]quio|tokyo/i.test(t))return sub[0];
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até)|indo (para|pra)|volto (para|pra)|sigo (para|pra)/i.test(t))return null;
-  const m=[['escola',/escola|col[ée]gio|jujutsu/i],['shibuya',/shibuya/i],['avenida',/avenida|sakuragawa|viaduto/i]].find(([,r])=>r.test(t));
+  const m=[['gion',/gion|higashiyama/i],['kyoto',/kyoto|quioto/i],['escola',/t[óo]quio|tokyo/i],['shibuya',/shibuya/i],['avenida',/avenida|sakuragawa|viaduto/i],[er,/escola|col[ée]gio|jujutsu/i]].find(([,r])=>r.test(t));
   return m?m[0]:null;
 }
 async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Confira se você está logado e se a Vercel tem a chave do Gemini configurada.'});return;}
   if(narrando)return;narrando=true;const obs=g.tipo==='observar'||g.tipo==='duelo'||g.tipo==='retorno';if(!obs){$('#chat-thinking').hidden=false;}renderRoll();renderCombate();
   let viajar=null,anteriorTxt='',iniciarDepois=null;
-  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
+  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (aluno de ${escolaCurta(escolaDe(k))}, ${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
   const so=g.sobreRolagem;const txtSobre=g.sobrecarga?(so?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga). O SISTEMA JÁ ROLOU o dano extra: ${so.q}${so.dado} = ${so.dados.join('+')} = ${so.total}. Some EXATAMENTE +${so.total} ao dano que a técnica causaria (em danoInimigos/danoJogadores e na narração) e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:` Ele investe +${g.sobrecarga} PA extra na técnica.`):'';
   const txtDados=(g.dados||[]).length?` Dados que ele escreveu na mensagem, JÁ ROLADOS pelo sistema (use exatamente estes valores, não role de novo nem ignore): ${g.dados.map(d=>`${d.expr} = ${d.total}`).join('; ')}.`:'';
   const gat=g.tipo==='emboscada'?`${F.nome} acabou de chegar a este local${g.anterior?' (antes: '+g.anterior.replace(/\n/g,' | ')+')':''}. ${g.primeira?'Descreva o lugar em 1 ou 2 frases e, em seguida, ':''}EMBOSCADA DO CLÃ ELMOS: caçadores do próprio clã de ${F.nome} (roupas cinza, máscaras de cão de ferro, correntes seladas) surgem para capturá-lo e levá-lo como receptáculo de Cérberus. Eles querem o herdeiro vivo. Narre o cerco de forma tensa (um deles pode dizer algo em "falas"), registre o líder dos caçadores em "npcs" e inicie o combate com "combate" com 1 ou 2 inimigos chamados "Caçador Elmos" (grau 4; grau 3 se o personagem for nível 3 ou mais).`
@@ -1705,7 +1748,7 @@ COMO NARRAR
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
-- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?'Escola · '+(x.quarto?x.curto:x.area):x.nome}${x.id==='escola'?', corredores':''})`).join(', ')}. As áreas da escola (ids que começam com escola-) ficam no mesmo prédio: andar entre elas é rápido. Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+- VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?ESCOLAS[x.pai].nome+' · '+(x.quarto?x.curto:x.area):x.nome}${ehEscola(x.id)?', corredores':''})`).join(', ')}. As áreas de uma escola (ids que começam com escola- para Tóquio e kyoto- para Kyoto) ficam no mesmo terreno: andar entre elas é rápido. Tóquio (escola, shibuya, avenida) e Kyoto (kyoto, gion) ficam a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}
 
@@ -2103,8 +2146,8 @@ async function route(){
   if(!meu)await ensureJogador();
   renderHud();
   if(h==='mapa'){if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;
-    if(meu.local)selLoc=raiz(meu.local);
-    $('#mapa-view').hidden=false;$('#canal-view').hidden=true;$('#areas-bar').hidden=true;$('#world-title').textContent='Tóquio';$('#world-sub').textContent='Escolha para onde ir.';renderMapa();return;}
+    if(meu.local)selLoc=raiz(meu.local);else selLoc=raizDaEscola(escolaDe(myId()));
+    $('#mapa-view').hidden=false;$('#canal-view').hidden=true;$('#areas-bar').hidden=true;$('#world-title').textContent='Tóquio e Kyoto';$('#world-sub').textContent='Escolha para onde ir.';renderMapa();return;}
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
   $('#mapa-view').hidden=true;$('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
