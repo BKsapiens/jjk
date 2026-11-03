@@ -2025,7 +2025,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     if(viajar)anteriorTxt=historico().split('\n').slice(-6).join('\n');
   }catch(err){
     avisoNormal();if(obs)return;
-    toastChat(err?.code==='rate_limited'?'O mestre precisa de um respiro (muitas mensagens seguidas). Espere um pouco e mande de novo.':err?.code==='not_granted'?'O uso da IA não foi permitido nesta visualização.':'O mestre não conseguiu responder agora. Mande a ação de novo.');
+    toastChat(err?.code==='rate_limited'?'O mestre precisa de um respiro (muitas mensagens seguidas). Espere um pouco e mande de novo.':err?.code==='not_granted'?'O uso da IA não foi permitido nesta visualização.':`O mestre não conseguiu responder agora. Mande a ação de novo.${err?.message&&err.message!=='sem conexão com o servidor'?` (detalhe: ${String(err.message).slice(0,200)})`:''}`);
   }finally{narrando=false;$('#chat-thinking').hidden=true;renderRoll();renderCombate();}
   if(iniciarDepois){assinarCombate(id);await iniciarCombate(id,iniciarDepois.inimigos,iniciarDepois.jogadores);}
   if(viajar){await new Promise(r=>setTimeout(r,1200));irPara(viajar,anteriorTxt);}

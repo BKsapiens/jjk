@@ -54,7 +54,6 @@ async function responderClaude(prompt, rapido) {
       body: JSON.stringify({
         model: modelo,
         max_tokens: rapido ? 1024 : 3000,
-        temperature: rapido ? 0.5 : 0.8,
         messages: [{ role: "user", content: prompt }]
       })
     });
