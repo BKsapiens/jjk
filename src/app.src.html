@@ -2911,21 +2911,29 @@ function renderCelFicha(){
     <p class="note" style="margin:6px 0">Técnica: ${esc(C.hasTec&&F.tecnica.nome?F.tecnica.nome:'nenhuma')}${variacoes().filter(x=>x&&x.nome).length?` · Variações: ${esc(variacoes().filter((x,i)=>x&&x.nome&&i<slotsVariacao(C.n)).map(x=>x.nome).join(', '))}`:''}${(F.especiais||[]).length?` · Desbloqueadas: ${esc(F.especiais.map(x=>x.nome).join(', '))}`:''}</p>
     <button class="btn primary" data-celficha="1">Abrir ficha completa</button>`;
 }
-/* Créditos (Ajustes > Créditos). Preencha os nomes aqui. */
+/* Créditos (Ajustes > Créditos) */
 const CREDITOS={
-  sistemaAutor:'[nome do criador do Era dos Feiticeiros]',
-  adaptacao:'[seu nome ou apelido]',
+  colaboradores:[['Gua-Xinim','Desenvolvimento/Suporte'],['BKsapiens','Alteração/Desenvolvimento']],
+  creditos:['OP - RPG','Jujutsu Kaisen (Mangá)','Gege Akutami'],
+  eraFeiticeiros:[['foguinhoq','Criação/Desenvolvimento'],['xcastiel','Desenvolvimento'],['galinasceo','Decoração/Suporte'],['royalbr','Ficha de Jogador']],
 };
 let celCreditos=false;
 function htmlCreditos(){
-  const bloco=(t,txt)=>`<div style="border:1px solid var(--line);padding:10px 12px"><div style="font-family:var(--display);font-size:1.05em;margin-bottom:4px">${t}</div><div style="color:var(--ink);opacity:.82;line-height:1.45">${txt}</div></div>`;
-  return `<div style="display:flex;flex-direction:column;gap:10px">
+  const tit=t=>`<div style="font-family:var(--display);font-size:1.25em;margin-top:6px">${t}</div>`;
+  const pessoa=([n,f])=>`<div><b>${esc(n)}</b> <span style="opacity:.75">(${esc(f)})</span></div>`;
+  const nota=txt=>`<div style="border:1px solid var(--line);padding:10px 12px;color:var(--ink);opacity:.82;line-height:1.45;text-align:left">${txt}</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:8px;text-align:center;line-height:1.5">
     <button class="btn" data-celcfg="voltar" style="align-self:flex-start">‹ Ajustes</button>
-    ${bloco('Sistema de regras',`Baseado no sistema <b>Era dos Feiticeiros</b>, criado por ${esc(CREDITOS.sistemaAutor)}. Versão 0.3, uma adaptação simplificada feita por ${esc(CREDITOS.adaptacao)} com autorização do criador.`)}
-    ${bloco('Campanha e mundo',`História, NPCs e linha do tempo da campanha por ${esc(CREDITOS.adaptacao)}.`)}
-    ${bloco('Mestre de IA',`As narrações são geradas pelo <b>Claude</b>, da Anthropic. A IA pode errar: o mestre humano tem a palavra final.`)}
-    ${bloco('Projeto de fã',`Inspirado em <b>Jujutsu Kaisen</b>, obra de Gege Akutami publicada pela Shueisha. Este é um projeto de fã, gratuito e sem fins lucrativos, sem nenhum vínculo com os detentores dos direitos. Todos os personagens e marcas da obra pertencem aos seus donos.`)}
-    ${bloco('Feito com',`Firebase (contas e dados) e Vercel (hospedagem).`)}
+    ${tit('Colaboradores')}
+    ${CREDITOS.colaboradores.map(pessoa).join('')}
+    ${tit('Créditos')}
+    ${CREDITOS.creditos.map(c=>`<div>${esc(c)}</div>`).join('')}
+    <div style="font-weight:700;margin-top:4px">— Pessoal de Era dos Feiticeiros —</div>
+    ${CREDITOS.eraFeiticeiros.map(pessoa).join('')}
+    <div style="height:6px"></div>
+    ${nota('Sistema baseado no <b>Era dos Feiticeiros</b>, adaptado para a versão 0.3 com autorização do criador.')}
+    ${nota('As narrações são geradas pelo <b>Claude</b>, da Anthropic. A IA pode errar: o mestre humano tem a palavra final.')}
+    ${nota('Projeto de fã, gratuito e sem fins lucrativos, sem vínculo com os detentores dos direitos de Jujutsu Kaisen. Personagens e marcas da obra pertencem aos seus donos.')}
   </div>`;
 }
 function renderCelConfig(){
