@@ -424,7 +424,8 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .car-chao::before{content:"";position:absolute;left:0;right:0;top:-4px;height:4px;background:#fff}
 .andante{position:absolute;bottom:0;height:var(--h,78%);left:0;animation:andar var(--dur,9s) linear var(--atraso,0s) infinite;will-change:transform}
 .andante img{height:100%;width:auto;display:block;animation:passo .45s ease-in-out infinite alternate;filter:drop-shadow(5px 4px 0 rgba(0,0,0,.35))}
-.andante.esq img{transform:scaleX(-1)}
+.andante img{transform:scaleX(-1)}
+.andante.esq img{transform:none}
 .andante.esq{animation-name:andarEsq}
 .andante.conhecido img{filter:drop-shadow(5px 4px 0 rgba(0,0,0,.55)) drop-shadow(0 0 0 #000)}
 @keyframes andar{from{transform:translateX(-30vw)}to{transform:translateX(calc(var(--larg,1200px) + 10vw))}}
@@ -2766,7 +2767,7 @@ function mostrarCarregando(id,precisaNarrar){
   const r=Math.random();if(r<0.30)lista.push({k:Math.random()<0.5?'gojo':'itadori',conhecido:true});if(r<0.06)lista.push({k:'gojo',conhecido:true},{k:'itadori',conhecido:true});
   const larg=box.parentElement.clientWidth||1000;
   $('#car-cena').innerHTML=lista.sort(()=>Math.random()-.5).map((a,i)=>{const prof=0.6+Math.random()*0.4;const dur=(7+Math.random()*7)/(prof);const esq=Math.random()<0.5;
-    return `<div class="andante${esq?' esq':''}${a.conhecido?' conhecido':''}" style="--h:${Math.round(38+prof*30)}%;--dur:${dur.toFixed(1)}s;--atraso:-${(Math.random()*dur).toFixed(1)}s;--larg:${larg}px;--x0:${Math.round(Math.random()*80)}vw;z-index:${Math.round(prof*10)};opacity:${(0.75+prof*0.25).toFixed(2)}"><img src="${ANDANTES[a.k]}" alt="" draggable="false"></div>`;}).join('');
+    return `<div class="andante${esq?' esq':''}${a.conhecido?' conhecido':''}" style="--h:${Math.round(54+prof*34)}%;--dur:${dur.toFixed(1)}s;--atraso:-${(Math.random()*dur).toFixed(1)}s;--larg:${larg}px;--x0:${Math.round(Math.random()*80)}vw;z-index:${Math.round(prof*10)};opacity:${(0.75+prof*0.25).toFixed(2)}"><img src="${ANDANTES[a.k]}" alt="" draggable="false"></div>`;}).join('');
   box.classList.remove('saindo');box.hidden=false;
   carreg={id,t0:Date.now(),precisa:!!precisaNarrar,msgs:false,narrou:false};
   clearInterval(carregTimer);carregTimer=setInterval(checarCarregando,300);
