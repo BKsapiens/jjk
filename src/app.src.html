@@ -299,6 +299,7 @@ body.sem-animacao .cel-mao,body.sem-animacao .cel-fundo{transition:none}
 .cel-grade{gap:34px 14px!important}
 body.texto-grande .chat-log{font-size:17px}
 body:has(#view-mundo:not([hidden])) #btn-sair{display:none}
+@media (max-width:760px){#btn-sair{position:static!important;display:block;margin:24px auto 30px;opacity:1}}
 
 @media (max-width:900px){.canal-grid{grid-template-columns:1fr}}
 .chat{border:1px solid var(--line);border-radius:10px;background:var(--ink-2);display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:460px}
@@ -414,6 +415,14 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .missao .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .missao select{width:auto;padding:4px 8px;font-size:13px}
 .empty-chat{color:var(--ash);font-size:14px;margin:auto;text-align:center;max-width:44ch}
+/* página da técnica */
+.tec-wrap{max-width:900px}
+.variacoes{display:flex;flex-direction:column;gap:14px;margin-top:10px}
+.var-card{border:1px solid var(--line);border-left:4px solid var(--seal);border-radius:10px;padding:14px;background:var(--ink);display:flex;flex-direction:column;gap:10px}
+.var-card.travada{opacity:.55;border-left-color:var(--line)}
+.var-card h3{margin:0;font-size:17px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.var-card .mod-texto{font-size:13px;color:var(--ash);background:var(--ink-2);border:1px dashed var(--line);border-radius:8px;padding:8px 10px}
+.tec-resumo{display:flex;flex-direction:column;gap:8px}
 /* mapa arrastável */
 #map{touch-action:none;cursor:grab}#map:active{cursor:grabbing}
 .map-frame{position:relative}
@@ -626,7 +635,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 
     <section class="step" id="s-tecnica">
       <h2><span class="n">08</span>Técnica Inata</h2>
-      <div id="tecnica-body"></div>
+      <div id="tecnica-resumo"></div>
       <div id="especiais-body"></div>
     </section>
 
@@ -696,6 +705,22 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <div class="panel" id="roll-panel"></div>
       </div>
     </div>
+  </div>
+</div>
+
+<div id="view-tecnica" hidden>
+  <div class="world-wrap tec-wrap">
+    <header class="world-top">
+      <div class="hanko small" aria-hidden="true">術</div>
+      <div><h1>Técnica Inata</h1><p class="note" style="margin:0" id="tec-sub"></p></div>
+      <a class="btn small" href="#ficha">‹ Voltar à ficha</a>
+      <button class="btn small primary" type="button" id="btn-tec-salvar">Salvar ficha</button>
+      <span class="status" id="tec-status" role="status"></span>
+    </header>
+    <section class="panel tec-base"><h2>Base da técnica</h2><div id="tecnica-body"></div></section>
+    <section class="panel"><h2>Variações</h2>
+      <p class="note" style="margin:0">Pelo livro, a cada 3 níveis (3, 6, 9, 12…) você ganha espaço para uma variação: um efeito novo com regra própria em cima da base. Escolha um modificador do capítulo 6.2 ou descreva uma variação temática, e valide com a IA.</p>
+      <div id="variacoes-body" class="variacoes"></div></section>
   </div>
 </div>
 
@@ -1133,10 +1158,10 @@ function renderAll(){
   const C=calc();
   $('#idade-efeito').innerHTML=esc(C.idade.txt);
   $('#armaprof-box').innerHTML=F.armaProf?`<label class="f" for="f-armanome">Arma<input type="text" id="f-armanome" data-bind="armaNome" value="${esc(F.armaNome)}" placeholder="Ex.: Katana, Pistola"></label>`:'';
-  renderRaca();renderAttrs(C);renderClasse(C);renderAnt(C);renderTraits();renderSkills(C);renderTecnica(C);renderEspeciais();renderEquip(C);renderItens();renderSheet(C);
+  renderRaca();renderAttrs(C);renderClasse(C);renderAnt(C);renderTraits();renderSkills(C);renderTecnica(C);renderTecResumo(C);renderVariacoes(C);renderEspeciais();renderEquip(C);renderItens();renderSheet(C);
   saveDraft();
 }
-function refreshLight(){const C=calc();$('#idade-efeito').innerHTML=esc(C.idade.txt);renderAttrs(C);renderSkills(C);renderTecnica(C);renderEquip(C);renderSheet(C);saveDraft();}
+function refreshLight(){const C=calc();$('#idade-efeito').innerHTML=esc(C.idade.txt);renderAttrs(C);renderSkills(C);renderTecnica(C);renderTecResumo(C);renderEquip(C);renderSheet(C);saveDraft();}
 
 /* ---------- Eventos ---------- */
 document.addEventListener('input',e=>{
@@ -1207,6 +1232,65 @@ function loadFicha(o){
 }
 
 /* ---------- IA: validação da técnica ---------- */
+/* ---------- Variações da Técnica Inata (a cada 3 níveis) ---------- */
+const slotsVariacao=n=>Math.floor(Math.max(1,+n||1)/3);
+function variacoes(){if(!Array.isArray(F.tecnica.variacoes))F.tecnica.variacoes=[];return F.tecnica.variacoes;}
+function renderTecResumo(C){
+  const box=$('#tecnica-resumo');if(!box)return;const t=F.tecnica;
+  if(!C.hasTec){box.innerHTML=`<p class="lead">${F.raca?'Este personagem não tem Técnica Inata pelas escolhas atuais (raça, variante ou Restrição Celestial).':'Escolha a raça primeiro. Humano com Técnica e Feto Completo criam uma técnica.'}</p>`;return;}
+  const v=t.validacao;const sl=slotsVariacao(C.n);const vs=variacoes().filter(x=>x&&x.nome);
+  box.innerHTML=`<div class="tec-resumo"><p class="lead" style="margin:0">A técnica tem uma página própria: base, habilidade única e as variações que você ganha a cada 3 níveis.</p>
+    <div class="var-card"><h3>${esc(t.nome||'Técnica sem nome')}${v?`<span class="pill ${v.veredito==='aprovada'?'ok':'warn'}">${{aprovada:'aprovada',ajustar:'precisa de ajuste',rejeitada:'rejeitada'}[v.veredito]||''}</span>`:'<span class="pill warn">não validada</span>'}</h3>
+      <p class="note" style="margin:0">${esc((t.descricao||'Ainda sem funcionamento descrito.').slice(0,220))}${(t.descricao||'').length>220?'…':''}</p>
+      <p class="note" style="margin:0">Variações: <b>${vs.length}</b> de <b>${sl}</b> espaço(s) no nível ${C.n}${sl?'':' (a primeira libera no nível 3)'}.</p></div>
+    <a class="btn primary" href="#tecnica" style="align-self:flex-start">Abrir página da técnica</a></div>`;
+}
+function renderVariacoes(C){
+  const box=$('#variacoes-body');if(!box)return;
+  if(!C.hasTec){box.innerHTML='<p class="note">Sem Técnica Inata, não há variações.</p>';return;}
+  const ae=document.activeElement;if(ae&&box.contains(ae)&&(ae.tagName==='INPUT'||ae.tagName==='TEXTAREA'))return;
+  const sl=slotsVariacao(C.n);const vs=variacoes();const total=Math.max(sl,vs.filter(x=>x&&x.nome).length);
+  const mods=DATA.modificadores||[];let h='';
+  for(let i=0;i<total;i++){const x=vs[i]||{};const acima=i>=sl;const v=x.validacao;
+    h+=`<div class="var-card"><h3><span>Variação ${i+1} <span class="note" style="font-size:13px">liberada no nível ${3*(i+1)}</span></span>${acima?'<span class="pill warn">acima do seu nível</span>':v?`<span class="pill ${v.veredito==='aprovada'?'ok':'warn'}">${{aprovada:'aprovada',ajustar:'precisa de ajuste',rejeitada:'rejeitada'}[v.veredito]||''}</span>`:''}</h3>
+      <div class="grid g2"><label class="f" for="v-nome-${i}">Nome<input type="text" id="v-nome-${i}" data-vbind="${i}|nome" value="${esc(x.nome||'')}" placeholder="Ex.: Grampo de Cabelo"></label>
+        <label class="f" for="v-mod-${i}">Modificador do livro (6.2)<select id="v-mod-${i}" data-vbind="${i}|modificador"><option value="">Variação temática (sem modificador da lista)</option>${mods.map(m=>`<option ${x.modificador===m.nome?'selected':''}>${esc(m.nome)}</option>`).join('')}</select></label>
+        <label class="f" for="v-tipo-${i}">Duração<select id="v-tipo-${i}" data-vbind="${i}|tipo">${['Instantânea','Concentrada','Sustentada'].map(o=>`<option ${x.tipo===o?'selected':''}>${o}</option>`).join('')}</select></label>
+        <label class="f" for="v-custo-${i}">Custo<input type="text" id="v-custo-${i}" data-vbind="${i}|custo" value="${esc(x.custo||'')}" placeholder="Ex.: 4 PA, Ação Padrão"></label></div>
+      ${x.modificador&&mods.find(m=>m.nome===x.modificador)?`<div class="mod-texto">${esc(mods.find(m=>m.nome===x.modificador).texto)}</div>`:''}
+      <label class="f" for="v-desc-${i}">Como funciona<textarea id="v-desc-${i}" data-vbind="${i}|descricao" placeholder="O que a variação faz em cima da base: efeito, alcance, teste do alvo, dano (lembre que o dado pode ser reduzido em passos)...">${esc(x.descricao||'')}</textarea></label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn" type="button" data-vvalidar="${i}" ${!x.nome||!x.descricao?'disabled':''}>Validar com a IA</button><span class="status" id="v-status-${i}"></span>
+        ${acima||vs.length>sl?`<button class="btn small" type="button" data-vapagar="${i}">Apagar variação</button>`:''}</div>
+      ${v?`<div class="ai-box show"><h4 class="verdict ${esc(v.veredito)}">${esc({aprovada:'Aprovada',ajustar:'Precisa de ajuste',rejeitada:'Rejeitada'}[v.veredito]||v.veredito)}</h4>${(v.motivos||[]).length?`<ul>${v.motivos.map(m=>`<li>${esc(m)}</li>`).join('')}</ul>`:''}${v.sugestao&&v.sugestao.descricao&&v.veredito!=='aprovada'?`<div><b>Versão sugerida</b><p style="margin:4px 0">${esc(v.sugestao.descricao)}${v.sugestao.custo?` <i>(custo: ${esc(v.sugestao.custo)})</i>`:''}</p><button class="btn small" type="button" data-vsugestao="${i}">Usar a versão sugerida</button></div>`:''}</div>`:''}</div>`;}
+  for(let k=0;k<2;k++){const i=total+k;h+=`<div class="var-card travada"><h3><span>Variação ${i+1}</span><span class="pill">nível ${3*(i+1)}</span></h3><p class="note" style="margin:0">Libera quando ${esc(F.nome||'o personagem')} chegar ao nível ${3*(i+1)}.</p></div>`;}
+  box.innerHTML=h;
+}
+async function validarVariacao(i){
+  const C=calc();const x=variacoes()[i];const st=$('#v-status-'+i);if(!x||!x.nome||!x.descricao)return;
+  if(!sample){st.textContent='A IA não está disponível aqui.';return;}
+  const mod=(DATA.modificadores||[]).find(m=>m.nome===x.modificador);const t=F.tecnica;
+  st.textContent='A IA está lendo a variação...';
+  const prompt=`Você é o mestre de um RPG de Jujutsu Kaisen com o livro "Era dos Feiticeiros 0.3". Avalie se esta VARIAÇÃO de Técnica Inata é aceitável.
+REGRAS: a cada 3 níveis (a partir do 3) o jogador ganha uma variação, que adiciona um efeito com regra própria em cima da base temática. A variação precisa combinar com a base. Medidas do personagem (nível ${C.n}, Espírito ${C.a.esp}): linha ${C.tec.linha} m, área ${C.tec.area} m, cone ${C.tec.cone} m, CD ${C.tec.cd}, limite ${C.tec.limite} PA por ativação. Instantânea: efeito no ato. Concentrada: dano reduzido em 1 passo, alvos repetem testes no fim do turno, máximo 10 turnos, uma por vez. Sustentada: PA fica preso enquanto ativa, uma por vez. Escala de dano: 1d4, 1d6, 1d8, 1d10, 1d12, 2d8 (teto). Rejeite efeitos que vencem a luta sozinhos no nível atual.
+${mod?`MODIFICADOR DO LIVRO ESCOLHIDO: ${mod.nome}. ${mod.texto}
+A variação deve seguir o custo e o efeito desse modificador.`:'Variação temática (sem modificador da lista): compare com os modificadores do livro (Técnica Ofensiva: 1 PA por dado de dano; Causar Condições; Aumento de CD: 4 PA; Bônus de Dano; Teleporte: 4 PA por salto; etc.) e cobre um custo equivalente.'}
+TÉCNICA BASE: ${t.nome} — ${t.descricao}${t.habilidadeUnica?` | Habilidade Única: ${t.habilidadeUnica}`:''}
+VARIAÇÕES JÁ EXISTENTES: ${variacoes().filter((y,j)=>j!==i&&y&&y.nome).map(y=>`${y.nome} (${y.custo||'?'}): ${y.descricao}`).join(' || ')||'nenhuma'}
+VARIAÇÃO AVALIADA: ${x.nome} · ${x.tipo||'Instantânea'} · custo ${x.custo||'não informado'} — ${x.descricao}
+Responda SOMENTE com JSON: {"veredito":"aprovada"|"ajustar"|"rejeitada","motivos":["frases curtas"],"sugestao":{"descricao":"versão ajustada, se não aprovada","custo":"custo ajustado"}}`;
+  try{const res=await chamarIA(prompt,'default');const j=lerJSON(res.text);
+    x.validacao={veredito:j.veredito,motivos:j.motivos||[],sugestao:j.sugestao||null,quando:Date.now()};saveDraft();st.textContent='';renderVariacoes(calc());renderTecResumo(calc());}
+  catch(e){st.textContent='A IA não conseguiu avaliar agora. Tente de novo.';}
+}
+document.addEventListener('input',e=>{const el=e.target;if(!el.dataset||!el.dataset.vbind)return;const [i,k]=el.dataset.vbind.split('|');const vs=variacoes();while(vs.length<=+i)vs.push({});
+  vs[+i][k]=el.value;if(k!=='tipo')delete vs[+i].validacao;saveDraft();renderTecResumo(calc());
+  if(el.tagName==='SELECT'){el.blur();renderVariacoes(calc());}
+  const b=document.querySelector(`[data-vvalidar="${i}"]`);if(b)b.disabled=!vs[+i].nome||!vs[+i].descricao;});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-vvalidar],[data-vsugestao],[data-vapagar],#btn-tec-salvar');if(!b)return;
+  if(b.dataset.vvalidar!==undefined){validarVariacao(+b.dataset.vvalidar);return;}
+  if(b.dataset.vsugestao!==undefined){const x=variacoes()[+b.dataset.vsugestao];if(x&&x.validacao?.sugestao){x.descricao=x.validacao.sugestao.descricao||x.descricao;if(x.validacao.sugestao.custo)x.custo=x.validacao.sugestao.custo;delete x.validacao;saveDraft();renderVariacoes(calc());}return;}
+  if(b.dataset.vapagar!==undefined){variacoes().splice(+b.dataset.vapagar,1);saveDraft();renderVariacoes(calc());renderTecResumo(calc());return;}
+  if(b.id==='btn-tec-salvar'){salvar().then(()=>{$('#tec-status').textContent=$('#save-status').textContent;});return;}});
 async function validarTecnica(){
   const st=$('#ai-status');const t=F.tecnica;
   if(!t.nome.trim()||!t.descricao.trim()){st.textContent='Preencha nome e funcionamento primeiro.';return;}
@@ -2108,7 +2192,7 @@ Recursos atuais: PV ${meu.estado.pv}/${meu.max.pv}, PA ${meu.estado.pa}/${meu.ma
 Perícias (* = treinada): ${per}.
 ${(()=>{const a=DATA.antecedentes.find(x=>x.nome===F.antecedente);return a?`Antecedente ${a.nome}: ${a.desc} Traços: ${a.tracos.map(t=>t.nome+' — '+t.texto).join(' | ')}\n`:'';})()}Habilidade de classe nível 1: ${C.classe?`${C.classe.l1.nome} — ${C.classe.l1.texto}`:'-'}. Habilidades simples: ${F.simples.join(', ')||'-'}.
 Vantagens: ${F.vantagens.join(', ')||'-'}. Desvantagens: ${F.desvantagens.join(', ')||'-'}. ${F.traitNotas?`Notas: ${F.traitNotas}`:''}
-${(F.especiais||[]).length?`Técnicas avançadas DESBLOQUEADAS PELO MESTRE (valem mesmo fora das regras normais de criação; use o custo indicado e a CD ${C.tec.cd}): ${F.especiais.map(e=>`${e.nome}${e.custo?` [${e.custo}]`:''}${e.fonte?` (origem: ${e.fonte})`:''} — ${e.descricao}`).join(' || ')}\n`:''}Técnica Inata: ${C.hasTec&&t.nome?`${t.nome} — ${t.descricao}${t.habilidadeUnica?` | Habilidade Única: ${t.habilidadeUnica}`:''} (CD ${C.tec.cd}, linha ${C.tec.linha} m, área ${C.tec.area} m, cone ${C.tec.cone} m, máximo ${C.tec.limite} PA por ativação)`:'nenhuma'}.
+${(F.especiais||[]).length?`Técnicas avançadas DESBLOQUEADAS PELO MESTRE (valem mesmo fora das regras normais de criação; use o custo indicado e a CD ${C.tec.cd}): ${F.especiais.map(e=>`${e.nome}${e.custo?` [${e.custo}]`:''}${e.fonte?` (origem: ${e.fonte})`:''} — ${e.descricao}`).join(' || ')}\n`:''}Técnica Inata: ${C.hasTec&&t.nome?`${t.nome} — ${t.descricao}${t.habilidadeUnica?` | Habilidade Única: ${t.habilidadeUnica}`:''} (CD ${C.tec.cd}, linha ${C.tec.linha} m, área ${C.tec.area} m, cone ${C.tec.cone} m, máximo ${C.tec.limite} PA por ativação)${variacoes().filter((x,i)=>x&&x.nome&&x.descricao&&i<slotsVariacao(C.n)).length?`. Variações da técnica: ${variacoes().filter((x,i)=>x&&x.nome&&x.descricao&&i<slotsVariacao(C.n)).map(x=>`${x.nome} [${x.tipo||'Instantânea'}${x.custo?', '+x.custo:''}]${x.modificador?` (modificador ${x.modificador})`:''} — ${x.descricao}`).join(' || ')}`:''}`:'nenhuma'}.
 ${C.reversa?`Energia Reversa (maestria da Família Gojo): cura ${C.reversa.dados}${C.reversa.dado} PV em um alvo com Ação Padrão (em si mesmo pode ser Ação Bônus), custo 1 PA por dado (${C.reversa.custo} PA). Fetos Amaldiçoados não podem ser curados por ela.\n`:''}História: ${F.historia||'-'}`;
 }
 function historico(){
@@ -2773,7 +2857,7 @@ function renderCelFicha(){
   $('#cel-ficha').innerHTML=`<h2 style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</h2><p class="note" style="margin:0">${esc([C.raca?.n,C.classe?.nome,F.antecedente].filter(Boolean).join(' · '))} · nível ${C.n} · ${esc(identDe(myId()))}</p>
     <div class="pools" style="margin:6px 0"><div class="pool pv"><div class="k">PV</div><div class="v">${e.pv??C.pv}/${m.pv??C.pv}</div></div><div class="pool pa"><div class="k">PA</div><div class="v">${e.pa??C.pa}/${m.pa??C.pa}</div></div><div class="pool pe"><div class="k">PE</div><div class="v">${e.pe??C.pe}/${m.pe??C.pe}</div></div></div>
     <div class="mini-attrs">${ATTRS.map(x=>`<div><span>${ABBR[x.k]}</span><b>${C.a[x.k]}</b></div>`).join('')}</div>
-    <p class="note" style="margin:6px 0">Técnica: ${esc(C.hasTec&&F.tecnica.nome?F.tecnica.nome:'nenhuma')}${(F.especiais||[]).length?` · Desbloqueadas: ${esc(F.especiais.map(x=>x.nome).join(', '))}`:''}</p>
+    <p class="note" style="margin:6px 0">Técnica: ${esc(C.hasTec&&F.tecnica.nome?F.tecnica.nome:'nenhuma')}${variacoes().filter(x=>x&&x.nome).length?` · Variações: ${esc(variacoes().filter((x,i)=>x&&x.nome&&i<slotsVariacao(C.n)).map(x=>x.nome).join(', '))}`:''}${(F.especiais||[]).length?` · Desbloqueadas: ${esc(F.especiais.map(x=>x.nome).join(', '))}`:''}</p>
     <button class="btn primary" data-celficha="1">Abrir ficha completa</button>`;
 }
 function renderCelConfig(){
@@ -2806,7 +2890,9 @@ async function route(){
   const h=location.hash.slice(1);
   const adm=h==='admin';
   $('#view-admin').hidden=!adm;
-  if(adm){$('#view-ficha').hidden=true;$('#view-mundo').hidden=true;renderAdmin();return;}
+  const tecV=h==='tecnica';$('#view-tecnica').hidden=!tecV;
+  if(adm){$('#view-ficha').hidden=true;$('#view-mundo').hidden=true;$('#view-tecnica').hidden=true;renderAdmin();return;}
+  if(tecV){$('#view-ficha').hidden=true;$('#view-mundo').hidden=true;fecharCel(true);fecharMapa();const C=calc();$('#tec-sub').textContent=`${F.nome||'Sem nome'} · nível ${C.n} · ${slotsVariacao(C.n)} espaço(s) de variação`;$('#tec-status').textContent='';renderTecnica(C);renderVariacoes(C);window.scrollTo({top:0});return;}
   const mundo=h==='mapa'||h.startsWith('local-');
   $('#view-ficha').hidden=mundo;$('#view-mundo').hidden=!mundo;
   if(!mundo){fecharCel(true);fecharMapa();if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;return;}
