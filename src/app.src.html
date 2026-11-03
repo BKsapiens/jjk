@@ -295,7 +295,7 @@ body.sem-animacao .cel-mao,body.sem-animacao .cel-fundo{transition:none}
 .cel-grade{gap:34px 14px!important}
 body.texto-grande .chat-log{font-size:17px}
 body:has(#view-mundo:not([hidden])) #btn-sair{display:none}
-@media (max-width:760px){.cel-mao{width:180vw;left:62%}.cel-tela{font-size:13px}}
+
 @media (max-width:900px){.canal-grid{grid-template-columns:1fr}}
 .chat{border:1px solid var(--line);border-radius:10px;background:var(--ink-2);display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:460px}
 .chat-log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -410,6 +410,79 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .missao .acts{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .missao select{width:auto;padding:4px 8px;font-size:13px}
 .empty-chat{color:var(--ash);font-size:14px;margin:auto;text-align:center;max-width:44ch}
+/* ---------- Celular (aparelho de verdade): layout próprio ---------- */
+.so-mob{display:none}
+@media (max-width:760px){
+  .so-mob{display:inline-flex}
+  body{font-size:15px}
+  .world-wrap{padding:8px 10px 0;gap:8px;max-width:none}
+  #view-mundo .world-wrap{height:100dvh;overflow:hidden;padding-bottom:0}
+  #view-mundo #canal-view:not([hidden]){flex:1;min-height:0}
+  .side .panel{max-height:38dvh;overflow:auto}
+  .world-top{gap:8px;padding-bottom:8px;flex-wrap:nowrap;align-items:center}
+  .world-top .hanko{display:none}
+  .world-top>div:not(.hud){min-width:0;flex:1}
+  #world-title{font-size:17px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #world-sub{display:none}
+  .hud{width:auto;flex:0 0 46%;padding:6px 8px;gap:3px;border-radius:8px}
+  .hud .nm{font-size:13px;flex-direction:column;align-items:flex-start;gap:0;line-height:1.1}
+  .hud .nm small{font-size:10px}
+  .bar{grid-template-columns:20px 1fr 42px;gap:4px;font-size:10px}
+  .bar .track{height:6px}
+  .bar.xp{display:none}
+  .areas{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -10px;padding:0 10px 2px}
+  .areas::-webkit-scrollbar{display:none}
+  .areas button{flex:0 0 auto;padding:6px 10px}
+  .canal-grid{display:flex;flex-direction:column;gap:8px}
+  .side{order:-1;gap:8px}
+  .side .panel{padding:10px}
+  .side #roll-panel{display:none}
+  body.rolar-aberto .side #roll-panel{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:38;border-radius:14px 14px 0 0;border:0;border-top:3px solid #d3121c;box-shadow:0 -10px 30px rgba(0,0,0,.6);padding:14px 14px calc(14px + env(safe-area-inset-bottom));max-height:70dvh;overflow:auto}
+  body.rolar-aberto::after{content:"";position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:37}
+  .canal-grid>*,.chat-form,.chat-opts,.chat-row{min-width:0;max-width:100%}
+  .chat{width:calc(100% + 20px);max-width:none;flex:1;height:auto;min-height:0;border-radius:8px 8px 0 0;border-left:0;border-right:0;border-bottom:0;margin:0 -10px}
+  .chat-log{padding:10px;gap:10px}
+  .msg{font-size:14.5px;max-width:100%}
+  .msg.mestre .body{font-size:15px}
+  .msg.jogador .body{max-width:92%}
+  .chat-form{padding:8px 8px calc(8px + env(safe-area-inset-bottom));gap:6px}
+  .chat-opts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:6px}
+  .chat-opts::-webkit-scrollbar{display:none}
+  .chat-opts>*{flex:0 0 auto}
+  .chat-opts .seg{min-width:0}
+  .chat-opts .seg button{padding:6px 9px;font-size:12.5px;white-space:nowrap}
+  .chat-opts .btn{white-space:nowrap}
+  .chat-row textarea{min-height:44px;font-size:16px}
+  .chat-row .btn{padding:0 14px}
+  /* botão Seu celular vira um botão flutuante */
+  .p5-cel{position:fixed;right:10px;bottom:calc(158px + env(safe-area-inset-bottom));z-index:30;padding:9px 12px 9px 9px;font-size:15px;gap:7px;box-shadow:4px 4px 0 #000,4px 4px 0 2px #fff}
+  .p5-cel-ico{width:30px;height:30px}
+  .p5-cel-txt b{font-size:10px}
+  body.rolar-aberto .p5-cel{display:none}
+  /* o celular ocupa a tela, sem a mão */
+  .cel-mao{left:0;right:0;bottom:0;top:0;width:auto;aspect-ratio:auto;transform:translateY(105%) rotate(-6deg);transform-origin:50% 100%}
+  .cel.show .cel-mao{transform:none}
+  .cel-mao img{display:none}
+  .cel-mascara{-webkit-mask-image:none;mask-image:none;position:absolute;inset:8px 8px 0;background:#d3121c;border:5px solid #000;border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 0 0 3px #fff}
+  .cel-tela{position:absolute;inset:0;width:auto;height:auto;transform:none;padding:10px 12px 0;font-size:15px}
+  .cel-topo h2{font-size:24px!important}
+  .cel-bt{width:40px!important;height:40px!important;font-size:20px!important}
+  .cel-hora{font-size:14px!important}
+  .cel .cel-app:not([data-app="home"]){zoom:1.08}
+  .cel-corpo{padding:10px 2px calc(40px + env(safe-area-inset-bottom)) 0}
+  .cel-grade{gap:22px 8px!important;padding:16px 0!important}
+  .cel-ic .q{width:74px!important;height:74px!important;font-size:36px!important}
+  .cel-ic span{font-size:13px!important}
+  .cel-badge{min-width:26px;height:26px;font-size:13px!important}
+  .dm-log{max-height:52dvh}
+  /* mapa em tela cheia */
+  .mapa-tela{padding:10px}
+  .mapa-topo h2{font-size:24px}
+  .mapa-tela .mapa-grid{grid-template-columns:1fr;gap:10px}
+  .mapa-tela .map-frame,.mapa-tela #map{max-height:none}
+  #map .node .ico>g{transform:none!important}
+  .modal .box{width:calc(100vw - 20px)}
+}
 </style>
 </head>
 <body>
@@ -575,6 +648,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <form class="chat-form" id="chat-form">
           <div class="chat-opts">
             <div class="seg" role="group" aria-label="Para quem é a mensagem"><button type="button" data-para="mestre" class="on">Para o mestre</button><button type="button" data-para="jogadores">Para os jogadores</button></div>
+            <button type="button" class="btn small so-mob" id="btn-rolar-m" aria-controls="roll-panel">🎲 Rolar teste</button>
             <button type="button" class="btn small" id="btn-anexar">Anexar rolagem</button>
             <div id="anexo-box" class="anexo"></div>
             <label class="sobre" id="sobre-wrap" for="chat-sobre" hidden title="Regra da casa: cada PA extra dá +1 dado de dano da técnica, rolado pelo sistema">PA extra na técnica <input type="number" id="chat-sobre" min="0" step="1" value="0"><select id="chat-sobre-dado" aria-label="Qual técnica recebe a sobrecarga" hidden style="width:auto;max-width:170px"></select></label>
@@ -1891,8 +1965,10 @@ function pedidoPendente(){
     if(m.tipo==='mestre'&&!m.fora&&m.alvoId===(uid||'eu'))return null;}
   return null;
 }
+(()=>{const mq=window.matchMedia('(max-width:760px)');const ap=()=>{const t=document.getElementById('chat-input');if(t&&paraQuem==='mestre')t.placeholder=mq.matches?'O que seu personagem faz ou fala?':'Descreva o que seu personagem faz ou fala... (Enter envia, Shift+Enter quebra linha)';};try{mq.addEventListener('change',ap);}catch{}setTimeout(ap,0);})();
 function renderRoll(){
   const C=calc();const ped=pedidoPendente();
+  {const bm=$('#btn-rolar-m');if(bm){bm.textContent=ped?`🎲 Rolar ${ped.pericia}`:'🎲 Rolar teste';bm.classList.toggle('primary',!!ped);}}
   if(ped&&SKILLS.some(s=>s[0]===ped.pericia))rollSkill=ped.pericia;
   const sk=C.skill[rollSkill];
   $('#roll-panel').innerHTML=`<h2>Rolar teste</h2>
@@ -2621,6 +2697,11 @@ async function enviarDM(){
   catch{ta.value=t;toastChat('Não consegui mandar a mensagem. Confira se as regras novas do Firestore foram publicadas.');}
   finally{dmEnviando=false;renderDM();const t2=$('#dm-texto');t2&&t2.focus();}
 }
+document.addEventListener('click',e=>{
+  if(e.target.closest('#btn-rolar-m')){document.body.classList.toggle('rolar-aberto');return;}
+  if(document.body.classList.contains('rolar-aberto')&&!e.target.closest('#roll-panel')){document.body.classList.remove('rolar-aberto');}
+  if(e.target.closest('#btn-rolar')&&document.body.classList.contains('rolar-aberto'))setTimeout(()=>document.body.classList.remove('rolar-aberto'),50);
+});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-dmabrir],[data-dmvoltar]');if(!b)return;
   if(b.dataset.dmabrir){dmAberto=b.dataset.dmabrir;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
   if(b.dataset.dmvoltar){dmAberto=null;renderDM();}});
