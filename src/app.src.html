@@ -224,6 +224,16 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .anexo .seg button{padding:4px 8px;font-size:12px}
 .msg .para{font-size:11px;border:1px solid var(--line);border-radius:999px;padding:0 7px;color:var(--cursed)}
 .msg.jogador.aos .body{border-style:dashed}
+.msg .meta .nm{font-weight:700}
+.grau{font-size:10.5px;border:1px solid var(--line);border-radius:999px;padding:0 6px;color:var(--ash);font-weight:600;white-space:nowrap}
+.msg.npc{border-left:3px solid var(--npc,#8a7f8c);padding-left:12px}
+.msg.npc .meta b{font-family:var(--display)}
+.msg.npc .body{font-family:var(--display);font-weight:600;line-height:1.6;font-size:15px}
+.msg.npc .body p:first-child::before{content:"“"}.msg.npc .body p:last-child::after{content:"”"}
+.npc-item{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--ink);display:flex;flex-direction:column;gap:4px}
+.npc-item ul{margin:2px 0 0;padding-left:18px;font-size:13px;color:var(--ash)}
+.treino-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.pix{display:grid;grid-template-columns:minmax(0,1fr) 100px auto;gap:6px;align-items:end}
 .att{display:inline-flex;gap:8px;align-items:center;margin-top:6px;border:1px dashed var(--line);border-radius:8px;padding:4px 10px;background:var(--ink);font-size:14px}
 .att .d20{font-family:var(--display);font-size:20px}
 .msg.combate{align-self:stretch;font-size:13.5px;border:1px solid #4a2a26;background:#1d1214;border-radius:8px;padding:7px 11px;max-width:none}
@@ -329,6 +339,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div class="grid g2">
         <label class="f" for="f-nome">Nome do personagem<input type="text" id="f-nome" data-bind="nome" placeholder="Ex.: Kenji Arakawa"></label>
         <label class="f" for="f-jogador">Jogador<input type="text" id="f-jogador" data-bind="jogador" placeholder="Seu nome"></label>
+        <label class="f" for="f-cor">Cor do nome no chat<input type="color" id="f-cor" data-bind="cor" value="#e0b354" style="height:40px;padding:2px 4px"></label>
         <label class="f" for="f-idade">Idade (11 a 100)<input type="number" id="f-idade" data-bind="idade" min="11" max="100"></label>
         <label class="f" for="f-nivel">Nível inicial<input type="number" id="f-nivel" data-bind="nivel" min="1" max="20"></label>
       </div>
@@ -446,6 +457,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
       <div><h1 id="world-title">Tóquio</h1><p id="world-sub" class="note"></p></div>
       <a class="btn small" href="#ficha" id="link-ficha">Ficha</a>
       <button class="btn small" id="btn-inv" type="button">Inventário</button>
+      <button class="btn small" id="btn-npcs" type="button">Livro de NPCs</button>
       <a class="btn small adm-link" href="#admin" hidden>Painel do mestre</a>
       <div class="hud" id="hud" aria-label="Seu personagem"></div>
     </header>
@@ -463,7 +475,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
             <div class="seg" role="group" aria-label="Para quem é a mensagem"><button type="button" data-para="mestre" class="on">Para o mestre</button><button type="button" data-para="jogadores">Para os jogadores</button></div>
             <button type="button" class="btn small" id="btn-anexar">Anexar rolagem</button>
             <div id="anexo-box" class="anexo"></div>
-            <label class="sobre" id="sobre-wrap" for="chat-sobre" hidden title="Regra da casa: cada 2 PA extras dão +1 dado de dano na técnica">PA extra na técnica <input type="number" id="chat-sobre" min="0" step="2" value="0"></label>
+            <label class="sobre" id="sobre-wrap" for="chat-sobre" hidden title="Regra da casa: cada PA extra dá +1 dado de dano da técnica, rolado pelo sistema">PA extra na técnica <input type="number" id="chat-sobre" min="0" step="1" value="0"><select id="chat-sobre-dado" aria-label="Qual técnica recebe a sobrecarga" hidden style="width:auto;max-width:170px"></select></label>
           </div>
           <div class="chat-row">
             <label for="chat-input" class="sr">O que você faz?</label>
@@ -477,6 +489,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <div class="panel" id="missoes-panel" hidden></div>
         <div class="panel" id="minha-missao" hidden></div>
         <div class="panel" id="descanso-panel" hidden></div>
+        <div class="panel" id="treino-panel" hidden></div>
         <div class="panel" id="roll-panel"></div>
         <div class="panel" id="presentes"></div>
         <div class="panel" id="loc-info"></div>
@@ -501,6 +514,15 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
   <div class="box">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="inv-title" style="font-size:22px">Inventário</h2><button class="btn small" id="inv-close" type="button">Fechar</button></div>
     <div id="inv-body"></div>
+  </div>
+</div>
+
+<div class="drawer" id="npc-drawer" role="dialog" aria-modal="true" aria-labelledby="npc-title">
+  <div class="box">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="npc-title" style="font-size:22px">Livro de NPCs</h2><button class="btn small" id="npc-close" type="button">Fechar</button></div>
+    <p class="note" style="margin:0">Todo personagem que o mestre apresenta fica anotado aqui, com o que ele lembra de vocês.</p>
+    <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome">
+    <div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div>
   </div>
 </div>
 
@@ -561,7 +583,7 @@ const blank=()=>({v:1,nome:'',jogador:'',idade:17,nivel:1,aparencia:'',historia:
   attrs:{for:0,vel:0,con:0,esp:0,sab:0,car:0},
   classe:'',simples:[],antecedente:'',antEscolhas:[],trabalhador:'',
   vantagens:[],desvantagens:[],traitNotas:'',pericias:[],armaProf:false,armaNome:'',arma:'',itens:[],
-  tecnica:{nome:'',descricao:'',habilidadeUnica:'',validacao:null},xp:0,especiais:[]});
+  tecnica:{nome:'',descricao:'',habilidadeUnica:'',dado:'d6',validacao:null},xp:0,especiais:[],cor:'',treino:{luta:0,pontaria:0,prog:{luta:0,pontaria:0},pronto:true}});
 let F=blank();
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -611,6 +633,8 @@ function calc(){
   const skill={};
   SKILLS.forEach(([nm,at])=>{let v=a[at]+(trained.has(nm)?a.sab:0);
     if(nm==='Jujutsu'&&F.raca==='humano')v+=2;
+    if(nm==='Luta')v+=+(F.treino?.luta)||0;
+    if(nm==='Pontaria')v+=+(F.treino?.pontaria)||0;
     if(nm==='Intuição'&&vant('Intuitivo'))v+=2;
     if(nm==='Intuição'&&desv('Ingênuo'))v-=2;
     if(nm==='Intimidação'&&vant('Aura Intimidadora'))v+=2;
@@ -825,14 +849,15 @@ function renderTecnica(C){
     <div class="grid">
       <label class="f" for="t-nome">Nome da técnica<input type="text" id="t-nome" data-tbind="nome" placeholder="Ex.: Correntes do Eco"></label>
       <label class="f" for="t-desc">Funcionamento base<textarea id="t-desc" data-tbind="descricao" placeholder="O que a técnica faz, como é ativada, alcance (linha, área ou cone), se é instantânea, concentrada ou sustentada, qual teste o alvo faz..."></textarea></label>
+      <label class="f" for="t-dado" style="max-width:260px">Dado de dano da técnica (usado na sobrecarga)<select id="t-dado" data-tbind="dado">${['d4','d6','d8','d10','d12'].map(d=>`<option>${d}</option>`).join('')}</select></label>
       <label class="f" for="t-hu">Habilidade Única (opcional, puramente utilitária)<textarea id="t-hu" data-tbind="habilidadeUnica" placeholder="Não pode dar dano ofensivo, bônus ou vantagem em testes, nem redução de dano."></textarea></label>
     </div>
     <div class="tec-stats" id="tec-stats"></div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn primary" id="btn-validar">Validar com a IA</button><span class="status" id="ai-status"></span></div>
     <div class="ai-box" id="ai-box"></div>`;
-    $('#t-nome').value=t.nome;$('#t-desc').value=t.descricao;$('#t-hu').value=t.habilidadeUnica;
+    $('#t-nome').value=t.nome;$('#t-dado').value=t.dado||'d6';$('#t-desc').value=t.descricao;$('#t-hu').value=t.habilidadeUnica;
   }
-  $('#tec-stats').innerHTML=`<span>CD <b>${C.tec.cd}</b></span><span>Linha <b>${C.tec.linha} m</b></span><span>Área <b>${C.tec.area} m</b></span><span>Cone <b>${C.tec.cone} m</b></span><span>Limite por ativação <b>${C.tec.limite} PA</b></span><span>Sobrecarga: <b>+1 dado a cada 2 PA extras</b></span>${F.restricao==='fraco'?'<span>Alcance <b>×10</b> e +1 dado (Corpo Fraco)</span>':''}${F.antecedente==='Família Gojo'?'<span>Custo −2 PA (Gojo)</span>':''}`;
+  $('#tec-stats').innerHTML=`<span>CD <b>${C.tec.cd}</b></span><span>Linha <b>${C.tec.linha} m</b></span><span>Área <b>${C.tec.area} m</b></span><span>Cone <b>${C.tec.cone} m</b></span><span>Limite por ativação <b>${C.tec.limite} PA</b></span><span>Sobrecarga: <b>+1 ${esc(F.tecnica.dado||'d6')} por PA extra</b></span>${F.restricao==='fraco'?'<span>Alcance <b>×10</b> e +1 dado (Corpo Fraco)</span>':''}${F.antecedente==='Família Gojo'?'<span>Custo −2 PA (Gojo)</span>':''}`;
   const ab=$('#ai-box');
   if(v){ab.classList.add('show');
     const label={aprovada:'Aprovada',ajustar:'Precisa de ajuste',rejeitada:'Rejeitada'}[v.veredito]||v.veredito;
@@ -856,6 +881,7 @@ function renderSheet(C){
      <dt>Dano desarmado</dt><dd>${C.desarm}</dd>
      <dt>Ataques extras (−2 em todos)</dt><dd>+${C.extraOpc}</dd>
      ${C.classe?.ataqueExtra?`<dt>${esc(C.classe.l1.nome)}</dt><dd>+1 (${esc(C.classe.ataqueExtra)})</dd>`:''}
+     ${(F.treino?.luta||F.treino?.pontaria)?`<dt>Treino de força</dt><dd>Luta +${F.treino.luta||0} · Pontaria +${F.treino.pontaria||0}</dd>`:''}
      <dt>Desvia / bloqueia balas</dt><dd>${C.a.vel>=4?'sim':'não'} / ${C.a.for>=4?'sim':'não'}</dd>
      ${C.hasTec?`<dt>CD da técnica</dt><dd>${C.tec.cd}</dd>`:''}
      ${(F.especiais||[]).map(e=>`<dt>${esc(e.nome)}</dt><dd>${esc(e.custo||'liberada')}</dd>`).join('')}
@@ -901,6 +927,8 @@ function refreshLight(){const C=calc();$('#idade-efeito').innerHTML=esc(C.idade.
 
 /* ---------- Eventos ---------- */
 document.addEventListener('input',e=>{
+  if(e.target.id==='cb-extra'){cbExtra=e.target.value;return;}
+  if(e.target.id==='npc-busca'){renderNpcs();return;}
   if(e.target.id==='hist-txt'){clearTimeout(window.__histT);window.__histT=setTimeout(()=>lerHistorico(e.target.value),400);return;}
   const el=e.target;
   if(el.dataset.bind){const k=el.dataset.bind;F[k]=el.type==='number'?el.value:el.value;
@@ -960,8 +988,8 @@ function closeModal(){$('#modal').classList.remove('show');}
 $('#modal-ok').addEventListener('click',()=>modalOk&&modalOk());
 
 function loadFicha(o){
-  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};
-  document.querySelectorAll('[data-bind]').forEach(el=>{if(el.closest('#raca-sub,#ant-sub,#armaprof-box'))return;el.value=F[el.dataset.bind]??'';});
+  F=o;F.xp=+o.xp||0;F.especiais=Array.isArray(o.especiais)?o.especiais:[];F.itens=Array.isArray(o.itens)?o.itens:[];F.attrs=Object.assign({for:0,vel:0,con:0,esp:0,sab:0,car:0},o.attrs||{});F.tecnica=Object.assign(blank().tecnica,o.tecnica||{});F.rolagens=o.rolagens||{};const tb=blank().treino;F.treino=Object.assign(tb,o.treino||{});F.treino.prog=Object.assign({luta:0,pontaria:0},(o.treino||{}).prog||{});
+  document.querySelectorAll('[data-bind]').forEach(el=>{if(el.closest('#raca-sub,#ant-sub,#armaprof-box'))return;el.value=el.type==='color'?(corValida(F[el.dataset.bind])||'#e0b354'):(F[el.dataset.bind]??'');});
   $('#tecnica-body').dataset.built='';renderAll();
 }
 
@@ -1044,6 +1072,19 @@ const locById=id=>LOCAIS.find(l=>l.id===id)||(String(id||'').startsWith('escola-
 const raiz=id=>(locById(id)?.pai)||id;
 const MAPA=()=>LOCAIS.filter(l=>!l.pai);
 const nomeLocal=id=>{const l=locById(id);if(!l)return '';return l.pai?l.area:l.curto;};
+const GRAUS_PG=[[3000,'Grau Especial'],[2500,'Semi-Grau Especial'],[2000,'Grau 1'],[1500,'Semi-Grau 1'],[850,'Grau 2'],[500,'Semi-Grau 2'],[300,'Grau 3'],[100,'Grau 4'],[0,'Aprendiz']];
+const grauEscola=pg=>GRAUS_PG.find(([n])=>(+pg||0)>=n)[1];
+const proxGrau=pg=>{const i=GRAUS_PG.findIndex(([n])=>(+pg||0)>=n);return i>0?GRAUS_PG[i-1]:null;};
+const PG_GRAU={4:40,3:80,2:150,1:250,0:400};
+const PALETA=['#e0b354','#6fb3d2','#d77a9e','#8fcf7a','#c99bf0','#f08c5a','#5fd0b8','#e3e07a'];
+const PALETA_NPC=['#b8a99a','#9fb4a8','#b09cb8','#c2a77c','#93a7bd','#bf9a9a','#a3b58c'];
+const corValida=c=>/^#[0-9a-f]{6}$/i.test(String(c||''))?c:'';
+const hashStr=t=>{let h=0;for(const c of String(t||''))h=(h*31+c.charCodeAt(0))>>>0;return h;};
+function dadosJog(id){return id===(uid||'eu')?{...(meu||{}),cor:F.cor}:(jogadores.get(id)||{});}
+function corDe(id){return corValida(dadosJog(id).cor)||PALETA[hashStr(id)%PALETA.length];}
+const corNpc=n=>PALETA_NPC[hashStr(String(n||'').toLowerCase())%PALETA_NPC.length];
+const grauDe=id=>grauEscola(dadosJog(id).pg);
+const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau" title="Grau na Escola Jujutsu">${esc(grauDe(id))}</span>`;
 const jogadores=new Map();let meu=null;let writeChain=Promise.resolve();const localMsgs={};
 let canalAtual=null,canalUnsub=null,msgs=[],selLoc='escola',narrando=false,rollMode=0,rollSkill='Percepção';
 const iniciais=n=>(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
@@ -1054,11 +1095,11 @@ async function ensureJogador(){
   if(db&&uid){
     try{const s=await db.doc('jogadores/'+uid).get();
       if(s.exists){const d=s.data();aplicarAdminNoJogador(d);const mx=maximos(d.bonusMax);meu={...d,max:mx,nome:F.nome,estado:{pv:Math.min(d.estado?.pv??mx.pv,mx.pv),pa:Math.min(d.estado?.pa??mx.pa,mx.pa),pe:Math.min(d.estado?.pe??mx.pe,mx.pe)}};
-        const patch={max:mx,nome:F.nome,estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};
+        const patch={max:mx,nome:F.nome,cor:corValida(F.cor)||'',estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};if(d.pg==null){patch.pg=0;meu.pg=0;}meu.cor=patch.cor;
         if(!Array.isArray(d.inventario)){Object.assign(patch,invInicial());Object.assign(meu,invInicial());}
         if(!Array.isArray(d.diario)){patch.diario=[];meu.diario=[];}
         await db.doc('jogadores/'+uid).update(patch);}
-      else{meu={nome:F.nome,local:'',estado:{...mx},max:mx,stats:meusStats(),diario:[],...invInicial(),atualizado:new Date().toISOString()};await db.doc('jogadores/'+uid).set(meu);}
+      else{meu={nome:F.nome,cor:corValida(F.cor)||'',pg:0,local:'',estado:{...mx},max:mx,stats:meusStats(),diario:[],...invInicial(),atualizado:new Date().toISOString()};await db.doc('jogadores/'+uid).set(meu);}
     }catch(e){meu=meu||{nome:F.nome,local:'',estado:{...mx},max:mx,diario:[],...invInicial()};}
   }else{
     try{meu=JSON.parse(localStorage.getItem('jjk-jogador')||'null');}catch{}
@@ -1066,6 +1107,7 @@ async function ensureJogador(){
     salvarMeuLocal();
   }
   jogadores.set(uid||'eu',{...meu});
+  setTimeout(processarTransferencias,0);
 }
 function invInicial(){
   const C=calc();const arma=DATA.armas.find(a=>a.nome===F.arma);
@@ -1089,7 +1131,7 @@ function renderHud(){
   const bar=(k,lbl)=>{const pct=m[k]>0?Math.max(0,Math.min(100,e[k]/m[k]*100)):0;
     return `<div class="bar ${k}"><span class="k">${lbl}</span><span class="track" role="progressbar" aria-label="${lbl}" aria-valuemin="0" aria-valuemax="${m[k]}" aria-valuenow="${e[k]}"><span class="fill" style="width:${pct}%;display:block"></span></span><span class="num">${e[k]} / ${m[k]}</span></div>`;};
   const X=xpInfo();
-  $('#hud').innerHTML=`<div class="nm">${esc(F.nome||'Sem nome')}<small>${esc(F.classe||'')} · nv ${C.n}</small></div>${bar('pv','PV')}${bar('pa','PA')}${bar('pe','PE')}
+  $('#hud').innerHTML=`<div class="nm"><span style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</span><small>${esc(F.classe||'')} · nv ${C.n} · ${esc(grauEscola(meu.pg))}</small></div>${bar('pv','PV')}${bar('pa','PA')}${bar('pe','PE')}
     <div class="bar xp"><span class="k">XP</span><span class="track" role="progressbar" aria-label="Experiência" aria-valuemin="${X.base}" aria-valuemax="${X.prox||X.x}" aria-valuenow="${X.x}"><span class="fill" style="width:${X.pct}%;display:block"></span></span><span class="num">${X.prox?`${X.x}/${X.prox}`:X.x}</span></div>`;
 }
 
@@ -1131,12 +1173,22 @@ async function irPara(id,anterior){
   const mudou=meu.local!==id;
   const vis=new Set([...(meu.visitados||[]),...(meu.diario||[]).map(d=>d.local).filter(Boolean)]);
   const primeira=!vis.has(id);
+  meu.__de=meu.local;
   if(mudou){const de=meu.local;const nl=x=>raiz(x)==='escola'&&raiz(de)==='escola'&&raiz(id)==='escola'?(locById(x)?.area||nomeLocal(x)):nomeLocal(x);
     if(de)await postMsg(de,{tipo:'sistema',texto:`${F.nome||'Alguém'} saiu em direção a ${nl(id)}.`});
     vis.add(id);await atualizarMeu({local:id,visitados:[...vis].slice(-60)});
     await postMsg(id,{tipo:'sistema',texto:`${F.nome||'Alguém'} chegou${de?` vindo de ${nl(de)}`:''}.`});}
   if(location.hash==='#local-'+id)setTimeout(route,0);else location.hash='local-'+id;
+  const de0=meu.__de;
+  if(mudou&&emboscadaElmos(id,de0)){await atualizarMeu({ultimaEmboscada:Date.now()});setTimeout(()=>narrar(id,{tipo:'emboscada',primeira,anterior:anterior||''}),500);return;}
   if(mudou){if(primeira)setTimeout(()=>narrar(id,{tipo:'chegada',anterior:anterior||''}),500);else chegadaRecente={local:id,anterior:anterior||'',t:Date.now()};}
+}
+/* Clã Elmos: chance de os caçadores do clã tentarem capturar o herdeiro quando ele circula longe da escola */
+function emboscadaElmos(id,de){
+  if(F.antecedente!=='Clã Elmos'||raiz(id)==='escola'||(de&&raiz(de)===raiz(id)))return false;
+  if(combate&&combate.ativo)return false;
+  if(Date.now()-(+meu.ultimaEmboscada||0)<4*3600000)return false;
+  return Math.random()<0.2;
 }
 
 /* Chamada à IA com espera automática quando o limite de mensagens é atingido */
@@ -1158,7 +1210,7 @@ function avisoNormal(){const el=$('#chat-thinking');if(el)el.firstChild.textCont
 const missoes=new Map();let missoesUnsub=null,gerandoMissoes=false,pagandoMissao=false;
 function assinarMissoes(){
   if(missoesUnsub||!db)return;
-  missoesUnsub=db.collection('missoes').onSnapshot(s=>{missoes.clear();s.docs.forEach(d=>{const x=d.data();if(x)missoes.set(d.id,{id:d.id,...x});});renderMissoes();pagarMissoes();},()=>{});
+  missoesUnsub=db.collection('missoes').onSnapshot(s=>{missoes.clear();s.docs.forEach(d=>{const x=d.data();if(x)missoes.set(d.id,{id:d.id,...x});});renderMissoes();pagarMissoes();if(!$('#view-admin').hidden)renderAdmCampanha();},()=>{});
 }
 async function missaoWrite(id,patch){
   const atual=missoes.get(id)||{};missoes.set(id,{...atual,...patch,id});renderMissoes();
@@ -1170,11 +1222,14 @@ async function missaoCriar(m){
   else{const id='m'+Date.now().toString(36)+dN(99);missoes.set(id,{id,...m});}
   renderMissoes();
 }
+const MISSAO_PESSOAL_PADRAO={'Clã Elmos':'Encontrar as outras cabeças de Cérberus espalhadas pelo Japão (Inércia já está com você), antes que o Clã Elmos o capture para devolver Cérberus a outro receptáculo.'};
+const missaoPessoal=()=>String(meu?.missaoPessoal||MISSAO_PESSOAL_PADRAO[F.antecedente]||'').trim();
 const minhaMissao=()=>[...missoes.values()].find(m=>m.status==='andamento'&&(m.membros||[]).includes(myId()));
 const nomeJog=id=>id===myId()?F.nome:(jogadores.get(id)?.nome||party.get(id)?.resumo?.nome||'alguém');
 function renderMissoes(){
   const mm=minhaMissao();const box=$('#minha-missao');
-  if(box){box.hidden=!mm;box.innerHTML=mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span></div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p><p>Para receber, entregue o relatório na Sala dos Professores.</p></div>`:'';}
+  if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p><p>Para receber, entregue o relatório na Sala dos Professores.</p></div>`:'')
+    +(mp?`<h2 style="margin-top:${mm?'10px':'0'}">Missão pessoal</h2><p class="note" style="margin:0">${esc(mp)}</p>`:'');}
   const p=$('#missoes-panel');if(!p)return;
   if(canalAtual!=='escola-missoes'){p.hidden=true;p.innerHTML='';return;}
   p.hidden=false;
@@ -1182,8 +1237,8 @@ function renderMissoes(){
   const abertas=lista.filter(m=>m.status==='aberta').length;
   const candidatos=[...jogadores.entries()].filter(([k])=>k!==myId());
   p.innerHTML=`<h2>Quadro de missões</h2>${lista.length?lista.map(m=>{const membro=(m.membros||[]).includes(myId());const fora=candidatos.filter(([k])=>!(m.membros||[]).includes(k));
-    return `<div class="missao${membro?' minha':''}"><div class="tt"><b>${esc(m.titulo)}</b><span class="pill ${m.status==='aberta'?'ok':'info'}">${m.status==='aberta'?'aberta':'em andamento'}</span></div>
-      <p>${esc(m.descricao)}</p><p>Grau ${esc(m.grau)} · Destino: ${esc(nomeLocal(m.destino)||m.destino)} · Recompensa: ${m.xp||0} XP e ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} por membro</p>
+    return `<div class="missao${membro?' minha':''}"><div class="tt"><b>${esc(m.titulo)}</b>${m.olho?'<span class="pill warn">Semana dos Olhos</span>':''}<span class="pill ${m.status==='aberta'?'ok':'info'}">${m.status==='aberta'?'aberta':'em andamento'}</span></div>
+      <p>${esc(m.descricao)}</p><p>Grau ${esc(m.grau)} · Destino: ${esc(nomeLocal(m.destino)||m.destino)} · Recompensa: ${m.xp||0} XP, ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} e ${pgDaMissao(m)} PG por membro</p>
       ${m.status==='andamento'?`<p>Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')||'ninguém'}</p>`:''}
       <div class="acts">${m.status==='aberta'?`<button class="btn small primary" data-maceitar="${m.id}" ${mm?'disabled title="Você já está em uma missão"':''}>Aceitar missão</button>`
         :membro?`${fora.length?`<label class="sr" for="madd-${m.id}">Jogador</label><select id="madd-${m.id}">${fora.map(([k,j])=>`<option value="${esc(k)}">${esc(j.nome)}</option>`).join('')}</select><button class="btn small" data-madd="${m.id}">Adicionar ao grupo</button>`:''}<button class="btn small" data-msair="${m.id}">Sair</button>`
@@ -1206,14 +1261,17 @@ async function sairMissao(id){const m=missoes.get(id);if(!m)return;const mem=(m.
 async function concluirMissao(m,local){
   if(!m||m.status!=='andamento')return;
   await missaoWrite(m.id,{status:'concluida',concluida:Date.now()});
-  await postMsg(local,{tipo:'sistema',texto:`Missão "${m.titulo}" concluída! Cada membro do grupo recebe ${m.xp||0} XP e ¥ ${(+m.ienes||0).toLocaleString('pt-BR')}.`});
+  await postMsg(local,{tipo:'sistema',texto:`Missão "${m.titulo}" concluída! Cada membro do grupo recebe ${m.xp||0} XP, ¥ ${(+m.ienes||0).toLocaleString('pt-BR')} e ${pgDaMissao(m)} Pontos de Graduação.`});
 }
+const pgDaMissao=m=>m.pg!=null?+m.pg:(PG_GRAU[m.grau]??40);
 async function pagarMissoes(){
   if(!meu||pagandoMissao)return;const pagas=new Set(meu.missoesPagas||[]);
   const m=[...missoes.values()].find(x=>x.status==='concluida'&&(x.membros||[]).includes(myId())&&!pagas.has(x.id));if(!m)return;
   pagandoMissao=true;
-  try{pagas.add(m.id);await atualizarMeu({missoesPagas:[...pagas].slice(-50),ienes:(meu.ienes||0)+(+m.ienes||0)});
-    if(+m.xp)await ganharXP(+m.xp,`missão: ${m.titulo}`,meu.local);}
+  try{pagas.add(m.id);const g0=grauEscola(meu.pg);const pg=(+meu.pg||0)+pgDaMissao(m);
+    await atualizarMeu({missoesPagas:[...pagas].slice(-50),ienes:(meu.ienes||0)+(+m.ienes||0),pg});
+    if(+m.xp)await ganharXP(+m.xp,`missão: ${m.titulo}`,meu.local);
+    if(grauEscola(pg)!==g0&&meu.local)await postMsg(meu.local,{tipo:'sistema',texto:`${F.nome} tem ${pg} Pontos de Graduação e está apto à promoção: agora é ${grauEscola(pg)} na Escola Jujutsu.`});}
   finally{pagandoMissao=false;}
   setTimeout(pagarMissoes,300);
 }
@@ -1223,13 +1281,19 @@ async function gerarMissoes(){
   const existentes=[...missoes.values()].map(m=>`${m.titulo} (${m.status})`).join('; ');
   const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros). Crie 3 chamados novos para o quadro de missões da Escola Técnica Jujutsu de Tóquio, para alunos de nível ${nv}.
 Destinos possíveis (use o id): shibuya (Shibuya: cruzamento, estação com subsolos, becos), avenida (Avenida Sakuragawa: comércio, viaduto ferroviário), escola-treino (Sala de Treinos da escola).
+{{CAMPANHA}}
+
+${direcaoMestre()}
 Memória da campanha, para criar continuidade com pistas abertas:
 ${memoriaCampanha()}
+${livroNpcs(15)}
 Chamados que já existem (não repita): ${existentes||'nenhum'}.
+Estas são missões comuns (não são das Semanas dos Olhos): nada de olhos de Sōgen aqui, mas cada chamado pode deixar um fio pequeno para as ameaças da campanha. Pelo menos um chamado deve ser uma side quest que apresenta um personagem secundário com nome (uma pessoa comum, um feiticeiro de fora, alguém ligado a um NPC já conhecido), descrito em "npc".
 Regras: grau 4 na maioria (às vezes 3) para nível 1-3. Recompensa do livro: grau 4 = 10 a 30 XP, grau 3 = 31 a 80 XP. Dinheiro entre 10000 e 60000 ienes. Descrição em 1 ou 2 frases, como um chamado oficial, com um gancho de mistério.
-Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000}]}`;
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""}}]}`;
   try{const res=await chamarIA(prompt,'default');const m=(res.text||'').match(/\{[\s\S]*\}/);const j=JSON.parse(m[0]);
     for(const x of (j.missoes||[]).slice(0,3)){const destino=locById(x.destino)?x.destino:'shibuya';
+      if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Ligado ao chamado "${String(x.titulo||'').slice(0,80)}".`}],destino);
       await missaoCriar({titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:+x.grau===3?3:4,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now()});}
     await postMsg('escola-missoes',{tipo:'sistema',texto:'Novos chamados foram pregados no quadro.'});
   }catch{toastChat('Os professores não conseguiram preparar chamados agora. Tente de novo.');}
@@ -1282,7 +1346,7 @@ function aplicarItens(inv,deltas){
   return inv;
 }
 function renderInv(){
-  if(!meu)return;const inv=meu.inventario||[];
+  if(!meu)return;const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('#inv-drawer input,#inv-drawer select'))return;const inv=meu.inventario||[];
   $('#inv-body').innerHTML=`<p class="counter">Dinheiro: <b>¥ ${(meu.ienes||0).toLocaleString('pt-BR')}</b> · ${inv.length} item(ns) · carga ${calc().carga}</p>
     <div class="inv-list">${inv.length?inv.map((it,i)=>`<div class="inv-item"><div><b>${esc(it.nome)}</b>${it.nota?`<small>${esc(it.nota)}</small>`:''}</div>
       <div class="qty"><button type="button" data-invq="${i}" data-d="-1" aria-label="Menos ${esc(it.nome)}">−</button><b>${it.qtd}</b><button type="button" data-invq="${i}" data-d="1" aria-label="Mais ${esc(it.nome)}">+</button></div></div>`).join(''):'<p class="note">Inventário vazio.</p>'}</div>
@@ -1290,8 +1354,116 @@ function renderInv(){
       <label class="f" for="inv-nome">Novo item<input type="text" id="inv-nome" placeholder="Ex.: Talismã"></label>
       <label class="f" for="inv-qtd">Qtd<input type="number" id="inv-qtd" min="1" value="1"></label>
       <button class="btn" type="submit">Adicionar</button></form>
-    <p class="note">O mestre também dá e tira itens pela narração (flechas gastas, objetos encontrados, compras). Itens que chegam a 0 somem da lista.</p>`;
+    <p class="note">O mestre também dá e tira itens pela narração (flechas gastas, objetos encontrados, compras). Itens que chegam a 0 somem da lista.</p>
+    ${(()=>{const outros=[...jogadores.entries()].filter(([k])=>k!==myId());return outros.length?`<h3 style="font-size:15px;margin:6px 0 0">Mandar ienes</h3><form id="inv-pix" class="pix">
+      <label class="f" for="pix-para">Para<select id="pix-para">${outros.map(([k,j])=>`<option value="${esc(k)}">${esc(j.nome)}</option>`).join('')}</select></label>
+      <label class="f" for="pix-valor">Valor (¥)<input type="number" id="pix-valor" min="1" step="1" placeholder="10000"></label>
+      <button class="btn" type="submit">Enviar</button></form><p class="note" id="pix-status" style="margin:0;color:var(--${pixMsg.ok?'ok':'seal'})">${esc(pixMsg.t)}</p>`:'';})()}`;
 }
+/* Transferência de ienes: quem manda desconta na hora; quem recebe aplica no próprio saldo */
+const transferencias=new Map();let transfAplicando=false,pixMsg={t:'',ok:true};
+async function transferirIenes(para,valor,local){
+  valor=Math.floor(+valor||0);if(!meu||!para||para===myId()||valor<=0)return 'Valor inválido.';
+  if(valor>(meu.ienes||0))return `Você só tem ¥ ${(meu.ienes||0).toLocaleString('pt-BR')}.`;
+  const nomeP=nomeJog(para);const t={de:myId(),deNome:F.nome,para,paraNome:nomeP,valor,ts:Date.now(),aplicada:false};
+  await atualizarMeu({ienes:(meu.ienes||0)-valor});
+  if(db){try{await db.collection('transferencias').add(t);}catch{await atualizarMeu({ienes:(meu.ienes||0)+valor});return 'Não consegui enviar. Confira se as regras do Firestore foram publicadas.';}}
+  else{const id='t'+Date.now();transferencias.set(id,{id,...t});}
+  const loc=local||meu.local;if(loc)await postMsg(loc,{tipo:'sistema',texto:`${F.nome} mandou ¥ ${valor.toLocaleString('pt-BR')} para ${nomeP}.`});
+  return '';
+}
+async function processarTransferencias(){
+  if(!meu||transfAplicando)return;const ja=new Set(meu.transfRecebidas||[]);
+  const minhas=[...transferencias.values()].filter(t=>t.para===myId()&&!t.aplicada&&!ja.has(t.id));if(!minhas.length)return;
+  transfAplicando=true;
+  try{let soma=0;minhas.forEach(t=>{soma+=Math.max(0,Math.floor(+t.valor||0));ja.add(t.id);});
+    await atualizarMeu({ienes:(meu.ienes||0)+soma,transfRecebidas:[...ja].slice(-100)});
+    for(const t of minhas){if(db)try{await db.doc('transferencias/'+t.id).update({aplicada:true});}catch{}
+      if(canalAtual)toastChat(`Você recebeu ¥ ${(+t.valor).toLocaleString('pt-BR')} de ${t.deNome||'alguém'}.`);}}
+  finally{transfAplicando=false;}
+}
+function assinarTransferencias(){if(!db)return;db.collection('transferencias').onSnapshot(s=>{transferencias.clear();s.docs.forEach(d=>{const x=d.data();if(x)transferencias.set(d.id,{id:d.id,...x});});processarTransferencias();},()=>{});}
+
+/* Livro de NPCs */
+const npcs=new Map();
+const npcId=n=>String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
+function assinarNpcs(){if(!db)return;db.collection('npcs').onSnapshot(s=>{npcs.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.nome)npcs.set(d.id,{id:d.id,...x});});if($('#npc-drawer').classList.contains('show'))renderNpcs();},()=>{});}
+async function registrarNpcs(lista,local){
+  for(const x of (lista||[]).slice(0,8)){const nome=String(x?.nome||'').trim().slice(0,60);const id=npcId(nome);if(!id)continue;
+    const ex=npcs.get(id);const nota=String(x.nota||'').trim().slice(0,240);const desc=String(x.descricao||'').trim().slice(0,300);
+    const notas=[...(ex?.notas||[]),...(nota?[{t:Date.now(),local:local||'',texto:nota}]:[])].slice(-12);
+    const doc=ex?{descricao:desc||ex.descricao||'',notas,visto:Date.now(),local:local||ex.local||''}:{nome,descricao:desc,notas,local:local||'',criado:Date.now(),visto:Date.now()};
+    if(ex&&!desc&&!nota&&Date.now()-(+ex.visto||0)<10*60000)continue;
+    npcs.set(id,{id,...(ex||{}),...doc});
+    if(db){try{ex?await db.doc('npcs/'+id).update(doc):await db.doc('npcs/'+id).set(doc);}catch{}}}
+}
+function livroNpcs(max){
+  const l=[...npcs.values()].sort((a,b)=>(+b.visto||0)-(+a.visto||0)).slice(0,max||40);
+  if(!l.length)return 'LIVRO DE NPCs: ninguém foi apresentado ainda.';
+  return `LIVRO DE NPCs (personagens já apresentados; mantenha nome, jeito e o que eles lembram dos jogadores):\n${l.map(n=>`- ${n.nome}${n.descricao?`: ${n.descricao}`:''}${(n.notas||[]).length?` | lembra: ${(n.notas||[]).slice(-3).map(x=>x.texto).join('; ')}`:''}`).join('\n')}`;
+}
+function renderNpcs(){
+  const q=normNome($('#npc-busca').value||'');
+  const l=[...npcs.values()].filter(n=>!q||normNome(n.nome).includes(q)).sort((a,b)=>(+b.visto||0)-(+a.visto||0));
+  $('#npc-body').innerHTML=l.length?l.map(n=>`<div class="npc-item"><b style="color:${corNpc(n.nome)}">${esc(n.nome)}</b>${n.descricao?`<span style="font-size:14px">${esc(n.descricao)}</span>`:''}${n.local?`<span class="note">visto por último: ${esc(nomeLocal(n.local)||n.local)}</span>`:''}
+    ${(n.notas||[]).length?`<ul>${(n.notas||[]).slice(-5).map(x=>`<li>${esc(x.texto)}</li>`).join('')}</ul>`:''}${souDono?`<button class="btn small" data-npcdel="${esc(n.id)}" style="align-self:flex-start">Apagar do livro</button>`:''}</div>`).join(''):'<p class="note">Ninguém anotado ainda.</p>';
+}
+
+/* Campanha (fase, semana dos olhos, direção do mestre) */
+let campanha={semana:0,fase:'ato1',notas:''};
+function assinarCampanha(){if(!db)return;db.doc('config/campanha').onSnapshot(s=>{campanha={semana:0,fase:'ato1',notas:'',...(s.exists?s.data():{})};window.__faseCampanha=campanha.fase||'ato1';if(!$('#view-admin').hidden)renderAdmCampanha();},()=>{});}
+const direcaoMestre=()=>campanha.notas&&campanha.notas.trim()?`DIREÇÃO DO MESTRE HUMANO (siga): ${campanha.notas.trim()}\n`:'';
+async function lancarSemanaOlhos(sem){
+  if(!sample)return 'A IA não está disponível.';
+  const destinos=['shibuya','avenida','shibuya'];const achavel=sem===2?Math.floor(Math.random()*3):-1;
+  const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros).
+{{CAMPANHA}}
+
+${direcaoMestre()}Memória da campanha:
+${memoriaCampanha()}
+${livroNpcs(15)}
+
+Crie os 3 chamados da SEMANA DOS OLHOS número ${sem}. Cada um é uma pista de que um olho de Kokonoe Sōgen está num lugar diferente. Para os jogadores, os chamados parecem missões oficiais da escola sobre "um objeto amaldiçoado de grau especial" (não diga o nome de Sōgen no título). Destinos, nesta ordem: ${destinos.join(', ')} (ids). Cada descrição em 1 ou 2 frases, com um gancho diferente (onde o olho foi visto, quem relatou, que maldições se agitaram).
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc":{"nome":"testemunha ou contato","descricao":"curta"}}]}`;
+  let j;try{const res=await chamarIA(prompt,'default');j=JSON.parse((res.text||'').match(/\{[\s\S]*\}/)[0]);}catch{return 'A IA não conseguiu preparar os chamados. Tente de novo.';}
+  const lista=(j.missoes||[]).slice(0,3);if(lista.length<3)return 'A IA respondeu com menos de 3 chamados. Tente de novo.';
+  for(let i=0;i<3;i++){const x=lista[i];
+    if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Contato do chamado "${String(x.titulo||'').slice(0,80)}" (Semana dos Olhos ${sem}).`}],destinos[i]);
+    await missaoCriar({titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now()});}
+  try{await db.doc('config/campanha').set({...campanha,semana:sem});}catch{}
+  await postMsg('escola-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
+  return '';
+}
+function instrucaoOlho(mm){
+  if(!mm||!mm.olho)return '';
+  return mm.olho.encontravel
+    ?` ESTA MISSÃO É DA SEMANA DOS OLHOS ${mm.olho.semana} E O OLHO PODE SER RECUPERADO: uma maldição comeu o olho e ficou extremamente forte. Quando ela aparecer, crie o combate com ela marcada "olho": true (o sistema dá +100 PV). Se o grupo a derrotar, o olho cai do corpo dela: adicione o item "Olho de Kokonoe Sōgen" (artefato amaldiçoado de grau especial) em "itens" para quem o pegar, e use "memoria". Sinta o perigo: é uma luta para fugir se estiverem mal.`
+    :` ESTA MISSÃO É DA SEMANA DOS OLHOS ${mm.olho.semana} E O OLHO NÃO PODE SER ENCONTRADO DE JEITO NENHUM: deixe o grupo investigar, lutar e achar pistas reais (marca do lótus fechado, testemunha, rastro), mas no fim o olho já sumiu (alguém chegou antes, foi trocado por uma isca, a maldição que o guardava está morta e vazia). Nunca dê o olho como item. A missão conta como cumprida quando eles investigarem o lugar e sobreviverem.`;
+}
+
+/* Treino de força (Sala de Treinos) */
+function renderTreino(){
+  const p=$('#treino-panel');if(!p)return;
+  if(canalAtual!=='escola-treino'||!meu){p.hidden=true;p.innerHTML='';return;}
+  const T=F.treino||blank().treino;const pronto=T.pronto!==false;const C=calc();
+  p.hidden=false;p.innerHTML=`<h2>Treino de força</h2><p class="note" style="margin:0">Cada sessão gasta 4 PE: d20 + perícia contra a CD do treino. 4 sessões boas = +1 permanente (máximo +3). Depois de treinar, só dá para treinar de novo após um descanso intermediário ou longo.</p>
+    ${[['luta','Luta'],['pontaria','Pontaria']].map(([k,n])=>`<div class="treino-row"><span><b>${n}</b> +${T[k]||0} · progresso ${T.prog?.[k]||0}/4<br><span class="note">CD ${12+3*(T[k]||0)} · rola d20 ${C.skill[n].v>=0?'+':''}${C.skill[n].v}</span></span><button class="btn small" data-treino="${k}" ${!pronto||(T[k]||0)>=3||meu.estado.pe<4||narrando?'disabled':''}>${(T[k]||0)>=3?'No máximo':'Treinar'}</button></div>`).join('')}
+    ${!pronto?'<p class="note" style="margin:0">Você já treinou. Descanse (intermediário ou longo) para treinar de novo.</p>':meu.estado.pe<4?'<p class="note" style="margin:0">PE insuficiente (precisa de 4).</p>':''}`;
+}
+async function treinar(k){
+  const T=JSON.parse(JSON.stringify(F.treino||blank().treino));if(T.pronto===false||!meu||meu.estado.pe<4||(T[k]||0)>=3)return;
+  const nome=k==='luta'?'Luta':'Pontaria';const C=calc();const cd=12+3*(T[k]||0);const r=d20();const b=C.skill[nome].v;const tot=r+b;const ok=r!==1&&(r===20||tot>=cd);
+  T.pronto=false;T.prog=T.prog||{luta:0,pontaria:0};let subiu=false;
+  if(ok){T.prog[k]=(T.prog[k]||0)+1;if(T.prog[k]>=4){T[k]=(T[k]||0)+1;T.prog[k]=0;subiu=true;}}
+  F.treino=T;saveDraft();
+  await atualizarMeu({estado:{...meu.estado,pe:meu.estado.pe-4},stats:meusStats()});
+  if(db&&uid)salvarQuieto();
+  await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} treina ${nome} (−4 PE): d20 ${r} ${b>=0?'+':'−'} ${Math.abs(b)} = ${tot} contra CD ${cd}. ${ok?`Sessão boa: progresso ${subiu?'4/4':T.prog[k]+'/4'}.`:'O treino não rendeu desta vez.'}${subiu?` ${nome} sobe para +${T[k]} permanente!`:''}`});
+  renderTreino();renderRoll();renderAll();
+}
+document.addEventListener('submit',async e=>{if(e.target.id!=='inv-pix')return;e.preventDefault();
+  const st=$('#pix-status');const err=await transferirIenes($('#pix-para').value,$('#pix-valor').value);
+  pixMsg=err?{t:err,ok:false}:{t:'Enviado.',ok:true};document.activeElement&&document.activeElement.blur();renderInv();});
 document.addEventListener('submit',e=>{if(e.target.id!=='inv-add')return;e.preventDefault();
   const n=$('#inv-nome').value.trim();const q=Math.max(1,parseInt($('#inv-qtd').value)||1);if(!n)return;
   atualizarMeu({inventario:aplicarItens(meu.inventario||[],[{nome:n,qtd:q}])}).then(renderInv);});
@@ -1332,11 +1504,15 @@ function renderChat(){
       if(m.teste)chips.push(`<span class="chip test">Teste de ${esc(m.teste.pericia)} para ${esc(m.alvoNome||'')}</span>`);
       if(m.fora)return `<div class="msg mestre fora"><div class="meta"><b>Mestre · fora do jogo</b>${hora}</div><div class="body">${paras(m.texto)}</div></div>`;
       return `<div class="msg mestre"><div class="meta"><b>Mestre</b>${hora}</div><div class="body">${paras(m.texto)}</div>${chips.length?`<div class="chips">${chips.join('')}</div>`:''}</div>`;}
+    if(m.tipo==='npc'){const c=corNpc(m.npcNome);return `<div class="msg npc" style="--npc:${c}"><div class="meta"><b style="color:${c}">${esc(m.npcNome||'NPC')}</b><span class="para" style="color:var(--ash)">NPC</span>${hora}</div><div class="body">${paras(m.texto)}</div></div>`;}
     if(m.tipo==='rolagem'){const r=m.rolagem||{};
-      return `<div class="msg rolagem${mine?' mine':''}"><div class="meta">${esc(m.autorNome)} · ${hora}</div><div class="body"><span class="d20">${r.escolhido}</span><span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}</span>${r.cd!=null?`<span class="res ${r.total>=r.cd?'ok':'fail'}">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</div></div>`;}
+      return `<div class="msg rolagem${mine?' mine':''}"><div class="meta">${nomeCor(m.autorId,m.autorNome)} · ${hora}</div><div class="body"><span class="d20">${r.escolhido}</span><span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}</span>${r.cd!=null?`<span class="res ${r.total>=r.cd?'ok':'fail'}">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</div></div>`;}
     if(m.tipo==='combate')return `<div class="msg combate${m.pedido&&m.alvoId===(uid||'eu')?' alerta':''}"><div class="meta"><b>Combate</b>${hora}</div><div>${esc(m.texto)}</div></div>`;
     const aos=m.para==='jogadores';const r=m.rolagem;
-    return `<div class="msg jogador${mine?' mine':''}${aos?' aos':''}"><div class="meta">${esc(m.autorNome)} · ${hora}${aos?'<span class="para">aos jogadores</span>':''}</div><div class="body">${paras(m.texto)}</div>${m.sobrecarga?`<div class="chips"><span class="chip test">+${m.sobrecarga} PA extra na técnica (+${Math.floor(m.sobrecarga/2)} dado${m.sobrecarga>=4?'s':''} de dano)</span></div>`:''}${r?`<div><span class="att"><span class="d20">${r.escolhido}</span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}${r.cd!=null?` <span class="res ${r.total>=r.cd?'ok':'fail'}" style="color:var(--${r.total>=r.cd?'ok':'seal'})">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</span></div>`:''}</div>`;}).join('');
+    const so=m.sobreRolagem;const chipsJ=[];
+    if(m.sobrecarga)chipsJ.push(`<span class="chip test">+${m.sobrecarga} PA extra na técnica${so?`: ${so.q}${esc(so.dado)} = ${so.dados.join('+')} = <b>+${so.total}</b> de dano`:` (+${Math.floor(m.sobrecarga/2)} dado(s))`}</span>`);
+    (m.dadosDeclarados||[]).forEach(d=>chipsJ.push(`<span class="chip test">${esc(d.expr)} = ${esc(d.detalhe)} = <b>${d.total}</b></span>`));
+    return `<div class="msg jogador${mine?' mine':''}${aos?' aos':''}"><div class="meta">${nomeCor(m.autorId,m.autorNome)} · ${hora}${aos?'<span class="para">aos jogadores</span>':''}</div><div class="body">${paras(m.texto)}</div>${chipsJ.length?`<div class="chips">${chipsJ.join('')}</div>`:''}${r?`<div><span class="att"><span class="d20">${r.escolhido}</span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}${r.cd!=null?` <span class="res ${r.total>=r.cd?'ok':'fail'}" style="color:var(--${r.total>=r.cd?'ok':'seal'})">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</span></div>`:''}</div>`;}).join('');
   if(atBottom||msgs[msgs.length-1]?.autorId===(uid||'eu')||msgs[msgs.length-1]?.tipo==='mestre')log.scrollTop=log.scrollHeight;
 }
 function pedidoPendente(){
@@ -1369,6 +1545,7 @@ async function descansar(tipo){
   if(combate&&combate.ativo&&souParticipante()){toastChat('Não dá para descansar no meio de um combate.');return;}
   const e={...meu.estado},m=meu.max,ganho={};
   ['pv','pa','pe'].forEach(k=>{const g=Math.max(1,Math.floor(m[k]*pc/100));const novo=Math.min(m[k],e[k]+g);ganho[k]=novo-e[k];e[k]=novo;});
+  if(tipo!=='curto'&&F.treino&&F.treino.pronto===false){F.treino={...F.treino,pronto:true};saveDraft();if(db&&uid)salvarQuieto();}
   await atualizarMeu({estado:e});
   const nome={curto:'um descanso curto (2 horas)',inter:'um descanso intermediário (4 horas)',longo:'um descanso longo (10 horas)'}[tipo];
   await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} fez ${nome}: +${ganho.pv} PV, +${ganho.pa} PA, +${ganho.pe} PE.`});
@@ -1384,7 +1561,7 @@ function renderAreas(){
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
-  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span><span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}<br><span class="note">PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span>${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}" style="margin-left:auto">Desafiar</button>`:''}</div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
+  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(grauDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span>${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}" style="margin-left:auto">Desafiar</button>`:''}</div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
   const l=locById(id);
   $('#loc-info').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p class="note" style="margin:0;font-size:13px">${esc(l.desc)}</p><a class="btn small" href="#mapa">Voltar ao mapa</a>`;
 }
@@ -1394,7 +1571,9 @@ function fazerRolagem(pericia,modo){const C=calc();const sk=C.skill[pericia];con
   const dados=modo?[d20(),d20()]:[d20()];const e=modo>0?Math.max(...dados):modo<0?Math.min(...dados):dados[0];
   return {pericia,dados,escolhido:e,bonus:sk.v,total:e+sk.v,modo:modo>0?'vantagem':modo<0?'desvantagem':'',cd:ped&&ped.pericia===pericia&&ped.cd!=null?ped.cd:null};}
 function renderAnexo(){
-  const C=calc();const sw=$('#sobre-wrap');if(sw){sw.hidden=!(C.hasTec||(F.especiais||[]).length);$('#chat-sobre').max=String(C.tec.limite);}$('#btn-anexar').hidden=!!anexo;
+  const C=calc();const sw=$('#sobre-wrap');if(sw){sw.hidden=!(C.hasTec||(F.especiais||[]).length);$('#chat-sobre').max=String(C.tec.limite);
+    const fontes=[...(C.hasTec?[[F.tecnica.dado||'d6',F.tecnica.nome||'Técnica Inata']]:[]),...(F.especiais||[]).map(e=>[e.dado||'d8',e.nome])];
+    const sd=$('#chat-sobre-dado');if(sd){const v=sd.value;sd.innerHTML=fontes.map(([d,n],i)=>`<option value="${esc(d)}" data-i="${i}">${esc(n)} (${esc(d)})</option>`).join('');sd.hidden=fontes.length<2;if(v&&fontes.some(f=>f[0]===v))sd.value=v;}}$('#btn-anexar').hidden=!!anexo;
   $('#anexo-box').innerHTML=anexo?`<label class="sr" for="anexo-sk">Perícia anexada</label><select id="anexo-sk">${SKILLS.map(([n])=>`<option ${n===anexo.pericia?'selected':''} value="${n}">${n} ${C.skill[n].v>=0?'+':''}${C.skill[n].v}</option>`).join('')}</select>
     <div class="seg" role="group" aria-label="Modo">${[[-1,'Desv.'],[0,'Normal'],[1,'Vant.']].map(([v,t])=>`<button type="button" data-anexomodo="${v}" class="${anexo.modo===v?'on':''}">${t}</button>`).join('')}</div>
     <button type="button" class="btn small" id="anexo-rem" aria-label="Tirar rolagem">✕</button><span class="note">rola quando você enviar</span>`:'';
@@ -1409,14 +1588,30 @@ async function enviar(){
   const ta=$('#chat-input');const t=ta.value.trim();if(!t||!canalAtual)return;
   if(narrando&&paraQuem==='mestre'){toastChat('Espere o mestre terminar de narrar.');return;}
   let sobre=paraQuem==='mestre'&&(calc().hasTec||(F.especiais||[]).length)?Math.max(0,parseInt($('#chat-sobre').value)||0):0;
-  if(sobre){const C=calc();if(sobre%2)sobre-=1;
+  if(sobre){const C=calc();
     if(sobre>meu.estado.pa){toastChat(`Você só tem ${meu.estado.pa} PA. Diminua o PA extra.`);return;}
     if(sobre>C.tec.limite){toastChat(`O limite por ativação no seu nível é ${C.tec.limite} PA (custo base + extra).`);return;}}
-  const r=anexo?fazerRolagem(anexo.pericia,anexo.modo):null;anexo=null;renderAnexo();$('#chat-sobre').value='0';
-  ta.value='';await postMsg(canalAtual,{tipo:'jogador',autorNome:F.nome||'Sem nome',texto:t,para:paraQuem,...(r?{rolagem:r}:{}),...(sobre?{sobrecarga:sobre}:{})});
+  const r=anexo?fazerRolagem(anexo.pericia,anexo.modo):null;anexo=null;renderAnexo();
+  let so=null;if(sobre){const dado=($('#chat-sobre-dado')&&$('#chat-sobre-dado').value)||F.tecnica.dado||'d6';const l=parseInt(dado.slice(1))||6;const ds=rolarDados(sobre,l);so={q:sobre,dado,dados:ds,total:ds.reduce((a,b)=>a+b,0)};}
+  $('#chat-sobre').value='0';
+  const dd=paraQuem==='mestre'?dadosNaMensagem(t):[];
+  ta.value='';await postMsg(canalAtual,{tipo:'jogador',autorNome:F.nome||'Sem nome',texto:t,para:paraQuem,...(r?{rolagem:r}:{}),...(sobre?{sobrecarga:sobre,sobreRolagem:so}:{}),...(dd.length?{dadosDeclarados:dd}:{})});
   if(paraQuem==='jogadores')agendarObservacao(canalAtual,t,r);
-  else if(ehDuelo()&&combateLocal===canalAtual&&!/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t))narrar(canalAtual,{tipo:'duelo',texto:t,rolagem:r,sobrecarga:sobre});
-  else narrar(canalAtual,{tipo:'acao',texto:t,rolagem:r,sobrecarga:sobre,foraHint:/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t)});
+  else if(ehDuelo()&&combateLocal===canalAtual&&!/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t))narrar(canalAtual,{tipo:'duelo',texto:t,rolagem:r,sobrecarga:sobre,sobreRolagem:so,dados:dd});
+  else narrar(canalAtual,{tipo:'acao',texto:t,rolagem:r,sobrecarga:sobre,sobreRolagem:so,dados:dd,foraHint:/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t)});
+}
+/* dados escritos pelo jogador ("+1d8", "2d6+3") são rolados pelo sistema para o mestre não errar a conta */
+function rolarExpr(expr){
+  const termos=[...String(expr||'').replace(/\s+/g,'').matchAll(/([+-]?)(\d*d\d+|\d+)/gi)];if(!termos.length)return null;
+  let total=0;const partes=[];
+  for(const [,sinal,t] of termos){const sg=sinal==='-'?-1:1;
+    if(/d/i.test(t)){const [q,l]=t.toLowerCase().split('d');const qq=Math.max(1,Math.min(30,parseInt(q)||1)),ll=Math.max(2,Math.min(100,parseInt(l)||6));const ds=rolarDados(qq,ll);const sm=ds.reduce((a,b)=>a+b,0);total+=sg*sm;partes.push(`${sg<0?'−':''}[${ds.join('+')}]`);}
+    else{const v=parseInt(t)||0;total+=sg*v;partes.push(`${sg<0?'−':''}${v}`);}}
+  return {expr:String(expr).trim(),detalhe:partes.join(' + ').replace(/\+ −/g,'− '),total};
+}
+function dadosNaMensagem(t){
+  const out=[];for(const m of String(t).matchAll(/(\d{0,2})d(4|6|8|10|12|20|100)(?![a-z0-9])(\s*[+-]\s*\d+(?!\s*d))?/gi)){if(out.length>=5)break;const r=rolarExpr(m[0]);if(r)out.push(r);}
+  return out;
 }
 async function rolar(){
   if(narrando||!canalAtual)return;const C=calc();const sk=C.skill[rollSkill];const ped=pedidoPendente();
@@ -1433,6 +1628,7 @@ function resumoFicha(){
   const per=SKILLS.map(([n])=>`${n} ${C.skill[n].v>=0?'+':''}${C.skill[n].v}${C.skill[n].t?'*':''}`).join(', ');
   return `${F.nome||'Sem nome'} — ${C.raca?.n||'?'}${F.raca==='feto'&&F.fetoVar?` (${F.fetoVar})`:''}, ${F.classe||'sem classe'}, nível ${C.n}, idade ${F.idade}, antecedente ${F.antecedente||'-'}${F.restricao?`, Restrição Celestial ${F.restricao==='fraco'?'Corpo Fraco':'Corpo Celestial'}`:''}.
 Atributos: FOR ${C.a.for}, VEL ${C.a.vel}, CON ${C.a.con}, ESP ${C.a.esp}, SAB ${C.a.sab}, CAR ${C.a.car}. Proficiência +${C.prof}.
+Grau na Escola Jujutsu: ${grauEscola(meu?.pg)} (${+meu?.pg||0} Pontos de Graduação).
 Experiência: ${xpAtual()} XP${xpInfo().prox?` (próximo nível em ${xpInfo().prox})`:''}.
 Recursos atuais: PV ${meu.estado.pv}/${meu.max.pv}, PA ${meu.estado.pa}/${meu.max.pa}, PE ${meu.estado.pe}/${meu.max.pe}. Deslocamento ${C.desl} m, RD ${C.rd}, dano desarmado ${C.desarm}.
 Perícias (* = treinada): ${per}.
@@ -1447,8 +1643,9 @@ function historico(){
     if(m.tipo==='mestre')return `[Mestre]: ${m.texto}${m.teste?` (pediu teste de ${m.teste.pericia} CD ${m.teste.cd} para ${m.alvoNome})`:''}`;
     if(m.tipo==='rolagem'){const r=m.rolagem||{};return `[${m.autorNome} rolou ${r.pericia}: total ${r.total} (d20=${r.escolhido}${r.modo?' com '+r.modo:''})]`;}
     if(m.tipo==='sistema')return `[Sistema]: ${m.texto}`;
+    if(m.tipo==='npc')return `[NPC ${m.npcNome}]: ${m.texto}`;
     if(m.tipo==='combate')return `[Combate]: ${m.texto}`;
-    const r=m.rolagem;return `[${m.autorNome}${m.para==='jogadores'?' → para os jogadores':''}]: ${m.texto}${r?` (rolou ${r.pericia}: total ${r.total})`:''}${m.sobrecarga?` (investiu +${m.sobrecarga} PA extra na técnica)`:''}`;}).join('\n');
+    const r=m.rolagem;return `[${m.autorNome}${m.para==='jogadores'?' → para os jogadores':''}]: ${m.texto}${r?` (rolou ${r.pericia}: total ${r.total})`:''}${m.sobrecarga?` (investiu +${m.sobrecarga} PA extra na técnica${m.sobreRolagem?`, dano extra rolado ${m.sobreRolagem.total}`:''})`:''}${(m.dadosDeclarados||[]).length?` (dados rolados pelo sistema: ${m.dadosDeclarados.map(d=>`${d.expr}=${d.total}`).join(', ')})`:''}`;}).join('\n');
 }
 function memoriaCampanha(){
   const meus=(meu.diario||[]).slice(-30).map(d=>`- (${locById(d.local)?.curto||d.local}) ${d.texto}`).join('\n');
@@ -1467,18 +1664,25 @@ async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Abra a página no Claude e permita o uso da IA.'});return;}
   if(narrando)return;narrando=true;const obs=g.tipo==='observar'||g.tipo==='duelo'||g.tipo==='retorno';if(!obs){$('#chat-thinking').hidden=false;}renderRoll();renderCombate();
   let viajar=null,anteriorTxt='',iniciarDepois=null;
-  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (PV ${j.estado?.pv}/${j.max?.pv})`);
-  const gat=g.tipo==='chegada'?`${F.nome} acabou de chegar a este local${g.anterior?'. Logo antes, em outro local, aconteceu isto:\n'+g.anterior+'\n':'. '}Descreva a cena como ele a vê ao chegar (o que está acontecendo, o clima, algum detalhe que convide à ação), levando em conta a memória da campanha. Não peça teste ainda, a menos que algo aconteça de imediato.`
+  const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
+  const so=g.sobreRolagem;const txtSobre=g.sobrecarga?(so?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga). O SISTEMA JÁ ROLOU o dano extra: ${so.q}${so.dado} = ${so.dados.join('+')} = ${so.total}. Some EXATAMENTE +${so.total} ao dano que a técnica causaria (em danoInimigos/danoJogadores e na narração) e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:` Ele investe +${g.sobrecarga} PA extra na técnica.`):'';
+  const txtDados=(g.dados||[]).length?` Dados que ele escreveu na mensagem, JÁ ROLADOS pelo sistema (use exatamente estes valores, não role de novo nem ignore): ${g.dados.map(d=>`${d.expr} = ${d.total}`).join('; ')}.`:'';
+  const gat=g.tipo==='emboscada'?`${F.nome} acabou de chegar a este local${g.anterior?' (antes: '+g.anterior.replace(/\n/g,' | ')+')':''}. ${g.primeira?'Descreva o lugar em 1 ou 2 frases e, em seguida, ':''}EMBOSCADA DO CLÃ ELMOS: caçadores do próprio clã de ${F.nome} (roupas cinza, máscaras de cão de ferro, correntes seladas) surgem para capturá-lo e levá-lo como receptáculo de Cérberus. Eles querem o herdeiro vivo. Narre o cerco de forma tensa (um deles pode dizer algo em "falas"), registre o líder dos caçadores em "npcs" e inicie o combate com "combate" com 1 ou 2 inimigos chamados "Caçador Elmos" (grau 4; grau 3 se o personagem for nível 3 ou mais).`
+    :g.tipo==='chegada'?`${F.nome} acabou de chegar a este local${g.anterior?'. Logo antes, em outro local, aconteceu isto:\n'+g.anterior+'\n':'. '}Descreva a cena como ele a vê ao chegar (o que está acontecendo, o clima, algum detalhe que convide à ação), levando em conta a memória da campanha. Não peça teste ainda, a menos que algo aconteça de imediato.`
     :g.tipo==='rolagem'?`${F.nome} rolou ${g.rolagem.pericia} e tirou total ${g.rolagem.total}${g.rolagem.cd!=null?` contra CD ${g.rolagem.cd} (${g.rolagem.total>=g.rolagem.cd?'SUCESSO':'FALHA'})`:' (não havia CD pedida: julgue se o resultado é bom para o que ele tentava)'}. Narre a consequência.`
     :g.tipo==='observar'?`${F.nome} escreveu uma mensagem PARA OS OUTROS JOGADORES, não para você: "${g.texto}"${g.rolagem?` (anexou rolagem de ${g.rolagem.pericia}: total ${g.rolagem.total})`:''}. Normalmente o mestre fica em silêncio nessas conversas. Só intervenha se for realmente necessário: um NPC presente ouve e reage ao que foi dito em voz alta, um perigo ou ataque surpresa acontece, ou o que foi dito muda a cena. Se não for intervir, responda apenas {"intervir":false}.`
     :g.tipo==='retorno'?`${F.nome} voltou a este local, onde já esteve antes. NÃO descreva o lugar de novo nem faça introdução.${g.anterior?' Logo antes, no local de onde ele veio, aconteceu isto:\n'+g.anterior+'\n':''} Só narre se um NPC o acompanhou ou seguiu até aqui, se alguém presente reage à chegada dele de um jeito que importa, ou se algo urgente acontece agora (ataque, emergência). Nesses casos, narre só isso, em poucas frases. Caso contrário responda apenas {"intervir":false}.`
-    :g.tipo==='duelo'?`Está acontecendo um DUELO entre jogadores. O sistema cuida de iniciativa, ataques, defesas e dano, e o mestre NÃO narra o duelo. ${F.nome} escreveu: "${g.texto}"${g.rolagem?` (rolou ${g.rolagem.pericia}: total ${g.rolagem.total})`:''}${g.sobrecarga?` e investe +${g.sobrecarga} PA extra na técnica (+${Math.floor(g.sobrecarga/2)} dado(s) de dano)`:''}. Se for Técnica Inata ou ação especial contra outro jogador, resolva SÓ a mecânica: dano em "danoJogadores" ([{"id":"id do jogador","dano":N}]), custos em "efeitos", e em "resumo" uma frase seca do resultado (ex.: "Explosão de Mitsnari acerta Ino: 9 de dano"). Deixe "narracao" vazia. Escreva "narracao" só se algo de fora intervier (um professor separa a briga, uma maldição aparece; use "combate" para trazer inimigos ou "fimCombate"). Se for só fala ou provocação, responda {"intervir":false}.${combate&&combate.vez!==myId()?' ATENÇÃO: não é o turno dele. Se ele tentar técnica ou ataque fora do turno, não aplique dano e diga em "resumo" que precisa esperar a vez.':''}`
+    :g.tipo==='duelo'?`Está acontecendo um DUELO entre jogadores. O sistema cuida de iniciativa, ataques, defesas e dano, e o mestre NÃO narra o duelo. ${F.nome} escreveu: "${g.texto}"${g.rolagem?` (rolou ${g.rolagem.pericia}: total ${g.rolagem.total})`:''}.${txtSobre}${txtDados} Se for Técnica Inata ou ação especial contra outro jogador, resolva SÓ a mecânica: dano em "danoJogadores" ([{"id":"id do jogador","dano":N}]), custos em "efeitos", e em "resumo" uma frase seca do resultado (ex.: "Explosão de Mitsnari acerta Ino: 9 de dano"). Deixe "narracao" vazia. Escreva "narracao" só se algo de fora intervier (um professor separa a briga, uma maldição aparece; use "combate" para trazer inimigos ou "fimCombate"). Se for só fala ou provocação, responda {"intervir":false}.${combate&&combate.vez!==myId()?' ATENÇÃO: não é o turno dele. Se ele tentar técnica ou ataque fora do turno, não aplique dano e diga em "resumo" que precisa esperar a vez.':''}`
     :g.tipo==='turno'?`Acabou de acontecer no combate (resolvido pelo sistema, números já aplicados):\n${g.eventos.join('\n')}\n${g.fim?'O combate terminou. Narre o desfecho.':'Narre isso de forma viva e curta (até 2 parágrafos), sem alterar números. Termine indicando de quem é a vez.'} Não peça teste. Use "efeitos" só se algo além dos golpes acontecer.`
     :g.foraHint?`${F.nome} escreveu: "${g.texto}". A mensagem chama o MESTRE pelo nome. Decida: se ele está falando com você, o mestre, fora do jogo (pergunta, dúvida de regra, confirmação do que o personagem percebe, pedido de esclarecimento), responda FORA DO JOGO com "foraDoJogo": true. Se "mestre" faz parte da fala ou ação do personagem (ex.: falando de um sensei), trate como ação normal com "foraDoJogo": false.`
-    :`${chegadaRecente&&chegadaRecente.local===id&&Date.now()-chegadaRecente.t<30*60000?`(Contexto: ${F.nome} acabou de voltar para este local, que já conhece; não descreva o lugar de novo. Se algum NPC da cena anterior o seguiu até aqui, ele pode aparecer agora.${chegadaRecente.anterior?' Logo antes aconteceu: '+chegadaRecente.anterior.replace(/\n/g,' | '):''}) `:''}${F.nome} declarou: "${g.texto}"${g.rolagem?` e rolou ${g.rolagem.pericia}: total ${g.rolagem.total}${g.rolagem.cd!=null?` contra CD ${g.rolagem.cd} (${g.rolagem.total>=g.rolagem.cd?'SUCESSO':'FALHA'})`:' (julgue o resultado contra a dificuldade da ação; não peça outro teste para a mesma coisa)'}`:''}. Responda à ação.${g.sobrecarga?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga): some +${Math.floor(g.sobrecarga/2)} dado(s) ao dano da técnica e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:''}${combate&&combate.ativo&&combate.vez!==myId()?' Atenção: não é o turno dele no combate; só permita falas, reações ou ações livres.':''}`;
+    :`${chegadaRecente&&chegadaRecente.local===id&&Date.now()-chegadaRecente.t<30*60000?`(Contexto: ${F.nome} acabou de voltar para este local, que já conhece; não descreva o lugar de novo. Se algum NPC da cena anterior o seguiu até aqui, ele pode aparecer agora.${chegadaRecente.anterior?' Logo antes aconteceu: '+chegadaRecente.anterior.replace(/\n/g,' | '):''}) `:''}${F.nome} declarou: "${g.texto}"${g.rolagem?` e rolou ${g.rolagem.pericia}: total ${g.rolagem.total}${g.rolagem.cd!=null?` contra CD ${g.rolagem.cd} (${g.rolagem.total>=g.rolagem.cd?'SUCESSO':'FALHA'})`:' (julgue o resultado contra a dificuldade da ação; não peça outro teste para a mesma coisa)'}`:''}. Responda à ação.${txtSobre}${txtDados}${combate&&combate.ativo&&combate.vez!==myId()?' Atenção: não é o turno dele no combate; só permita falas, reações ou ações livres.':''}`;
   const inv=(meu.inventario||[]).map(i=>`${i.nome} ×${i.qtd}${i.nota?` (${i.nota})`:''}`).join('; ');
   const prompt=`Você é o MESTRE de uma campanha de RPG de mesa no universo de Jujutsu Kaisen, com o sistema "Era dos Feiticeiros 0.3" (regras da casa: Velocidade no lugar de Agilidade, Sabedoria no lugar de Intelecto; a Família Gojo domina Energia Reversa). Os jogadores conversam com você por um chat, um canal por local, e é uma só campanha: o que aconteceu em um local continua valendo nos outros.
 
+CAMPANHA
+{{CAMPANHA}}
+
+${direcaoMestre()}
 COMO NARRAR
 - Português do Brasil, tom de anime sombrio com momentos leves. 1 a 3 parágrafos curtos (no máximo ~120 palavras), falando com o jogador em segunda pessoa.
 - Nunca decida ações, falas, pensamentos ou sentimentos dos personagens dos jogadores. Descreva o mundo e os NPCs, e termine abrindo espaço para o jogador agir.
@@ -1492,16 +1696,23 @@ COMO NARRAR
 - FORA DO JOGO: quando o jogador fala com você chamando de "mestre" (ex.: "perdão mestre, eu percebi, é uma criatura ou não?"), responda como o mestre conversando na mesa: informal, curto (1 ou 2 frases), em primeira pessoa, sem narrar a cena, sem segunda pessoa dramática. Ex.: "sim sim, é uma maldição, e pelo tamanho deve ser grau 4". Responda com o que o personagem poderia perceber ou saber, sem entregar segredos da trama. Nesse caso use "foraDoJogo": true e não mude efeitos, itens, combate ou teste. Quando o jogador voltar a falar como o personagem, volte a narrar normalmente.
 - TÉCNICAS DESBLOQUEADAS: quando a ficha lista técnicas avançadas desbloqueadas pelo mestre, elas são válidas mesmo fugindo das regras normais (ex.: um receptáculo usando o poder de quem abriga). Resolva-as pela descrição, cobre o custo indicado em efeitos.pa e aceite sobrecarga.
 - MISSÕES: chamados ficam no Quadro de Missões da escola. Quando o grupo cumprir o objetivo da missão ativa, lembre que o pagamento só sai com o relatório entregue a um professor na Sala dos Professores. Quando ${F.nome} entregar esse relatório lá (com o objetivo cumprido), use "missaoConcluida": true; o sistema paga XP e ienes da missão a todo o grupo, então não dê XP nem ienes por isso.
-- REGRAS DA CASA DE ENERGIA: (1) Recuperar energia: em combate, o jogador pode gastar a ação do turno para recuperar 1d8 PA. Se ele declarar isso no chat durante o turno dele, use "recuperarPA": true (o sistema rola o 1d8 e aplica; não ponha esse PA em efeitos). Fora de combate, descanso continua sendo o jeito de recuperar. (2) Sobrecarga: ao usar a Técnica Inata, o jogador pode gastar PA além do custo: cada 2 PA extras somam +1 dado de dano da técnica (mesmo tipo de dado). Custo base + extra nunca passa do limite por ativação (Nível × 4). Desconte tudo em efeitos.pa e mostre o dano maior na narração e em danoInimigos.
+- REGRAS DA CASA DE ENERGIA: (1) Recuperar energia: em combate, o jogador pode gastar a ação do turno para recuperar 1d8 PA. Se ele declarar isso no chat durante o turno dele, use "recuperarPA": true (o sistema rola o 1d8 e aplica; não ponha esse PA em efeitos). Fora de combate, descanso continua sendo o jeito de recuperar. (2) Sobrecarga: ao usar a Técnica Inata (ou uma técnica desbloqueada), o jogador pode gastar PA além do custo: CADA 1 PA extra soma +1 dado de dano da técnica. O sistema rola esses dados e informa o total; some esse total exato. Custo base + extra nunca passa do limite por ativação (Nível × 4). Desconte tudo em efeitos.pa e mostre o dano maior na narração e em danoInimigos. Mais PA extra precisa sempre dar bem mais dano.
+- BÔNUS DECLARADOS: quando o jogador usa uma habilidade que dá bônus (ex.: "uso Impulso, +1d8 de dano"), confira na ficha e CONTE o bônus. Se ele escreveu os dados, o sistema já rolou e informa o resultado: use exatamente esse número. Se o bônus vale para o próximo ataque com arma (feito pelo botão Atacar), preencha "bonusProximoAtaque": {"dano":"1d8","acerto":0,"motivo":"Impulso"} e o sistema soma no próximo ataque. Se o bônus vale para uma técnica que você resolve agora, some direto em danoInimigos/danoJogadores.
+- NPCs E FALAS: quando um NPC fala, coloque a fala em "falas" ([{"npc":"Nome","texto":"o que ele diz"}]), e não dentro da narração. Cada fala aparece no chat com o nome do NPC, logo depois da narração. A narração descreve a cena e os gestos; as falas são só as palavras. Todo NPC novo com nome, ou NPC conhecido com quem acontece algo marcante, vai em "npcs" ([{"nome":"Nome","descricao":"quem é, aparência e jeito, 1 frase","nota":"o que ele vai lembrar desta cena, 1 frase"}]). Use os nomes do LIVRO DE NPCs exatamente iguais quando eles voltarem, e faça eles lembrarem do que está anotado.
+- DINHEIRO ENTRE JOGADORES: se ${F.nome} der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
+- MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?'Escola · '+(x.quarto?x.curto:x.area):x.nome}${x.id==='escola'?', corredores':''})`).join(', ')}. As áreas da escola (ids que começam com escola-) ficam no mesmo prédio: andar entre elas é rápido. Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}
 
+${livroNpcs(40)}
+
 OUTROS JOGADORES NESTE LOCAL: ${outros.join('; ')||'nenhum'}.
 
-${(()=>{const mm=minhaMissao();return mm?`MISSÃO ATIVA DE ${F.nome}: "${mm.titulo}" (grau ${mm.grau}, destino ${nomeLocal(mm.destino)}). ${mm.descricao} Grupo: ${(mm.membros||[]).map(nomeJog).join(', ')}.`:`${F.nome} não está em nenhuma missão no momento.`;})()}
+${(()=>{const mm=minhaMissao();return mm?`MISSÃO ATIVA DE ${F.nome}: "${mm.titulo}" (grau ${mm.grau}, destino ${nomeLocal(mm.destino)}). ${mm.descricao} Grupo: ${(mm.membros||[]).map(nomeJog).join(', ')}.${instrucaoOlho(mm)}`:`${F.nome} não está em nenhuma missão no momento.`;})()}
+${missaoPessoal()?`MISSÃO PESSOAL DE ${F.nome} (dê espaço para ela com pistas e cenas, sem resolver de uma vez): ${missaoPessoal()}`:''}
 
 ${resumoCombate()}
 
@@ -1518,7 +1729,7 @@ ${historico()||'(vazio)'}
 AGORA: ${gat}
 
 Responda SOMENTE com um objeto JSON, sem texto fora dele:
-{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta"}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true}
+{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta","olho":false}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true,"falas":[],"npcs":[],"bonusProximoAtaque":null,"transferir":[]}
 "efeitos", "itens" e "ienes" são mudanças para ${F.nome} (negativo gasta/perde, positivo ganha). Use os nomes dos itens exatamente como estão no inventário. "itens" pode ser []. "memoria" é uma frase curta só quando algo relevante acontecer (pista, NPC conhecido, ferimento, missão, item importante, decisão).`;
   try{
     const res=await chamarIA(prompt,obs?'quick':'default',obs?null:avisoEspera);avisoNormal();
@@ -1539,7 +1750,18 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     let teste=null;if(j.teste&&j.teste.pericia&&SKILLS.some(s=>s[0]===j.teste.pericia))teste={pericia:j.teste.pericia,cd:+j.teste.cd||15,motivo:String(j.teste.motivo||'').slice(0,140)};
     const itens=(Array.isArray(j.itens)?j.itens:[]).filter(x=>x&&x.nome&&Math.round(+x.qtd)).slice(0,10).map(x=>({nome:String(x.nome).slice(0,60),qtd:Math.round(+x.qtd)}));
     const ienes=Math.round(+j.ienes||0);
-    await postMsg(id,{tipo:'mestre',texto:String(j.narracao||'').slice(0,4000),teste,efeitos:ef,itens,ienes,alvoId:uid||'eu',alvoNome:F.nome});
+    const falas=(Array.isArray(j.falas)?j.falas:[]).filter(f=>f&&f.npc&&String(f.texto||'').trim()).slice(0,6);
+    const narr=String(j.narracao||'').trim().slice(0,4000);
+    if(narr||!falas.length||teste||Object.keys(ef).length||itens.length||ienes)await postMsg(id,{tipo:'mestre',texto:narr,teste,efeitos:ef,itens,ienes,alvoId:uid||'eu',alvoNome:F.nome});
+    for(const f of falas)await postMsg(id,{tipo:'npc',npcNome:String(f.npc).slice(0,60),texto:String(f.texto).slice(0,1500)});
+    const novosNpcs=(Array.isArray(j.npcs)?j.npcs:[]).filter(x=>x&&x.nome);
+    falas.forEach(f=>{if(!npcs.has(npcId(f.npc))&&!novosNpcs.some(x=>npcId(x.nome)===npcId(f.npc)))novosNpcs.push({nome:f.npc});});
+    if(novosNpcs.length)registrarNpcs(novosNpcs,id);
+    const bpa=j.bonusProximoAtaque;
+    if(bpa&&typeof bpa==='object'&&(bpa.dano||+bpa.acerto)){const dano=String(bpa.dano||'').replace(/[^0-9d+\-]/gi,'').slice(0,20);await atualizarMeu({bonusAtaque:{dano,acerto:Math.max(-10,Math.min(10,Math.round(+bpa.acerto||0))),motivo:String(bpa.motivo||'bônus').slice(0,40),t:Date.now()}});
+      await postMsg(id,{tipo:'sistema',texto:`${F.nome} guarda para o próximo ataque: ${String(bpa.motivo||'bônus').slice(0,40)}${dano?` +${dano} de dano`:''}${+bpa.acerto?` ${+bpa.acerto>0?'+':''}${Math.round(+bpa.acerto)} no acerto`:''}.`});}
+    for(const tr of (Array.isArray(j.transferir)?j.transferir:[]).slice(0,3)){const nn=normNome(tr?.para);const hit=[...jogadores.entries()].find(([k,x])=>k!==myId()&&(k===tr?.para||normNome(x.nome)===nn||(nn&&normNome(x.nome).includes(nn))));
+      if(hit){const err=await transferirIenes(hit[0],tr.valor,id);if(err)toastChat(err);}}
     const patch={};
     if(Object.keys(ef).length){const e={...meu.estado};['pv','pa','pe'].forEach(k=>{if(ef[k])e[k]=Math.max(0,Math.min(meu.max[k],e[k]+ef[k]));});patch.estado=e;}
     if(itens.length)patch.inventario=aplicarItens(meu.inventario||[],itens);
@@ -1619,7 +1841,8 @@ async function iniciarCombate(local,lista,outrosJogadores){
   const parts={};let i=0;
   (lista||[]).slice(0,6).forEach(e=>{const g=GRAUS[e.grau]!=null?e.grau:4;const G=GRAUS[g];const q=Math.max(1,Math.min(4,+e.qtd||1));
     for(let k=0;k<q;k++){const id=`e${Date.now().toString(36)}${i++}`;const nome=(String(e.nome||'Maldição').slice(0,40))+(q>1?` ${String.fromCharCode(65+k)}`:'');
-      parts[id]={id,nome,tipo:'inimigo',lado:'inimigos',grau:g,pv:G.pv,pvMax:G.pv,atk:G.atk,def:G.def,dano:G.dano,rd:G.rd,ini:d20()+G.ini,descricao:String(e.descricao||'').slice(0,160)};}});
+      const olho=e.olho===true&&k===0;const pv=G.pv+(olho?100:0);
+      parts[id]={id,nome:nome+(olho&&!/olho/i.test(nome)?' (comeu um olho)':''),tipo:'inimigo',lado:'inimigos',grau:g,pv,pvMax:pv,atk:G.atk+(olho?2:0),def:G.def+(olho?1:0),dano:G.dano,rd:G.rd,ini:d20()+G.ini,descricao:String(e.descricao||'').slice(0,160),...(olho?{olho:true}:{})};}});
   const outros=(outrosJogadores||[]).filter(id=>id&&id!==myId()&&jogadores.has(id));
   const pvp=!Object.keys(parts).length&&outros.length>0;
   if(!Object.keys(parts).length&&!pvp)return;
@@ -1742,7 +1965,17 @@ async function recuperarPA(passar){
   if(passar)await passarVez(false);
   return true;
 }
-let ultimaArma=null,cbArma=null,cbAlvo=null;
+let ultimaArma=null,cbArma=null,cbAlvo=null,cbExtra='';
+/* bônus deste ataque: campo "Dano extra" do painel + bônus guardado pelo mestre (ex.: Impulso +1d8) */
+async function bonusDoAtaque(){
+  const out={acerto:0,dano:0,notas:[]};
+  const b=meu?.bonusAtaque;
+  if(b&&(b.dano||b.acerto)){out.acerto+=Math.round(+b.acerto||0);if(b.dano){const r=rolarExpr(b.dano);if(r){out.dano+=r.total;out.notas.push(`${b.motivo||'bônus'} ${r.expr}=${r.total}`);}}
+    else if(b.acerto)out.notas.push(`${b.motivo||'bônus'} ${b.acerto>0?'+':''}${b.acerto} no acerto`);
+    await atualizarMeu({bonusAtaque:null});}
+  if(cbExtra.trim()){const r=rolarExpr(cbExtra);if(r){out.dano+=r.total;out.notas.push(`extra ${r.expr}=${r.total}`);}cbExtra='';}
+  return out;
+}
 function extraClasse(armaNome){const C=calc();const t=C.classe?.ataqueExtra;if(!t)return 0;const a=DATA.armas.find(x=>x.nome===armaNome);
   if(t==='arco')return armaNome==='Arco'?1:0;
   if(t==='espada')return /Katana|Wakizashi|Nodachi/.test(armaNome||'')?1:0;
@@ -1760,17 +1993,18 @@ async function atacar(alvoId,armaNome){
     if(m)invPatch=aplicarItens(inv,[{nome:m.nome,qtd:-1}]);}
   ataquesTurno++;
   const pen=ataquesTurno>1+extraClasse(arma.nome)?-2:0;
-  const sk=C.skill[arma.skill].v;const ra=d20();const at=ra+sk+pen;
+  const bx=await bonusDoAtaque();
+  const sk=C.skill[arma.skill].v+bx.acerto;const ra=d20();const at=ra+sk+pen;
   if(invPatch)await atualizarMeu({inventario:invPatch});
-  const bonusDano=C.a[arma.attr]+arma.flat;
+  const bonusDano=C.a[arma.attr]+arma.flat+bx.dano;const notaB=bx.notas.length?` (${bx.notas.join(', ')})`:'';
   if(alvo.tipo==='jogador'){
     if(ra===1){const txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}: 1 natural. Falha crítica: o golpe sai totalmente errado.`;turnoLog.push(txt);await postMsg(combateLocal,{tipo:'combate',texto:txt});checarPassagemAuto();return;}
     const pid=`p${Date.now().toString(36)}${dN(999)}`;
     await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20,t:Date.now()}}});
-    await postMsg(combateLocal,{tipo:'combate',pedido:true,alvoId:alvo.id,texto:`${F.nome} ataca ${alvo.nome} com ${arma.nome}: ${ra}+${sk}${pen?pen:''} = ${at}${ra===20?' (20 natural!)':''}. ${alvo.nome}, role Esquiva ou Bloqueio (Luta) para se defender.`});
+    await postMsg(combateLocal,{tipo:'combate',pedido:true,alvoId:alvo.id,texto:`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at}${ra===20?' (20 natural!)':''}. ${alvo.nome}, role Esquiva ou Bloqueio (Luta) para se defender.`});
     return;}
   const rd=d20();const df=rd+(alvo.def||0);
-  let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${alvo.def} = ${df}.`;
+  let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${alvo.def} = ${df}.`;
   const patch={};
   if(ra!==1&&(ra===20||at>df)){const p=parseDados(arma.dados);const crit=ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+bonusDano;const dano=Math.max(1,bruto-(alvo.rd||0));
     const novo=Math.max(0,alvo.pv-dano);patch.participantes={[alvoId]:{pv:novo}};
@@ -1845,6 +2079,8 @@ function renderCombate(){
      ${aguardo?`<div class="pedido">Esperando ${esc(combate.participantes[aguardo.alvo]?.nome||'o alvo')} rolar a defesa. <button class="btn small" data-defauto="${aguardo.id}">Rolar defesa automática</button></div>`:''}
      <label class="f" for="cb-alvo">Alvo<select id="cb-alvo">${alvos.map(a=>`<option value="${a.id}" ${a.id===cbAlvo?'selected':''}>${esc(a.nome)} (${a.pv} PV)</option>`).join('')}</select></label>
      <label class="f" for="cb-arma">Arma<select id="cb-arma">${armas.map(a=>`<option value="${esc(a.nome)}" ${a.nome===cbArma?'selected':''}>${esc(a.nome)} · ${a.dados}+${C.a[a.attr]+a.flat} · ${a.skill}</option>`).join('')}</select></label>
+     <label class="f" for="cb-extra">Dano extra neste ataque (opcional)<input type="text" id="cb-extra" value="${esc(cbExtra)}" placeholder="Ex.: 1d8 ou 3"></label>
+     ${meu?.bonusAtaque&&(meu.bonusAtaque.dano||meu.bonusAtaque.acerto)?`<p class="note" style="margin:0">Guardado para o próximo ataque: ${esc(meu.bonusAtaque.motivo||'bônus')}${meu.bonusAtaque.dano?` +${esc(meu.bonusAtaque.dano)} de dano`:''}${meu.bonusAtaque.acerto?` ${meu.bonusAtaque.acerto>0?'+':''}${meu.bonusAtaque.acerto} no acerto`:''}.</p>`:''}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="btn-atacar" ${narrando||!alvos.length||aguardo?'disabled':''}>Atacar</button><button class="btn" id="btn-fimturno" ${narrando||aguardo?'disabled':''}>Encerrar turno</button></div>
      ${C.celestial?'':`<button class="btn" id="btn-recuperar" ${narrando||ataquesTurno>0||recuperouTurno?'disabled':''} title="Regra da casa: gasta a ação do turno">Recuperar energia (1d8 PA)</button>`}
      <p class="note" style="margin:0">Recuperar energia usa a ação do turno no lugar dos ataques. Para técnicas (com PA extra para mais dano), manobras ou Energia Reversa, descreva no chat para o mestre.</p>`
@@ -1870,7 +2106,7 @@ async function route(){
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
   $('#mapa-view').hidden=true;$('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
-  abrirCanal(id);assinarCombate(id);renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();
+  abrirCanal(id);assinarCombate(id);renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{
@@ -1883,6 +2119,10 @@ document.addEventListener('click',e=>{
   if(b.dataset.madd){adicionarMissao(b.dataset.madd,$('#madd-'+b.dataset.madd).value);return;}
   if(b.id==='btn-gerar-missoes'){gerarMissoes();return;}
   if(b.dataset.descanso){descansar(b.dataset.descanso);return;}
+  if(b.dataset.treino){treinar(b.dataset.treino);return;}
+  if(b.id==='btn-npcs'){renderNpcs();$('#npc-drawer').classList.add('show');$('#npc-close').focus();return;}
+  if(b.id==='npc-close'){$('#npc-drawer').classList.remove('show');return;}
+  if(b.dataset.npcdel){const id=b.dataset.npcdel;openModal(`Apagar ${npcs.get(id)?.nome||'NPC'} do livro?`,'O mestre de IA deixa de lembrar desse personagem.','','Apagar',async()=>{closeModal();try{await db.doc('npcs/'+id).delete();}catch{}npcs.delete(id);renderNpcs();});return;}
   if(b.dataset.area){if(b.dataset.area!==canalAtual)irPara(b.dataset.area,historico().split('\n').slice(-4).join('\n'));return;}
   if(b.dataset.rollmode!==undefined){rollMode=+b.dataset.rollmode;renderRoll();return;}
   if(b.id==='btn-rolar'){rolar();return;}
@@ -1911,17 +2151,20 @@ document.addEventListener('click',e=>{
   if(b.dataset.admdiario!==undefined){const j=jogadores.get(admSel)||{};const d=[...(j.diario||[])];d.splice(+b.dataset.admdiario,1);admUpdate(admSel,{diario:d}).then(renderAdmEditor).catch(()=>{});return;}
   if(b.dataset.admini){const [loc,eid]=b.dataset.admini.split('|');const pv=Math.max(0,parseInt($('#ae-'+eid).value)||0);db.doc('combates/'+loc).update({participantes:{[eid]:{pv}}}).then(()=>admStatus('PV do inimigo salvo.')).catch(()=>admStatus('Não consegui salvar.',true));return;}
   if(b.dataset.admfim){const loc=b.dataset.admfim;db.doc('combates/'+loc).update({ativo:false,resultado:'encerrado',fim:Date.now()}).then(()=>admPost(loc,{tipo:'combate',texto:'O mestre encerrou o combate.'})).catch(()=>admStatus('Não consegui encerrar.',true));return;}
-  if(b.dataset.admfalar){const loc=b.dataset.admfalar;const t=$('#am-'+loc).value.trim();if(!t)return;const fora=$('#amm-'+loc).value==='f';admPost(loc,{tipo:'mestre',texto:t,fora,alvoId:'',alvoNome:''}).then(()=>{$('#am-'+loc).value='';});return;}
+  if(b.dataset.admfalar){const loc=b.dataset.admfalar;const t=$('#am-'+loc).value.trim();if(!t)return;const modo=$('#amm-'+loc).value;const npcN=$('#amn-'+loc).value.trim();
+    if(modo==='p'&&!npcN){admStatus('Escreva o nome do NPC.',true);return;}
+    admPost(loc,modo==='p'?{tipo:'npc',npcNome:npcN.slice(0,60),texto:t}:{tipo:'mestre',texto:t,fora:modo==='f',alvoId:'',alvoNome:''}).then(()=>{$('#am-'+loc).value='';if(modo==='p'&&!npcs.has(npcId(npcN)))registrarNpcs([{nome:npcN}],loc);});return;}
+  if(b.dataset.admolhos){const n=+b.dataset.admolhos;openModal(`Lançar a Semana dos Olhos ${n}?`,n===2?'A IA cria 3 chamados; em um deles (sorteado) a maldição que comeu o olho pode ser derrotada e o olho recuperado.':'A IA cria 3 chamados; em todos eles o olho vai ter sumido no fim.','','Lançar',async()=>{closeModal();admStatus('Os professores estão preparando os chamados...');const err=await lancarSemanaOlhos(n);admStatus(err||`Semana dos Olhos ${n} lançada: 3 chamados no quadro.`,!!err);renderAdmCampanha();});return;}
   if(b.dataset.admlimpar){const loc=b.dataset.admlimpar;openModal(`Limpar o canal de ${locById(loc).curto}?`,'Todas as mensagens deste canal são apagadas para todo mundo. O diário do mestre continua.','','Limpar canal',async()=>{closeModal();await admLimparCanal(loc);});return;}
   if(b.id==='btn-hist-importar'){importarHistorico();return;}
   if(b.id==='btn-fimcombate'){openModal('Encerrar o combate?','Use se a luta travou ou já acabou na história. Todos os inimigos somem da ordem de turnos.','','Encerrar combate',async()=>{closeModal();await encerrarCombate('encerrado');});return;}
 });
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){$('#inv-drawer').classList.remove('show');}
+  if(e.key==='Escape'){$('#inv-drawer').classList.remove('show');$('#npc-drawer').classList.remove('show');}
   const n=e.target.closest&&e.target.closest('#map .node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selLoc=n.dataset.loc;renderMapa();const el=document.querySelector(`#map .node[data-loc="${selLoc}"]`);el&&el.focus();}
   if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}
 });
-document.addEventListener('change',e=>{if(e.target.id==='hist-arq'&&e.target.files[0]){e.target.files[0].text().then(lerHistorico);}if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
+document.addEventListener('change',e=>{if(e.target.id==='hist-arq'&&e.target.files[0]){e.target.files[0].text().then(lerHistorico);}if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='cb-extra'){cbExtra=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
 $('#chat-form').addEventListener('submit',e=>{e.preventDefault();enviar();});
 async function entrarMundo(){
   const st=$('#save-status');
@@ -1948,14 +2191,28 @@ function renderAdmin(){
   if(!souDono){$('#adm-body').innerHTML='<p class="lead">Este painel é só para o dono da página.</p>';return;}
   if(!db){$('#adm-body').innerHTML='<p class="lead">O painel precisa do armazenamento do grupo. Abra a página no Claude com login.</p>';return;}
   admAssinarCombates();
-  $('#adm-body').innerHTML=`<div class="adm-grid"><div class="panel"><h2>Personagens</h2><div class="party" id="adm-lista"></div></div><div id="adm-editor"></div></div>
+  $('#adm-body').innerHTML=`<div class="panel" style="margin-bottom:16px" id="adm-campanha"></div><div class="adm-grid"><div class="panel"><h2>Personagens</h2><div class="party" id="adm-lista"></div></div><div id="adm-editor"></div></div>
     <div class="panel" style="margin-top:16px"><h2>Locais, combates e canais</h2><div id="adm-locais" class="adm-locais"></div></div>
     <div class="panel" style="margin-top:16px"><h2>Importar histórico dos chats</h2>
       <p class="note" style="margin:0">Use o arquivo gerado no site antigo pelo botão "Exportar histórico para o site novo". Antes, cada jogador precisa ter entrado aqui e salvo a ficha, para aparecer na lista abaixo.</p>
       <input type="file" id="hist-arq" accept=".json,application/json,text/plain">
       <label class="sr" for="hist-txt">Ou cole o conteúdo</label><textarea id="hist-txt" class="mono" rows="3" placeholder="...ou cole aqui o texto exportado"></textarea>
       <div id="hist-map"></div></div>`;
-  renderAdmLista();renderAdmEditor();renderAdmLocais();
+  renderAdmLista();renderAdmEditor();renderAdmLocais();renderAdmCampanha();
+}
+function renderAdmCampanha(){
+  const el=$('#adm-campanha');if(!el)return;if(el.contains(document.activeElement)&&document.activeElement.tagName!=='BUTTON')return;
+  const sem=+campanha.semana||0;const olhos=[...missoes.values()].filter(m=>m.olho);
+  el.innerHTML=`<h2>Campanha</h2>
+    <p class="note" style="margin:0">A história secreta (Feiticeiro dos Nove Olhos, a seita do Lótus Fechado, a maldição Nakigara, a queda de Shibuya e da escola) fica guardada no servidor e o mestre de IA lê em toda resposta. Aqui você controla a fase e dá direções.</p>
+    <div class="grid g2">
+      <label class="f" for="cp-fase">Fase da história<select id="cp-fase">${[['ato1','Ato 1 · missões, NPCs e pistas'],['queda','A Queda · destruição de Shibuya e da escola'],['kyoto','Kyoto · alunos transferidos']].map(([v,t])=>`<option value="${v}" ${campanha.fase===v?'selected':''}>${t}</option>`).join('')}</select></label>
+      <div class="f"><span>Semanas dos Olhos</span><span class="note">Semana atual: <b>${sem||'nenhuma ainda'}</b> de 3 · ${olhos.length} chamado(s) de olho no quadro (${olhos.filter(m=>m.status==='concluida').length} concluído(s)).</span>
+        <div class="adm-acts">${[1,2,3].map(n=>`<button class="btn small${n===sem+1?' primary':''}" data-admolhos="${n}">Lançar semana ${n}</button>`).join('')}</div>
+        <span class="note">Semanas 1 e 3: o olho some em todas as missões. Semana 2: uma das três missões tem a maldição que comeu o olho (+100 PV) e o olho pode ser recuperado.</span></div>
+    </div>
+    <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
+    <div class="adm-acts"><button class="btn primary" data-adm="campanha">Salvar campanha</button></div>`;
 }
 function renderAdmLista(){
   const el=$('#adm-lista');if(!el)return;
@@ -1978,6 +2235,11 @@ function renderAdmEditor(){
     <div class="grid g3">${num('adm-nivel',fi.nivel||1,'Nível',1)}${num('adm-xp',fi.xp||0,'XP total',0)}${num('adm-darxp',50,'Dar XP agora')}</div>
     <div class="adm-acts"><button class="btn primary" data-adm="progressao">Salvar nível e XP</button><button class="btn" data-adm="darxp">Dar XP</button></div>
     <p class="note" style="margin:0">Ao mudar o nível, o jogo recalcula PV, PA e PE máximos na tela do jogador.</p></div>
+  <div class="panel"><h2>Escola e história</h2>
+    <div class="grid g2">${num('adm-pg',j.pg||0,`Pontos de Graduação (agora: ${grauEscola(j.pg)})`,0)}<div></div></div>
+    <label class="f" for="adm-pessoal">Missão pessoal (o jogador vê, e o mestre de IA usa)<textarea id="adm-pessoal" rows="2" placeholder="Ex.: Encontrar as cabeças de Cérberus">${esc(j.missaoPessoal||MISSAO_PESSOAL_PADRAO[fi.antecedente]||'')}</textarea></label>
+    <div class="adm-acts"><button class="btn primary" data-adm="escola">Salvar grau e missão pessoal</button></div>
+    <p class="note" style="margin:0">Graus do livro: 100 PG Grau 4 · 300 Grau 3 · 500 Semi-Grau 2 · 850 Grau 2 · 1500 Semi-Grau 1 · 2000 Grau 1 · 2500 Semi-Grau Especial · 3000 Grau Especial. Missões dão 40 (grau 4), 80 (grau 3), 150 (grau 2) e 120 (olhos).</p></div>
   <div class="panel"><h2>Local</h2><div class="adm-acts"><label class="sr" for="adm-local">Local</label><select id="adm-local" style="max-width:320px"><option value="">Fora do mapa</option>${LOCAIS.map(l=>`<option value="${l.id}" ${j.local===l.id?'selected':''}>${esc(l.nome)}</option>`).join('')}</select><button class="btn" data-adm="mover">Mover personagem</button></div></div>
   <div class="panel"><h2>Inventário e dinheiro</h2>
     <div style="max-width:220px">${num('adm-ienes',j.ienes||0,'Ienes',0)}</div>
@@ -1997,8 +2259,8 @@ function renderAdmEditor(){
     <label class="sr" for="adm-ficha">Ficha em JSON</label><textarea id="adm-ficha" class="mono" rows="10">${esc(JSON.stringify(fi,null,1))}</textarea>
     <div class="adm-acts"><button class="btn primary" data-adm="ficha">Aplicar ficha</button></div></div>`;
 }
-const admEspRow=(e,i)=>`<div class="adm-esp-row"><div class="grid g3"><label class="f" for="es-n${i}">Nome<input type="text" id="es-n${i}" value="${esc(e.nome||'')}"></label><label class="f" for="es-c${i}">Custo<input type="text" id="es-c${i}" value="${esc(e.custo||'')}" placeholder="Ex.: 4 PA, Ação Padrão"></label><label class="f" for="es-f${i}">Origem<input type="text" id="es-f${i}" value="${esc(e.fonte||'')}" placeholder="Ex.: Receptáculo de Cérberus"></label></div><label class="f" for="es-d${i}">O que faz<textarea id="es-d${i}" rows="4">${esc(e.descricao||'')}</textarea></label><button class="btn small" type="button" data-admespdel="${i}">Remover técnica</button></div>`;
-function lerEspAdm(){return [...document.querySelectorAll('#adm-esp .adm-esp-row')].map(r=>{const [n,c,f]=r.querySelectorAll('input');const d=r.querySelector('textarea');return {nome:n.value.trim(),custo:c.value.trim(),fonte:f.value.trim(),descricao:d.value.trim()};}).filter(e=>e.nome&&e.descricao);}
+const admEspRow=(e,i)=>`<div class="adm-esp-row"><div class="grid g3"><label class="f" for="es-n${i}">Nome<input type="text" id="es-n${i}" value="${esc(e.nome||'')}"></label><label class="f" for="es-c${i}">Custo<input type="text" id="es-c${i}" value="${esc(e.custo||'')}" placeholder="Ex.: 4 PA, Ação Padrão"></label><label class="f" for="es-f${i}">Origem<input type="text" id="es-f${i}" value="${esc(e.fonte||'')}" placeholder="Ex.: Receptáculo de Cérberus"></label><label class="f" for="es-x${i}">Dado de dano (sobrecarga)<input type="text" id="es-x${i}" value="${esc(e.dado||'d8')}" placeholder="d8"></label></div><label class="f" for="es-d${i}">O que faz<textarea id="es-d${i}" rows="4">${esc(e.descricao||'')}</textarea></label><button class="btn small" type="button" data-admespdel="${i}">Remover técnica</button></div>`;
+function lerEspAdm(){return [...document.querySelectorAll('#adm-esp .adm-esp-row')].map(r=>{const [n,c,f,x]=r.querySelectorAll('input');const d=r.querySelector('textarea');const dd=(x?.value||'').trim().toLowerCase();return {nome:n.value.trim(),custo:c.value.trim(),fonte:f.value.trim(),dado:/^d(4|6|8|10|12)$/.test(dd)?dd:'d8',descricao:d.value.trim()};}).filter(e=>e.nome&&e.descricao);}
 const admInvRow=(it,i)=>`<div class="inv-row adm"><label class="sr" for="ai-n${i}">Item</label><input type="text" id="ai-n${i}" value="${esc(it.nome)}"><label class="sr" for="ai-q${i}">Qtd</label><input type="number" id="ai-q${i}" value="${esc(it.qtd)}" min="0"><label class="sr" for="ai-o${i}">Nota</label><input type="text" id="ai-o${i}" value="${esc(it.nota||'')}" placeholder="nota"><button class="x" type="button" data-adminvdel="${i}" aria-label="Remover">✕</button></div>`;
 function lerInvAdm(){return [...document.querySelectorAll('#adm-inv .inv-row')].map(r=>{const [n,q,o]=r.querySelectorAll('input');return {nome:n.value.trim(),qtd:Math.max(0,parseInt(q.value)||0),nota:o.value.trim()};}).filter(i=>i.nome&&i.qtd>0);}
 function renderAdmLocais(){
@@ -2010,7 +2272,7 @@ function renderAdmLocais(){
         ${ini.map(p=>`<div class="adm-acts"><label class="f" for="ae-${p.id}" style="flex:1">${esc(p.nome)} (${esc(GRAUS[p.grau]?.label||'')}, máx ${p.pvMax})<input type="number" id="ae-${p.id}" value="${p.pv}" min="0"></label><button class="btn small" data-admini="${l.id}|${p.id}">Salvar PV</button></div>`).join('')}
         <button class="btn small" data-admfim="${l.id}">Encerrar combate</button>`:'<p class="note" style="margin:0">Sem combate.</p>'}
       <label class="f" for="am-${l.id}">Falar como mestre neste canal<textarea id="am-${l.id}" rows="2" placeholder="Ex.: Um apagão derruba as luzes da estação."></textarea></label>
-      <div class="adm-acts"><label class="sr" for="amm-${l.id}">Tipo</label><select id="amm-${l.id}" style="width:auto"><option value="n">Narração</option><option value="f">Fora do jogo</option></select><button class="btn small primary" data-admfalar="${l.id}">Enviar</button><button class="btn small" data-admlimpar="${l.id}">Limpar canal</button></div></div>`;}).join('');
+      <div class="adm-acts"><label class="sr" for="amm-${l.id}">Tipo</label><select id="amm-${l.id}" style="width:auto"><option value="n">Narração</option><option value="f">Fora do jogo</option><option value="p">Fala de NPC</option></select><label class="sr" for="amn-${l.id}">Nome do NPC</label><input type="text" id="amn-${l.id}" placeholder="Nome do NPC" style="max-width:150px"><button class="btn small primary" data-admfalar="${l.id}">Enviar</button><button class="btn small" data-admlimpar="${l.id}">Limpar canal</button></div></div>`;}).join('');
 }
 async function admAcao(a){
   const id=admSel;const j=jogadores.get(id)||{};const v=k=>parseInt($('#'+k).value)||0;
@@ -2029,6 +2291,8 @@ async function admAcao(a){
     try{await db.doc('fichas/'+id).update({ficha:{xp,nivel:String(nivel)}});}catch{}
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
+  if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
+  if(a==='campanha'){try{await db.doc('config/campanha').set({...campanha,fase:$('#cp-fase').value,notas:$('#cp-notas').value.trim().slice(0,1500)});admStatus('Campanha salva.');}catch{admStatus('Não consegui salvar a campanha. Publique as regras novas do Firestore.',true);}return;}
   if(a==='mover'){const loc=$('#adm-local').value;await admUpdate(id,{local:loc});if(loc)await admPost(loc,{tipo:'sistema',texto:`${j.nome} aparece aqui (movido pelo mestre).`});renderAdmEditor();}
   if(a==='addinv'){const box=$('#adm-inv');const i=box.children.length;box.insertAdjacentHTML('beforeend',admInvRow({nome:'',qtd:1,nota:''},i));box.lastElementChild.querySelector('input').focus();return;}
   if(a==='inventario'){await admUpdate(id,{inventario:lerInvAdm(),ienes:Math.max(0,v('adm-ienes'))});renderAdmEditor();}
@@ -2139,13 +2403,13 @@ async function boot(){
   db.collection('fichas').onSnapshot(snap=>{party.clear();snap.docs.forEach(d=>{const x=d.data();if(x&&x.resumo)party.set(x.donoId||d.id,x);});renderParty();if(!$('#view-ficha').hidden){const C=calc();renderAnt(C);renderSheet(C);}},()=>{});
   db.collection('jogadores').onSnapshot(snap=>{jogadores.clear();snap.docs.forEach(d=>{const x=d.data();if(!x)return;jogadores.set(d.id,x);
       if(d.id===uid&&meu&&!snap.metadata.hasPendingWrites){const antes=meu.local;
-        meu={...meu,estado:x.estado||meu.estado,max:x.max||meu.max,bonusMax:x.bonusMax||meu.bonusMax,local:x.local,inventario:x.inventario||meu.inventario,ienes:x.ienes??meu.ienes,diario:x.diario||meu.diario,missoesPagas:x.missoesPagas||meu.missoesPagas,visitados:x.visitados||meu.visitados};
+        meu={...meu,estado:x.estado||meu.estado,max:x.max||meu.max,bonusMax:x.bonusMax||meu.bonusMax,local:x.local,inventario:x.inventario||meu.inventario,ienes:x.ienes??meu.ienes,diario:x.diario||meu.diario,missoesPagas:x.missoesPagas||meu.missoesPagas,visitados:x.visitados||meu.visitados,pg:x.pg??meu.pg,missaoPessoal:x.missaoPessoal??meu.missaoPessoal,bonusAtaque:x.bonusAtaque===undefined?meu.bonusAtaque:x.bonusAtaque,transfRecebidas:x.transfRecebidas||meu.transfRecebidas};
         if(x.local!==antes&&location.hash.startsWith('#local-')&&x.local)setTimeout(()=>{location.hash='local-'+x.local;},50);
         setTimeout(()=>{sincronizarPvCombate();},0);}
       if(d.id===uid)aplicarAdminNoJogador(x);});
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(!$('#mapa-view').hidden)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if($('#inv-drawer').classList.contains('show'))renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();

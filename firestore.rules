@@ -26,5 +26,21 @@ service cloud.firestore {
     match /missoes/{id} {
       allow read, write: if logado();
     }
+
+    // Ienes mandados entre jogadores (quem recebe marca como aplicada).
+    match /transferencias/{id} {
+      allow read, create, update: if logado();
+      allow delete: if mestre();
+    }
+    // Livro de NPCs: o mestre de IA anota; só o mestre humano apaga.
+    match /npcs/{id} {
+      allow read, create, update: if logado();
+      allow delete: if mestre();
+    }
+    // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
+    match /config/{id} {
+      allow read: if logado();
+      allow write: if mestre();
+    }
   }
 }

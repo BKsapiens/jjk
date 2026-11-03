@@ -15,6 +15,8 @@
 //
 //   MESTRE_PROVEDOR       opcional: "claude" ou "gemini", para forçar um dos dois quando as duas chaves existirem.
 
+import { CAMPANHA, FASES } from "./_campanha.js";
+
 const GEMINI_PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
 const GEMINI_RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
 
@@ -51,7 +53,7 @@ async function responderClaude(prompt, rapido) {
       },
       body: JSON.stringify({
         model: modelo,
-        max_tokens: rapido ? 1024 : 2048,
+        max_tokens: rapido ? 1024 : 3000,
         messages: [{ role: "user", content: prompt }]
       })
     });
@@ -104,7 +106,11 @@ export default async function handler(req, res) {
   } catch { res.status(502).send("Não consegui conferir o login."); return; }
 
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
-  const prompt = String(body.prompt || "").slice(0, 60000);
+  let prompt = String(body.prompt || "").slice(0, 60000);
+  if (prompt.includes("{{CAMPANHA}}")) {
+    const fase = FASES[body.fase] || FASES.ato1;
+    prompt = prompt.replace("{{CAMPANHA}}", CAMPANHA + "\n\n" + fase);
+  }
   if (!prompt) { res.status(400).send("Pedido vazio."); return; }
   const rapido = body.tier === "quick";
 
