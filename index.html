@@ -190,7 +190,49 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .who-list div{display:flex;gap:8px;align-items:center}
 .tok{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;background:var(--seal);color:#fff;flex:none}
 .tok.other{background:#3d5a54}
-.canal-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:16px;align-items:start}
+.canal-grid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:16px;align-items:start}
+/* botão Seu celular */
+.p5-cel{position:relative;display:flex;align-items:center;gap:10px;padding:14px 16px 14px 12px;background:#d3121c;color:#fff;border:3px solid #000;box-shadow:5px 5px 0 #000,5px 5px 0 2px #fff;transform:skew(-8deg) rotate(-2deg);cursor:pointer;font:900 italic 21px/1 var(--display);letter-spacing:.5px;transition:transform .12s,box-shadow .12s}
+.p5-cel:hover,.p5-cel:focus-visible{transform:skew(-8deg) rotate(-2deg) translate(-2px,-2px);box-shadow:8px 8px 0 #000,8px 8px 0 2px #fff;outline:none}
+.p5-cel:active{transform:skew(-8deg) rotate(-2deg) translate(2px,2px);box-shadow:2px 2px 0 #000}
+.p5-cel-ico{display:grid;place-items:center;width:40px;height:40px;background:#000;border:2px solid #fff;transform:rotate(6deg)}
+.p5-cel-txt{display:flex;flex-direction:column;text-shadow:2px 2px 0 #000}.p5-cel-txt b{font-size:13px;letter-spacing:3px;color:#000;text-shadow:none;background:#fff;padding:1px 5px;align-self:flex-start;transform:rotate(-3deg)}
+.p5-cel-dot{position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #000}
+/* o celular */
+.cel{position:fixed;inset:0;z-index:40;overflow:hidden}
+.cel-fundo{position:absolute;inset:0;background:repeating-linear-gradient(-35deg,rgba(0,0,0,.78) 0 22px,rgba(160,8,16,.55) 22px 26px);opacity:0;transition:opacity .25s}
+.cel.show .cel-fundo{opacity:1}
+.cel-mao{position:absolute;left:50%;bottom:0;width:min(98vw,calc(100vh * 1.414));aspect-ratio:2480/1754;transform:translate(-50%,105%) rotate(-14deg);transform-origin:50% 100%;transition:transform .42s cubic-bezier(.2,.9,.25,1.12)}
+.cel.show .cel-mao{transform:translate(-50%,3%) rotate(0deg)}
+.cel-mao img{position:absolute;inset:0;width:100%;height:100%;user-select:none}
+.cel-maos{pointer-events:none}
+.cel-mascara{position:absolute;inset:0;-webkit-mask-image:url(/img/celular-mascara.png);mask-image:url(/img/celular-mascara.png);-webkit-mask-size:100% 100%;mask-size:100% 100%}
+.cel-tela{position:absolute;left:24.8%;top:3.3%;width:48.3%;height:78%;transform:rotate(7.5deg);transform-origin:0 0;display:flex;flex-direction:column;padding:2.2% 3% 0 9%;color:#fff;font-size:14px}
+.cel-topo{display:flex;align-items:center;gap:8px;padding:6px 0 8px;border-bottom:3px solid #000}
+.cel-topo h2{flex:1;margin:0;font:900 italic 22px/1 var(--display);color:#fff;text-shadow:3px 3px 0 #000;letter-spacing:.5px}
+.cel-hora{font:800 13px/1 var(--body);background:#000;color:#fff;padding:4px 8px;transform:skew(-10deg)}
+.cel-bt{width:34px;height:34px;display:grid;place-items:center;background:#000;color:#fff;border:2px solid #fff;font:900 18px/1 var(--body);cursor:pointer;transform:skew(-8deg)}
+.cel-bt:hover,.cel-bt:focus-visible{background:#fff;color:#000;outline:none}
+.cel-corpo{flex:1;overflow:auto;padding:10px 4px 32% 0;scrollbar-width:thin;scrollbar-color:#000 transparent}
+.cel-app{display:flex;flex-direction:column;gap:10px}
+.cel .panel{background:#0b0a0c;border:2px solid #fff;border-radius:2px;box-shadow:4px 4px 0 #000;padding:12px}
+.cel .panel:empty{display:none}
+.cel-grade{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px;padding:8px 2px}
+.cel-ic{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;cursor:pointer;color:#fff;padding:0}
+.cel-ic .q{width:64px;height:64px;display:grid;place-items:center;background:#fff;border:3px solid #000;box-shadow:4px 4px 0 #000;font:900 30px/1 'Shippori Mincho B1',serif;color:#000;transition:transform .12s}
+.cel-ic:nth-child(3n+2) .q{transform:rotate(4deg)}.cel-ic:nth-child(3n) .q{transform:rotate(-3deg)}.cel-ic:nth-child(3n+1) .q{transform:rotate(-5deg)}
+.cel-ic:hover .q,.cel-ic:focus-visible .q{transform:scale(1.08) rotate(0);background:#000;color:#fff;border-color:#fff}
+.cel-ic:focus-visible{outline:none}
+.cel-ic span{font:900 12px/1.1 var(--body);background:#000;color:#fff;padding:3px 7px;letter-spacing:.5px;text-transform:uppercase;transform:skew(-10deg)}
+.cel-ic.off{opacity:.45}
+.mapa-cel{display:flex;flex-direction:column;gap:10px}
+.mapa-cel .map-frame{box-shadow:4px 4px 0 #000;border-width:2px}
+.cel .loc-card{background:#0b0a0c;border:2px solid #fff;padding:12px;border-radius:2px;box-shadow:4px 4px 0 #000}
+@media (prefers-reduced-motion:reduce){.cel-mao,.cel-fundo{transition:none}}
+body.sem-animacao .cel-mao,body.sem-animacao .cel-fundo{transition:none}
+body.texto-grande .chat-log{font-size:17px}
+body:has(#view-mundo:not([hidden])) #btn-sair{display:none}
+@media (max-width:760px){.cel-mao{width:180vw;left:62%}.cel-tela{font-size:13px}}
 @media (max-width:900px){.canal-grid{grid-template-columns:1fr}}
 .chat{border:1px solid var(--line);border-radius:10px;background:var(--ink-2);display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:460px}
 .chat-log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
@@ -460,16 +502,8 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
     <header class="world-top">
       <div class="hanko small" aria-hidden="true">呪</div>
       <div><h1 id="world-title">Tóquio</h1><p id="world-sub" class="note"></p></div>
-      <a class="btn small" href="#ficha" id="link-ficha">Ficha</a>
-      <button class="btn small" id="btn-inv" type="button">Inventário</button>
-      <button class="btn small" id="btn-npcs" type="button">Livro de NPCs</button>
-      <a class="btn small adm-link" href="#admin" hidden>Painel do mestre</a>
       <div class="hud" id="hud" aria-label="Seu personagem"></div>
     </header>
-    <div id="mapa-view" class="mapa-grid">
-      <div class="map-frame"><svg id="map" viewBox="0 0 1000 640" role="img" aria-label="Mapa de Tóquio e Kyoto"></svg></div>
-      <div class="loc-card" id="loc-card"></div>
-    </div>
     <nav class="areas" id="areas-bar" aria-label="Áreas da escola" hidden></nav>
     <div id="canal-view" class="canal-grid" hidden>
       <div class="chat">
@@ -490,14 +524,11 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         </form>
       </div>
       <div class="side">
+        <button type="button" class="p5-cel" id="btn-cel" aria-haspopup="dialog"><span class="p5-cel-ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26"><rect x="6" y="2" width="12" height="20" rx="2" fill="#fff" stroke="#000" stroke-width="2" transform="rotate(8 12 12)"/><rect x="8.5" y="5" width="7" height="12" fill="#d3121c" transform="rotate(8 12 12)"/></svg></span><span class="p5-cel-txt"><b>SEU</b> CELULAR</span><span class="p5-cel-dot" id="cel-alerta" hidden></span></button>
         <div class="panel combate" id="combate-panel" hidden></div>
         <div class="panel" id="missoes-panel" hidden></div>
-        <div class="panel" id="minha-missao" hidden></div>
-        <div class="panel" id="descanso-panel" hidden></div>
         <div class="panel" id="treino-panel" hidden></div>
         <div class="panel" id="roll-panel"></div>
-        <div class="panel" id="presentes"></div>
-        <div class="panel" id="loc-info"></div>
       </div>
     </div>
   </div>
@@ -515,19 +546,27 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
   </div>
 </div>
 
-<div class="drawer" id="inv-drawer" role="dialog" aria-modal="true" aria-labelledby="inv-title">
-  <div class="box">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="inv-title" style="font-size:22px">Inventário</h2><button class="btn small" id="inv-close" type="button">Fechar</button></div>
-    <div id="inv-body"></div>
-  </div>
-</div>
-
-<div class="drawer" id="npc-drawer" role="dialog" aria-modal="true" aria-labelledby="npc-title">
-  <div class="box">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><h2 id="npc-title" style="font-size:22px">Livro de NPCs</h2><button class="btn small" id="npc-close" type="button">Fechar</button></div>
-    <p class="note" style="margin:0">Todo personagem que o mestre apresenta fica anotado aqui, com o que ele lembra de vocês.</p>
-    <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome">
-    <div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div>
+<div class="cel" id="cel" hidden>
+  <div class="cel-fundo" data-celfechar="1"></div>
+  <div class="cel-mao" role="dialog" aria-modal="true" aria-labelledby="cel-titulo">
+    <img class="cel-base" src="/img/celular.png" alt="" draggable="false">
+    <div class="cel-mascara"><div class="cel-tela">
+      <div class="cel-topo"><button type="button" class="cel-bt" id="cel-voltar" aria-label="Voltar">‹</button><h2 id="cel-titulo">Celular</h2><span class="cel-hora" id="cel-hora"></span><button type="button" class="cel-bt" data-celfechar="1" aria-label="Guardar o celular">✕</button></div>
+      <div class="cel-corpo" id="cel-corpo">
+        <section class="cel-app" data-app="home"><div class="cel-grade" id="cel-grade"></div></section>
+        <section class="cel-app" data-app="mapa" hidden>
+          <div id="mapa-view" class="mapa-cel"><div class="map-frame"><svg id="map" viewBox="0 0 1000 640" role="img" aria-label="Mapa de Tóquio e Kyoto"></svg></div><div class="loc-card" id="loc-card"></div></div></section>
+        <section class="cel-app" data-app="objetivos" hidden><div class="panel" id="minha-missao"></div><div class="panel" id="cel-sem-missao"></div></section>
+        <section class="cel-app" data-app="descanso" hidden><div class="panel" id="descanso-panel"></div><div class="panel" id="cel-sem-descanso"></div></section>
+        <section class="cel-app" data-app="cena" hidden><div class="panel" id="presentes"></div><div class="panel" id="loc-info"></div></section>
+        <section class="cel-app" data-app="inventario" hidden><div class="panel"><div id="inv-body"></div></div></section>
+        <section class="cel-app" data-app="npcs" hidden><div class="panel"><p class="note" style="margin:0">Todo personagem que o mestre apresenta fica anotado aqui, com o que ele lembra de vocês.</p>
+          <label class="sr" for="npc-busca">Buscar</label><input type="text" id="npc-busca" placeholder="Buscar por nome"><div id="npc-body" style="display:flex;flex-direction:column;gap:8px"></div></div></section>
+        <section class="cel-app" data-app="ficha" hidden><div class="panel" id="cel-ficha"></div></section>
+        <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
+      </div>
+    </div></div>
+    <img class="cel-maos" src="/img/celular-maos.png" alt="" draggable="false">
   </div>
 </div>
 
@@ -1245,7 +1284,7 @@ function salvarMeuLocal(){try{localStorage.setItem('jjk-jogador',JSON.stringify(
 async function atualizarMeu(patch){
   meu={...meu,...patch,atualizado:new Date().toISOString()};jogadores.set(uid||'eu',{...meu});
   if(db&&uid){const ref=db.doc('jogadores/'+uid);writeChain=writeChain.then(()=>ref.update(patch)).catch(()=>{});await writeChain;}else salvarMeuLocal();
-  renderHud();if(canalAtual)renderPresentes();if(!$('#mapa-view').hidden)renderMapa();if($('#inv-drawer').classList.contains('show'))renderInv();
+  renderHud();if(canalAtual)renderPresentes();if(celApp==='mapa')renderMapa();if(celApp==='inventario')renderInv();if(celApp==='ficha')renderCelFicha();
   if(patch.estado&&typeof sincronizarPvCombate==='function')sincronizarPvCombate();
 }
 
@@ -1539,7 +1578,7 @@ function aplicarItens(inv,deltas){
   return inv;
 }
 function renderInv(){
-  if(!meu)return;const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('#inv-drawer input,#inv-drawer select'))return;const inv=meu.inventario||[];
+  if(!meu)return;const ae=document.activeElement;if(ae&&ae.matches&&ae.matches('#cel input,#cel select'))return;const inv=meu.inventario||[];
   $('#inv-body').innerHTML=`<p class="counter">Dinheiro: <b>¥ ${(meu.ienes||0).toLocaleString('pt-BR')}</b> · ${inv.length} item(ns) · carga ${calc().carga}</p>
     <div class="inv-list">${inv.length?inv.map((it,i)=>`<div class="inv-item"><div><b>${esc(it.nome)}</b>${it.nota?`<small>${esc(it.nota)}</small>`:''}</div>
       <div class="qty"><button type="button" data-invq="${i}" data-d="-1" aria-label="Menos ${esc(it.nome)}">−</button><b>${it.qtd}</b><button type="button" data-invq="${i}" data-d="1" aria-label="Mais ${esc(it.nome)}">+</button></div></div>`).join(''):'<p class="note">Inventário vazio.</p>'}</div>
@@ -1580,7 +1619,7 @@ function assinarTransferencias(){if(!db)return;db.collection('transferencias').o
 /* Livro de NPCs */
 const npcs=new Map();
 const npcId=n=>String(n||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60);
-function assinarNpcs(){if(!db)return;db.collection('npcs').onSnapshot(s=>{npcs.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.nome)npcs.set(d.id,{id:d.id,...x});});if($('#npc-drawer').classList.contains('show'))renderNpcs();},()=>{});}
+function assinarNpcs(){if(!db)return;db.collection('npcs').onSnapshot(s=>{npcs.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.nome)npcs.set(d.id,{id:d.id,...x});});if(celApp==='npcs')renderNpcs();},()=>{});}
 async function registrarNpcs(lista,local){
   for(const x of (lista||[]).slice(0,8)){const nome=String(x?.nome||'').trim().slice(0,60);const id=npcId(nome);if(!id)continue;
     const ex=npcs.get(id);const nota=String(x.nota||'').trim().slice(0,240);const desc=String(x.descricao||'').trim().slice(0,300);
@@ -2425,6 +2464,66 @@ function renderCombate(){
    <button class="btn small" id="btn-fimcombate" style="align-self:flex-start">Encerrar combate</button>`;
 }
 
+/* ---------- Seu celular ---------- */
+let celApp=null;
+const CEL_APPS=[['mapa','地','Mapa'],['objetivos','任','Objetivos'],['descanso','寮','Descanso'],['cena','人','Na cena'],['inventario','袋','Inventário'],['npcs','書','NPCs'],['ficha','札','Ficha'],['config','設','Ajustes']];
+const CEL_TIT={home:'Celular',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',config:'Ajustes'};
+function abrirCel(app){
+  const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
+  celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
+}
+function fecharCel(){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);const b=$('#btn-cel');b&&b.focus();}
+function celIr(app){
+  celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
+  $('#cel-titulo').textContent=CEL_TIT[app]||'Celular';$('#cel-voltar').style.visibility=app==='home'?'hidden':'visible';
+  $('#cel-hora').textContent=new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});$('#cel-corpo').scrollTop=0;
+  renderCelApp();
+}
+function renderCelApp(){
+  const a=celApp;if(!a)return;
+  if(a==='home'){const quarto=!!locById(canalAtual)?.quarto;
+    $('#cel-grade').innerHTML=CEL_APPS.map(([k,kj,n])=>`<button type="button" class="cel-ic${k==='descanso'&&!quarto?' off':''}" data-celapp="${k}"><span class="q" aria-hidden="true">${kj}</span><span>${n}</span></button>`).join('');}
+  if(a==='mapa'){if(meu)selLoc=selLoc||raiz(meu.local||casaDe(myId()));renderMapa();}
+  if(a==='objetivos'){renderMissoes();const mm=minhaMissao(),mp=missaoPessoal();$('#cel-sem-missao').innerHTML=mm||mp?'':'<p class="note" style="margin:0">Nenhuma missão no momento. Vá ao Quadro de Missões da escola para pegar um chamado.</p>';
+    if(!mm&&!mp)$('#minha-missao').innerHTML='';}
+  if(a==='descanso'){renderDescanso();const ok=!!locById(canalAtual)?.quarto;$('#cel-sem-descanso').innerHTML=ok?'':`<p class="note" style="margin:0">Descanso só no quarto do dormitório.</p>${meu?`<button class="btn small" data-celquarto="1" style="margin-top:8px">Ir para o meu quarto</button>`:''}`;}
+  if(a==='cena'){if(canalAtual)renderPresentes();else{$('#presentes').innerHTML='<p class="note" style="margin:0">Você ainda não está em nenhum lugar. Abra o Mapa.</p>';$('#loc-info').innerHTML='';}}
+  if(a==='inventario')renderInv();
+  if(a==='npcs')renderNpcs();
+  if(a==='ficha')renderCelFicha();
+  if(a==='config')renderCelConfig();
+}
+function renderCelFicha(){
+  const C=calc();const e=meu?.estado||{},m=meu?.max||{};
+  $('#cel-ficha').innerHTML=`<h2 style="color:${corDe(myId())}">${esc(F.nome||'Sem nome')}</h2><p class="note" style="margin:0">${esc([C.raca?.n,C.classe?.nome,F.antecedente].filter(Boolean).join(' · '))} · nível ${C.n} · ${esc(identDe(myId()))}</p>
+    <div class="pools" style="margin:6px 0"><div class="pool pv"><div class="k">PV</div><div class="v">${e.pv??C.pv}/${m.pv??C.pv}</div></div><div class="pool pa"><div class="k">PA</div><div class="v">${e.pa??C.pa}/${m.pa??C.pa}</div></div><div class="pool pe"><div class="k">PE</div><div class="v">${e.pe??C.pe}/${m.pe??C.pe}</div></div></div>
+    <div class="mini-attrs">${ATTRS.map(x=>`<div><span>${ABBR[x.k]}</span><b>${C.a[x.k]}</b></div>`).join('')}</div>
+    <p class="note" style="margin:6px 0">Técnica: ${esc(C.hasTec&&F.tecnica.nome?F.tecnica.nome:'nenhuma')}${(F.especiais||[]).length?` · Desbloqueadas: ${esc(F.especiais.map(x=>x.nome).join(', '))}`:''}</p>
+    <button class="btn primary" data-celficha="1">Abrir ficha completa</button>`;
+}
+function renderCelConfig(){
+  const anim=document.body.classList.contains('sem-animacao'),grande=document.body.classList.contains('texto-grande');
+  $('#cel-config').innerHTML=`<div style="display:flex;flex-direction:column;gap:8px">
+    <button class="btn" data-celcfg="anim">${anim?'Ligar':'Desligar'} animação do celular</button>
+    <button class="btn" data-celcfg="texto">Texto do chat: ${grande?'grande':'normal'}</button>
+    <button class="btn" data-celficha="1">Abrir ficha completa</button>
+    ${souDono?'<a class="btn" href="#admin" data-celfechar="1">Painel do mestre</a>':''}
+    <button class="btn" data-celcfg="sair" style="border-color:var(--seal);color:var(--seal)">Sair da conta</button></div>`;
+}
+(()=>{try{if(localStorage.getItem('jjk-cfg-anim')==='0')document.body.classList.add('sem-animacao');if(localStorage.getItem('jjk-cfg-texto')==='g')document.body.classList.add('texto-grande');}catch{}})();
+document.addEventListener('click',e=>{
+  const t=e.target.closest('[data-celfechar],[data-celapp],#btn-cel,#cel-voltar,[data-celficha],[data-celcfg],[data-celquarto]');if(!t)return;
+  if(t.id==='btn-cel'){abrirCel();return;}
+  if(t.id==='cel-voltar'){celIr('home');return;}
+  if(t.dataset.celapp){celIr(t.dataset.celapp);return;}
+  if(t.dataset.celficha){fecharCel();location.hash='ficha';return;}
+  if(t.dataset.celquarto){fecharCel();irPara(quartoId(myId()));return;}
+  if(t.dataset.celcfg==='anim'){const on=document.body.classList.toggle('sem-animacao');try{localStorage.setItem('jjk-cfg-anim',on?'0':'1');}catch{}renderCelConfig();return;}
+  if(t.dataset.celcfg==='texto'){const on=document.body.classList.toggle('texto-grande');try{localStorage.setItem('jjk-cfg-texto',on?'g':'n');}catch{}renderCelConfig();return;}
+  if(t.dataset.celcfg==='sair'){const b=document.getElementById('btn-sair');if(b)b.click();return;}
+  if(t.dataset.celfechar){fecharCel();return;}
+});
+
 /* Rotas */
 async function route(){
   const h=location.hash.slice(1);
@@ -2433,24 +2532,27 @@ async function route(){
   if(adm){$('#view-ficha').hidden=true;$('#view-mundo').hidden=true;renderAdmin();return;}
   const mundo=h==='mapa'||h.startsWith('local-');
   $('#view-ficha').hidden=mundo;$('#view-mundo').hidden=!mundo;
-  if(!mundo){if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;return;}
+  if(!mundo){fecharCel();if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;return;}
   if(!F.nome.trim()){location.hash='ficha';return;}
   if(!meu)await ensureJogador();
   else{const mx=maximos(meu.bonusMax);if(['pv','pa','pe'].some(k=>mx[k]!==meu.max?.[k]))await atualizarMeu({max:mx,estado:{pv:Math.min(meu.estado.pv,mx.pv),pa:Math.min(meu.estado.pa,mx.pa),pe:Math.min(meu.estado.pe,mx.pe)}});}
   renderHud();
-  if(h==='mapa'){if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;
-    if(meu.local)selLoc=raiz(meu.local);else selLoc=raizDaEscola(escolaDe(myId()));
-    $('#mapa-view').hidden=false;$('#canal-view').hidden=true;$('#areas-bar').hidden=true;$('#world-title').textContent='Tóquio e Kyoto';$('#world-sub').textContent='Escolha para onde ir.';renderMapa();return;}
+  if(h==='mapa'){selLoc=meu.local?raiz(meu.local):casaDe(myId());
+    if(meu.local){location.hash='local-'+meu.local;setTimeout(()=>abrirCel('mapa'),60);return;}
+    if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;msgs=[];
+    $('#canal-view').hidden=false;$('#areas-bar').hidden=true;$('#world-title').textContent='Tóquio e Kyoto';$('#world-sub').textContent='Pegue o celular e escolha para onde ir no Mapa.';
+    $('#chat-log').innerHTML='<p class="empty-chat">Você ainda não está em nenhum lugar. Abra <b>Seu celular</b> e escolha um destino no Mapa.</p>';
+    renderRoll();renderCombate();setTimeout(()=>abrirCel('mapa'),80);return;}
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
-  $('#mapa-view').hidden=true;$('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
-  abrirCanal(id);assinarCombate(id);renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();
+  $('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
+  abrirCanal(id);assinarCombate(id);renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();if(celApp)renderCelApp();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{
   const n=e.target.closest('#map .node');if(n){selLoc=n.dataset.loc;renderMapa();return;}
   const b=e.target.closest('button');if(!b)return;
-  if(b.dataset.entrar){irPara(b.dataset.entrar);return;}
+  if(b.dataset.entrar){fecharCel();irPara(b.dataset.entrar);return;}
   if(b.dataset.maceitar){aceitarMissao(b.dataset.maceitar);return;}
   if(b.dataset.mentrar){entrarMissao(b.dataset.mentrar);return;}
   if(b.dataset.msair){sairMissao(b.dataset.msair);return;}
@@ -2459,14 +2561,12 @@ document.addEventListener('click',e=>{
   if(b.dataset.descanso){descansar(b.dataset.descanso);return;}
   if(b.dataset.treino){treinar(b.dataset.treino);return;}
   if(b.id==='btn-relatorio'){const mm=minhaMissao();if(!mm)return;openModal(`Relatório: ${mm.titulo}`,'Resuma o que aconteceu na missão (opcional). O professor lê e a missão é paga para todo o grupo.',' ','Entregar relatório',async()=>{const t=$('#modal-text').value.trim();closeModal();await entregarRelatorio(mm,t);});$('#modal-text').value='';$('#modal-text').placeholder='Ex.: Achamos a maldição na plataforma 4, o guarda estava alimentando ela...';$('#modal-text').focus();return;}
-  if(b.id==='btn-npcs'){renderNpcs();$('#npc-drawer').classList.add('show');$('#npc-close').focus();return;}
-  if(b.id==='npc-close'){$('#npc-drawer').classList.remove('show');return;}
+
   if(b.dataset.npcdel){const id=b.dataset.npcdel;openModal(`Apagar ${npcs.get(id)?.nome||'NPC'} do livro?`,'O mestre de IA deixa de lembrar desse personagem.','','Apagar',async()=>{closeModal();try{await db.doc('npcs/'+id).delete();}catch{}npcs.delete(id);renderNpcs();});return;}
   if(b.dataset.area){if(b.dataset.area!==canalAtual)irPara(b.dataset.area,historico().split('\n').slice(-4).join('\n'));return;}
   if(b.dataset.rollmode!==undefined){rollMode=+b.dataset.rollmode;renderRoll();return;}
   if(b.id==='btn-rolar'){rolar();return;}
-  if(b.id==='btn-inv'){renderInv();$('#inv-drawer').classList.add('show');$('#inv-close').focus();return;}
-  if(b.id==='inv-close'){$('#inv-drawer').classList.remove('show');return;}
+
   if(b.dataset.invq!==undefined){const i=+b.dataset.invq,d=+b.dataset.d;const it=(meu.inventario||[])[i];if(!it)return;
     atualizarMeu({inventario:aplicarItens(meu.inventario,[{nome:it.nome,qtd:d}])}).then(renderInv);renderInv();return;}
   if(b.id==='btn-mundo'){entrarMundo();return;}
@@ -2502,7 +2602,7 @@ document.addEventListener('click',e=>{
   if(b.id==='btn-fimcombate'){openModal('Encerrar o combate?','Use se a luta travou ou já acabou na história. Todos os inimigos somem da ordem de turnos.','','Encerrar combate',async()=>{closeModal();await encerrarCombate('encerrado');});return;}
 });
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){$('#inv-drawer').classList.remove('show');$('#npc-drawer').classList.remove('show');}
+  if(e.key==='Escape'&&!$('#cel').hidden){if(celApp&&celApp!=='home')celIr('home');else fecharCel();}
   const n=e.target.closest&&e.target.closest('#map .node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selLoc=n.dataset.loc;renderMapa();const el=document.querySelector(`#map .node[data-loc="${selLoc}"]`);el&&el.focus();}
   if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}
 });
@@ -2763,7 +2863,7 @@ async function boot(){
         setTimeout(()=>{sincronizarPvCombate();},0);}
       if(d.id===uid)aplicarAdminNoJogador(x);});
     if(meu)jogadores.set(uid,{...meu});
-    renderHud();if(!$('#mapa-view').hidden)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if($('#inv-drawer').classList.contains('show'))renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
+    renderHud();if(celApp==='mapa')renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
   assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
