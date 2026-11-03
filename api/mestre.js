@@ -15,7 +15,7 @@
 //
 //   MESTRE_PROVEDOR       opcional: "claude" ou "gemini", para forçar um dos dois quando as duas chaves existirem.
 
-import { CAMPANHA, FASES, EVENTOS } from "./_campanha.js";
+import { CAMPANHA, FASES, EVENTOS, ROTEIROS } from "./_campanha.js";
 
 const GEMINI_PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
 const GEMINI_RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
@@ -114,6 +114,7 @@ export default async function handler(req, res) {
     prompt = prompt.replace("{{CAMPANHA}}", CAMPANHA + "\n\n" + fase + linha);
   }
   if (!prompt) { res.status(400).send("Pedido vazio."); return; }
+  prompt = prompt.replace(/\{\{ROTEIRO:([a-z0-9]+)\}\}/g, (_, k) => ROTEIROS[k] || "(roteiro não encontrado: conduza como missão comum)");
   const rapido = body.tier === "quick";
 
   const r = provedor === "claude" ? await responderClaude(prompt, rapido) : await responderGemini(prompt, rapido);
