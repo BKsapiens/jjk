@@ -51,3 +51,18 @@ export const FASES = {
   queda: "FASE ATUAL: A Queda. Shibuya e a Escola de Tóquio estão sendo destruídas agora (Nakigara ataca pelos subterrâneos e a seita aproveita o caos). Narre caos, evacuação, escolhas difíceis. Ao fim, os alunos serão levados para Kyoto.",
   kyoto: "FASE ATUAL: Kyoto. Shibuya e a Escola de Tóquio foram destruídas. Os alunos de Tóquio foram transferidos para a Escola de Kyoto, com outros costumes e rivalidades. A caça aos olhos continua."
 };
+
+// O que o mestre de IA passa a saber quando cada acontecimento da linha do tempo dispara.
+// O jogo manda só as chaves dos eventos que já aconteceram; o texto fica aqui no servidor.
+export const EVENTOS = {
+  abertura: "Início do ano letivo. Os alunos acabaram de chegar. Missões pequenas e side quests, apresentando NPCs. Nada de grande ameaça visível ainda; só detalhes estranhos no fundo das cenas.",
+  rumores: "Rumores do Lótus Fechado: a seita começou a marcar com cinza os lugares onde um olho de Sōgen já esteve. Marcas aparecem em portas de Shibuya; a Sala dos Professores recebeu um relatório e escondeu; um pergaminho da ala selada de Kyoto foi mexido (alguém de dentro). Solte essas pistas quando fizer sentido.",
+  olhos1: "Semana dos Olhos 1 aconteceu: o Alto Escalão mandou caçar objetos de grau especial. Em todas as missões o olho sumiu antes. Os professores começam a desconfiar de vazamento de informação.",
+  intercambio: "O Intercâmbio de Boa Vontade entre Tóquio e Kyoto foi anunciado. Rivalidade em alta: provocações, apostas, veteranos testando novatos. Um treino conjunto no dojo de Kyoto está no quadro. Alguém da seita pode usar o evento para circular entre as escolas.",
+  nakigara: "Nakigara se mostra: bueiros de Shibuya transbordaram água cinzenta e mais gente sumiu perto do viaduto da Avenida Sakuragawa. Fiapos cinzentos aparecem em subsolos, esgotos e estações. Nakigara pode falar com alguém através da água, imitando a voz de um desaparecido. Ela ainda não aparece de corpo inteiro.",
+  olhos2: "Semana dos Olhos 2 aconteceu: uma das missões tem uma maldição que comeu um olho. A seita e Nakigara disputam os olhos; dá para perceber que não são aliados de verdade.",
+  barreira: "A barreira da Escola de Tóquio tremeu várias noites. Professores tensos, reuniões fechadas, saídas noturnas proibidas em Kyoto. Um infiltrado da seita está perto de ser descoberto, mas ainda não deve ser revelado por completo.",
+  olhos3: "Semana dos Olhos 3 aconteceu: de novo, todos os olhos sumiram. A seita está muito perto de ter olhos suficientes para o ritual. Tudo aponta para um ataque grande em Tóquio.",
+  queda: "A QUEDA COMEÇOU: a barreira da Escola de Tóquio se rompeu e Shibuya está sendo engolida por água cinzenta e maldições. Nakigara ataca pelos subterrâneos; a seita usa o caos para buscar o que falta. Cenas de evacuação, resgate, escolhas difíceis e combates desesperados. NPCs conhecidos podem estar em perigo. Em poucos dias, os alunos de Tóquio serão levados para Kyoto.",
+  kyoto: "A Escola de Tóquio e Shibuya foram destruídas na Queda e estão em ruínas. Todos os alunos de Tóquio foram transferidos para a Escola de Kyoto, onde dividem dormitórios, missões e desconfiança com os alunos de Kyoto. A caça aos olhos e a ameaça de Nakigara continuam."
+};

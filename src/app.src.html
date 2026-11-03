@@ -1180,7 +1180,8 @@ const raizDaEscola=ch=>ch==='kyoto'?'kyoto':'escola';
 const escolaDe=id=>id===myId()?(F.escolaOrigem==='kyoto'?'kyoto':'toquio'):(jogadores.get(id)?.escola==='kyoto'?'kyoto':'toquio');
 const escolaCurta=ch=>ch==='kyoto'?'Kyoto':'Tóquio';
 const slugId=k=>String(k||'').replace(/[^A-Za-z0-9-]/g,'x');
-const quartoId=(k,ch)=>`${raizDaEscola(ch||escolaDe(k))}-quarto-${slugId(k)}`;
+const casaDe=k=>typeof faseEfetiva==='function'&&faseEfetiva()==='kyoto'?'kyoto':raizDaEscola(escolaDe(k));
+const quartoId=(k,ch)=>`${ch?raizDaEscola(ch):casaDe(k)}-quarto-${slugId(k)}`;
 const ehQuarto=id=>/^(escola|kyoto)-quarto-/.test(String(id||''));
 const donoQuarto=id=>{const s=String(id||'').replace(/^(escola|kyoto)-quarto-/,'');return [...jogadores.keys()].find(k=>slugId(k)===s)||(slugId(myId())===s?myId():null);};
 function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'estudante';const meuQ=dono===myId();const pai=String(id).startsWith('kyoto-')?'kyoto':'escola';const E=ESCOLAS[pai];
@@ -1293,13 +1294,14 @@ function renderMapa(){
         <text y="-4" text-anchor="middle" fill="${sel?'#0b0a0c':'#fff'}" font-size="30" font-weight="900" font-family="Shippori Mincho B1, serif">${l.kanji}</text>
         <rect x="${-w/2}" y="14" width="${w}" height="22" fill="${sel?'#0b0a0c':'#fff'}" stroke="#0b0a0c" stroke-width="3"/>
         <text y="30" text-anchor="middle" fill="${sel?'#fff':'#0b0a0c'}" font-size="13" font-weight="900" letter-spacing=".5" font-family="Zen Kaku Gothic New, sans-serif">${esc(l.curto.toUpperCase())}</text></g>
+        ${(fe=>fe!=='ato1'&&(l.id==='escola'||l.id==='shibuya')?`<text y="-48" text-anchor="middle" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="4" paint-order="stroke">${fe==='kyoto'?'RUÍNAS':'SOB ATAQUE'}</text>`:'')(faseEfetiva())}
         ${nAreas?`<text y="50" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" letter-spacing="1" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="3" paint-order="stroke">${nAreas+1} ÁREAS</text>`:''}
       </g>
       ${ps.map(([k,j],i)=>`<g transform="translate(${l.x+32+i*19} ${l.y-38})"><circle r="10" fill="${corDe(k)}" stroke="#0b0a0c" stroke-width="3"/><text y="4" text-anchor="middle" fill="#0b0a0c" font-size="9" font-weight="900" font-family="sans-serif">${esc(iniciais(j.nome))}</text></g>`).join('')}
     </g>`;});
   $('#map').innerHTML=s;
   const l=locById(raiz(selLoc));const ps=present(l.id);const here=meu?.local&&raiz(meu.local)===l.id;
-  const minhaE=raizDaEscola(escolaDe(myId()));
+  const minhaE=casaDe(myId());
   $('#loc-card').innerHTML=`<h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
     ${(()=>{const ar=LOCAIS.filter(z=>z.pai===l.id);return ar.length?`<p class="note" style="margin:0"><b style="color:var(--bone)">Áreas:</b> ${esc([l.area||'Centro',...ar.map(z=>z.area)].join(' · '))}</p>`:'';})()}
     <div><h3 style="font-size:14px;margin-bottom:6px">Quem está lá</h3><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}${locById(j.local)?.pai?` <span class="note">· ${esc(nomeLocal(j.local))}</span>`:''}</div>`).join(''):'<div class="note">Ninguém por enquanto.</div>'}</div></div>
@@ -1350,7 +1352,7 @@ function avisoNormal(){const el=$('#chat-thinking');if(el)el.firstChild.textCont
 const missoes=new Map();let missoesUnsub=null,gerandoMissoes=false,pagandoMissao=false;
 function assinarMissoes(){
   if(missoesUnsub||!db)return;
-  missoesUnsub=db.collection('missoes').onSnapshot(s=>{missoes.clear();s.docs.forEach(d=>{const x=d.data();if(x)missoes.set(d.id,{id:d.id,...x});});renderMissoes();pagarMissoes();if(!$('#view-admin').hidden)renderAdmCampanha();},()=>{});
+  missoesUnsub=db.collection('missoes').onSnapshot(s=>{missoes.clear();s.docs.forEach(d=>{const x=d.data();if(x)missoes.set(d.id,{id:d.id,...x});});missoesCarregadas=true;renderMissoes();pagarMissoes();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{});
 }
 async function missaoWrite(id,patch){
   const atual=missoes.get(id)||{};missoes.set(id,{...atual,...patch,id});renderMissoes();
@@ -1420,7 +1422,7 @@ async function avancarEtapa(mm,local){
     await postMsg(local,{tipo:'sistema',texto:`Objetivo da missão "${mm.titulo}" cumprido! Voltem à escola e entreguem o relatório na Sala dos Professores para receber.`});}
   else{await missaoWrite(mm.id,{etapa:e});await postMsg(local,{tipo:'sistema',texto:`Missão "${mm.titulo}": etapa ${e} de ${sg.etapas.length} concluída.`});}
 }
-const quadroAtual=()=>locById(canalAtual)?.tipo==='missoes'?canalAtual:`${raizDaEscola(escolaDe(myId()))}-missoes`;
+const quadroAtual=()=>locById(canalAtual)?.tipo==='missoes'?canalAtual:`${casaDe(myId())}-missoes`;
 const minhaMissao=()=>[...missoes.values()].find(m=>m.status==='andamento'&&(m.membros||[]).includes(myId()));
 const nomeJog=id=>id===myId()?F.nome:(jogadores.get(id)?.nome||party.get(id)?.resumo?.nome||'alguém');
 function renderMissoes(){
@@ -1617,7 +1619,92 @@ function renderNpcs(){
 
 /* Campanha (fase, semana dos olhos, direção do mestre) */
 let campanha={semana:0,fase:'ato1',notas:''};
-function assinarCampanha(){if(!db)return;db.doc('config/campanha').onSnapshot(s=>{campanha={semana:0,fase:'ato1',notas:'',...(s.exists?s.data():{})};window.__faseCampanha=campanha.fase||'ato1';if(!$('#view-admin').hidden)renderAdmCampanha();},()=>{});}
+let campanhaCarregada=false,eventosCarregados=false,missoesCarregadas=false,checandoLinha=false;const eventos=new Map();
+function assinarCampanha(){if(!db)return;
+  db.doc('config/campanha').onSnapshot(s=>{campanha={semana:0,fase:'ato1',notas:'',...(s.exists?s.data():{})};campanhaCarregada=true;
+    const t=String(campanha.temporada||'');
+    if(t){let loc=null;try{loc=localStorage.getItem('jjk-temporada');}catch{}
+      if(loc!==t){try{localStorage.setItem('jjk-temporada',t);const tinha=localStorage.getItem('jjk-ficha-rascunho')||localStorage.getItem('jjk-jogador');localStorage.removeItem('jjk-ficha-rascunho');localStorage.removeItem('jjk-jogador');if(tinha||loc!==null){location.reload();return;}}catch{}}}
+    atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{});
+  db.collection('eventos').onSnapshot(s=>{eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
+  setInterval(checarLinhaDoTempo,5*60000);}
+/* ---------- Linha do tempo automática da campanha ----------
+   Cada acontecimento dispara sozinho quando passa o número de dias desde o lançamento E o grupo já concluiu
+   missões suficientes. Quem estiver online primeiro dispara; o registro em "eventos" impede repetir. */
+const LINHA=[
+  {k:'abertura',dia:0,min:0,titulo:'Início do ano letivo',anuncio:[
+    ['escola','Os sinos da Escola de Tóquio tocam o início de mais um ano letivo. No Quadro de Missões, os primeiros chamados esperam os alunos novos, e os professores parecem mais tensos do que deveriam para um primeiro dia.'],
+    ['kyoto','Os portões vermelhos da Escola de Kyoto se abrem para mais um ano. A professora Utahime confere a lista de alunos duas vezes; o diretor Gakuganji avisa, seco, que Tóquio "também começou as aulas".']]},
+  {k:'rumores',dia:3,min:1,titulo:'Rumores do Lótus Fechado',anuncio:[
+    ['shibuya-rua3','Nos bares do beco, a fofoca da semana é sempre a mesma: alguém anda desenhando com cinza uma flor de pétalas fechadas nas portas de lojas de Shibuya. Ninguém viu quem foi.'],
+    ['escola-professores','Um relatório sobre "marcas de lótus fechado" chegou à Sala dos Professores. Os professores trocam um olhar e o papel vai parar numa gaveta trancada.'],
+    ['kyoto-biblioteca','Um pergaminho da ala selada amanheceu fora do lugar, aberto numa página arrancada. A bibliotecária não deixa ninguém chegar perto.']]},
+  {k:'olhos1',dia:7,min:2,titulo:'Semana dos Olhos 1',olhos:1,anuncio:[
+    ['escola','Um mensageiro do Alto Escalão atravessa os corredores com pressa. Pouco depois, chamados urgentes aparecem no quadro: objetos amaldiçoados de grau especial.']]},
+  {k:'intercambio',dia:10,min:3,titulo:'Intercâmbio de Boa Vontade anunciado',anuncio:[
+    ['escola','Um cartaz novo no corredor: o Intercâmbio de Boa Vontade entre Tóquio e Kyoto foi marcado. Antes dele, um treino conjunto no dojo de Kyoto. Os veteranos já estão fazendo apostas.'],
+    ['kyoto','O diretor Gakuganji anuncia o Intercâmbio de Boa Vontade com Tóquio e deixa claro que espera uma vitória "sem discussão". Haverá um treino conjunto no dojo antes disso.']],
+    missao:{titulo:'Treino conjunto Tóquio × Kyoto',destino:'kyoto-treino',grau:3,descricao:'As duas escolas marcaram um treino conjunto no dojo de Kyoto como preparação para o Intercâmbio de Boa Vontade. Os diretores querem ver do que os novatos são capazes, e ninguém quer perder para a outra escola.',xp:50,ienes:30000,pg:100,quadro:'todos'}},
+  {k:'nakigara',dia:13,min:4,titulo:'Os fiapos dos subterrâneos',anuncio:[
+    ['shibuya','Três bueiros de Shibuya transbordaram água cinzenta na mesma madrugada. A polícia fala em cano rompido. Quem enxerga maldições viu fiapos cinzentos subindo pelas grades.'],
+    ['avenida-viaduto','Mais um desaparecimento perto do viaduto. Desta vez sobrou só um sapato, encharcado de água parada.']]},
+  {k:'olhos2',dia:14,min:4,requer:'olhos1',apos:5,titulo:'Semana dos Olhos 2',olhos:2,anuncio:[
+    ['escola','De novo o mensageiro do Alto Escalão. Desta vez ele não cumprimenta ninguém. Novos chamados de grau especial vão para o quadro.']]},
+  {k:'barreira',dia:19,min:6,titulo:'A barreira treme',anuncio:[
+    ['escola','Durante a noite, a barreira da escola tremeu três vezes. Os professores passaram a madrugada nos limites do terreno e ninguém explica nada aos alunos.'],
+    ['kyoto','O diretor Gakuganji convocou uma reunião fechada com os clãs. A professora Utahime proibiu saídas noturnas sem autorização.']]},
+  {k:'olhos3',dia:21,min:6,requer:'olhos2',apos:5,titulo:'Semana dos Olhos 3',olhos:3,anuncio:[
+    ['escola','O Alto Escalão manda a última leva de chamados de grau especial. Um professor comenta, baixo, que "talvez já seja tarde".']]},
+  {k:'queda',dia:26,min:8,requer:'olhos3',apos:3,titulo:'A Queda',anuncio:[
+    ['escola','ALERTA. A barreira da Escola de Tóquio se rompeu de uma vez. Ao mesmo tempo, Shibuya inteira ficou sem luz e água cinzenta começou a subir pelas ruas. Todos os feiticeiros disponíveis estão convocados.'],
+    ['shibuya','Todas as luzes de Shibuya se apagam ao mesmo tempo. Dos bueiros, das escadas da estação e dos subsolos sobe água cinzenta, e com ela uma multidão de maldições. Gente correndo para todo lado.'],
+    ['kyoto','Notícias urgentes de Tóquio: a escola irmã está sob ataque e Shibuya virou zona de guerra. Kyoto prepara a enfermaria para receber feridos.']]},
+  {k:'kyoto',dia:28,min:0,requer:'queda',apos:2,titulo:'Transferência para Kyoto',anuncio:[
+    ['escola','A Escola de Tóquio não existe mais como era: prédios em ruínas, a barreira desfeita. Por ordem do Alto Escalão, todos os alunos de Tóquio estão transferidos para a Escola de Kyoto.'],
+    ['kyoto','Os alunos de Tóquio chegam a Kyoto com malas, curativos e cara de poucos amigos. Os veteranos de Kyoto observam do pátio. Os quartos novos já estão no dormitório.']]}];
+function faseEfetiva(){return campanha.faseManual||(eventos.has('kyoto')?'kyoto':eventos.has('queda')?'queda':'ato1');}
+function atualizarFase(){window.__faseCampanha=faseEfetiva();window.__eventosCampanha=LINHA.filter(e=>eventos.has(e.k)).map(e=>e.k);}
+const diasCampanha=()=>campanha.inicio?(Date.now()-(+campanha.inicio))/864e5:-1;
+const missoesConcluidas=()=>[...missoes.values()].filter(m=>m.status==='concluida').length;
+function statusEvento(e){
+  if(eventos.has(e.k))return {feito:true};
+  const d=diasCampanha();const falta=[];
+  if(d<0)return {pronto:false,falta:['a campanha ainda não foi lançada']};
+  if(d<e.dia)falta.push(`dia ${e.dia} (agora: dia ${Math.floor(d)})`);
+  if(missoesConcluidas()<(e.min||0))falta.push(`${e.min} missões concluídas (agora: ${missoesConcluidas()})`);
+  if(e.requer){const r=eventos.get(e.requer);if(!r)falta.push(`depois de "${LINHA.find(x=>x.k===e.requer)?.titulo}"`);else if(e.apos&&Date.now()-(+r.ts||0)<e.apos*864e5)falta.push(`${e.apos} dias depois de "${LINHA.find(x=>x.k===e.requer)?.titulo}"`);}
+  return {pronto:!falta.length,falta};
+}
+let linhaTimer=null;function agendarLinha(){clearTimeout(linhaTimer);linhaTimer=setTimeout(checarLinhaDoTempo,4000);}
+async function checarLinhaDoTempo(){
+  if(!db||!uid||checandoLinha||campanha.autoPausado||!campanhaCarregada||!eventosCarregados||!missoesCarregadas||!campanha.inicio)return;
+  const e=LINHA.find(x=>statusEvento(x).pronto);if(!e)return;
+  checandoLinha=true;try{await dispararEvento(e,false);}finally{checandoLinha=false;}
+}
+async function dispararEvento(e,manual){
+  if(eventos.has(e.k))return 'Esse acontecimento já foi disparado.';
+  try{const ref=db.doc('eventos/'+e.k);const s=await ref.get();if(s.exists)return 'Esse acontecimento já foi disparado.';
+    await ref.set({ts:Date.now(),por:uid||'',titulo:e.titulo,manual:!!manual});}
+  catch{return 'Não consegui registrar o acontecimento. Confira se as regras novas do Firestore foram publicadas.';}
+  eventos.set(e.k,{ts:Date.now()});atualizarFase();
+  for(const [loc,txt] of (e.anuncio||[]))await postMsg(loc,{tipo:'mestre',texto:txt,alvoId:'',alvoNome:''});
+  if(e.missao)await missaoCriar({...e.missao,status:'aberta',membros:[],criada:Date.now()});
+  if(e.olhos){let err=await lancarSemanaOlhos(e.olhos);if(err){await new Promise(r=>setTimeout(r,30000));err=await lancarSemanaOlhos(e.olhos);}if(err)return `Acontecimento registrado, mas a IA não criou os chamados: ${err} Use "Lançar semana" no painel.`;}
+  return '';
+}
+/* Lançamento: apaga tudo e começa a campanha do zero (só o mestre) */
+async function resetarTudo(){
+  const st=t=>admStatus(t);let n=0;
+  const ids=[...new Set([...jogadores.keys(),...party.keys()])];
+  const canais=new Set(LOCAIS.map(l=>l.id));ids.forEach(k=>{canais.add('escola-quarto-'+slugId(k));canais.add('kyoto-quarto-'+slugId(k));});
+  const apagarColecao=async c=>{for(let k=0;k<50;k++){const s=await db.collection(c).limit(100).get();if(s.empty)break;for(const d of s.docs){await db.collection(c).doc(d.id).delete();n++;if(n%25===0)st(`Apagando... ${n} registros`);}}};
+  try{
+    for(const c of canais)await apagarColecao(`canais/${c}/msgs`);
+    for(const c of ['missoes','npcs','transferencias','eventos','combates','fichas','jogadores'])await apagarColecao(c);
+    await db.doc('config/campanha').set({temporada:Date.now(),inicio:Date.now(),fase:'ato1',faseManual:'',notas:campanha.notas||'',semana:0,autoPausado:false});
+    st(`Tudo apagado (${n} registros). A campanha começou agora. A página vai recarregar.`);return true;}
+  catch(e){st(`Parou no meio (${n} apagados): ${e?.message||'erro de permissão'}. Publique as regras novas do Firestore e tente de novo.`,true);return false;}
+}
 const direcaoMestre=()=>campanha.notas&&campanha.notas.trim()?`DIREÇÃO DO MESTRE HUMANO (siga): ${campanha.notas.trim()}\n`:'';
 async function lancarSemanaOlhos(sem){
   if(!sample)return 'A IA não está disponível.';
@@ -1638,7 +1725,7 @@ Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc"
     if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Contato do chamado "${String(x.titulo||'').slice(0,80)}" (Semana dos Olhos ${sem}).`}],destinos[i]);
     const sg=normSegredo(x.segredo,3);
     await missaoCriar({...(sg?{segredo:sg,etapa:0,combates:0,acoes:0}:{}),titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now(),quadro:'todos'});}
-  try{await db.doc('config/campanha').set({...campanha,semana:sem});}catch{}
+  if(souDono){try{await db.doc('config/campanha').set({...campanha,semana:sem});}catch{}}
   await postMsg('kyoto-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
   await postMsg('escola-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
   return '';
@@ -1857,13 +1944,13 @@ function historico(){
     const r=m.rolagem;return `[${m.autorNome}${m.para==='jogadores'?' → para os jogadores':''}]: ${m.texto}${r?` (rolou ${r.pericia}: total ${r.total})`:''}${m.sobrecarga?` (investiu +${m.sobrecarga} PA extra na técnica${m.sobreRolagem?`, dano extra rolado ${m.sobreRolagem.total}`:''})`:''}${(m.dadosDeclarados||[]).length?` (dados rolados pelo sistema: ${m.dadosDeclarados.map(d=>`${d.expr}=${d.total}`).join(', ')})`:''}`;}).join('\n');
 }
 function memoriaCampanha(){
-  const meus=(meu.diario||[]).slice(-30).map(d=>`- (${locById(d.local)?.curto||d.local}) ${d.texto}`).join('\n');
+  const meus=(meu?.diario||[]).slice(-30).map(d=>`- (${locById(d.local)?.curto||d.local}) ${d.texto}`).join('\n');
   const outros=[...jogadores.entries()].filter(([k])=>k!==(uid||'eu')).map(([k,j])=>(j.diario||[]).slice(-6).map(d=>`- ${j.nome} (${locById(d.local)?.curto||d.local}): ${d.texto}`).join('\n')).filter(Boolean).join('\n');
   return `Do próprio jogador, em todos os locais (mais antigo primeiro):\n${meus||'(nada ainda)'}\n\nDos outros jogadores:\n${outros||'(nada ainda)'}`;
 }
 function detectarViagem(t){
   if(!/caminh\w* (para|pra|até)|vou (para|pra|até|ao|à|na|no)|indo (para|pra)|volto (para|pra)|sigo (para|pra)|entro na|entro no|entro em|des[çc]\w* (para|pra|até|ao|à|aos|às|na|no|nos)|subo (para|pra|até|ao|à|na|no)/i.test(t))return null;
-  const atualR=raiz(canalAtual||meu?.local);const er=ehEscola(atualR)?atualR:raizDaEscola(escolaDe(myId()));
+  const atualR=raiz(canalAtual||meu?.local);const er=ehEscola(atualR)?atualR:casaDe(myId());
   if(!ehEscola(atualR)){const f=LOCAIS.find(l=>l.pai===atualR&&l.kw&&new RegExp(l.kw,'i').test(t));if(f)return f.id;if(new RegExp(`cruzamento|${locById(atualR)?.area||'@@'}`,'i').test(t)&&LOCAIS.some(l=>l.pai===atualR))return atualR;}
   const sub=[[quartoId(myId()),/meu quarto|dormit[óo]rio|minha cama/i],[`${er}-enfermaria`,/enfermaria|shoko|curandeiro/i],[`${er}-professores`,/sala dos? professor/i],[`${er}-missoes`,/quadro|mural de miss/i],[`${er}-treino`,/sala de treino|dojo|tatame|treinamento/i],...(er==='kyoto'?[['kyoto-biblioteca',/biblioteca|pergaminho/i]]:[]),[er,/corredor|p[áa]tio/i]].find(([,r])=>r.test(t));
   if(sub&&!/kyoto|quioto|t[óo]quio|tokyo/i.test(t))return sub[0];
@@ -1928,7 +2015,7 @@ COMO NARRAR
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS,...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
-LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}
+LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
 ${livroNpcs(40)}
 
@@ -2398,6 +2485,7 @@ document.addEventListener('click',e=>{
       else if(b.dataset.admcumprir){await missaoWrite(m.id,{objetivoCumprido:true,etapa:m.segredo.etapas.length});await postMsg(loc,{tipo:'sistema',texto:`Objetivo da missão "${m.titulo}" cumprido (mestre). Voltem à escola e entreguem o relatório na Sala dos Professores.`});}
       else await concluirMissao(m,`${m.quadro&&m.quadro!=='todos'?m.quadro:'escola'}-professores`);
       admStatus('Feito.');renderAdmCampanha();})();return;}
+  if(b.dataset.admevento){const e=LINHA.find(x=>x.k===b.dataset.admevento);if(!e)return;openModal(`Disparar "${e.titulo}" agora?`,'Os anúncios vão para os canais e o mestre de IA passa a considerar este acontecimento.','','Disparar',async()=>{closeModal();admStatus('Disparando...');const err=await dispararEvento(e,true);admStatus(err||`"${e.titulo}" aconteceu.`,!!err);renderAdmCampanha();});return;}
   if(b.dataset.admolhos){const n=+b.dataset.admolhos;openModal(`Lançar a Semana dos Olhos ${n}?`,n===2?'A IA cria 3 chamados; em um deles (sorteado) a maldição que comeu o olho pode ser derrotada e o olho recuperado.':'A IA cria 3 chamados; em todos eles o olho vai ter sumido no fim.','','Lançar',async()=>{closeModal();admStatus('Os professores estão preparando os chamados...');const err=await lancarSemanaOlhos(n);admStatus(err||`Semana dos Olhos ${n} lançada: 3 chamados no quadro.`,!!err);renderAdmCampanha();});return;}
   if(b.dataset.admlimpar){const loc=b.dataset.admlimpar;openModal(`Limpar o canal de ${locById(loc).curto}?`,'Todas as mensagens deste canal são apagadas para todo mundo. O diário do mestre continua.','','Limpar canal',async()=>{closeModal();await admLimparCanal(loc);});return;}
   if(b.id==='btn-hist-importar'){importarHistorico();return;}
@@ -2445,21 +2533,22 @@ function renderAdmin(){
   renderAdmLista();renderAdmEditor();renderAdmLocais();renderAdmCampanha();
 }
 function renderAdmCampanha(){
-  const el=$('#adm-campanha');if(!el)return;if(el.contains(document.activeElement)&&document.activeElement.tagName!=='BUTTON')return;
-  const sem=+campanha.semana||0;const olhos=[...missoes.values()].filter(m=>m.olho);
+  const el=$('#adm-campanha');if(!el)return;if(el.contains(document.activeElement)&&document.activeElement.tagName!=='BUTTON'&&document.activeElement.tagName!=='SUMMARY')return;
+  const d=diasCampanha();const fe=faseEfetiva();
   el.innerHTML=`<h2>Campanha</h2>
-    <p class="note" style="margin:0">A história secreta (Feiticeiro dos Nove Olhos, a seita do Lótus Fechado, a maldição Nakigara, a queda de Shibuya e da escola) fica guardada no servidor e o mestre de IA lê em toda resposta. Aqui você controla a fase e dá direções.</p>
-    <div class="grid g2">
-      <label class="f" for="cp-fase">Fase da história<select id="cp-fase">${[['ato1','Ato 1 · missões, NPCs e pistas'],['queda','A Queda · destruição de Shibuya e da escola'],['kyoto','Kyoto · alunos transferidos']].map(([v,t])=>`<option value="${v}" ${campanha.fase===v?'selected':''}>${t}</option>`).join('')}</select></label>
-      <div class="f"><span>Semanas dos Olhos</span><span class="note">Semana atual: <b>${sem||'nenhuma ainda'}</b> de 3 · ${olhos.length} chamado(s) de olho no quadro (${olhos.filter(m=>m.status==='concluida').length} concluído(s)).</span>
-        <div class="adm-acts">${[1,2,3].map(n=>`<button class="btn small${n===sem+1?' primary':''}" data-admolhos="${n}">Lançar semana ${n}</button>`).join('')}</div>
-        <span class="note">Semanas 1 e 3: o olho some em todas as missões. Semana 2: uma das três missões tem a maldição que comeu o olho (+100 PV) e o olho pode ser recuperado.</span></div>
-    </div>
+    <p class="note" style="margin:0">A história secreta fica no servidor. A linha do tempo abaixo avança sozinha: cada acontecimento dispara quando passam os dias desde o lançamento e o grupo já concluiu missões suficientes. Você não precisa fazer nada, mas pode disparar antes ou pausar.</p>
+    <p class="counter" style="margin:0">${campanha.inicio?`Dia <b>${Math.floor(d)}</b> da campanha · ${missoesConcluidas()} missão(ões) concluída(s) · fase: <b>${{ato1:'Ato 1',queda:'A Queda',kyoto:'Kyoto'}[fe]}</b>${campanha.autoPausado?' · <b style="color:var(--seal)">automação pausada</b>':''}`:'A campanha ainda não foi lançada. Use o botão de lançamento no fim desta seção.'}</p>
+    <div class="f"><span>Linha do tempo</span>${LINHA.map(e=>{const st=statusEvento(e);const ev=eventos.get(e.k);
+      return `<div class="treino-row"><span><b>${esc(e.titulo)}</b><br><span class="note">${st.feito?`aconteceu em ${new Date(+ev.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${ev.manual?' (manual)':''}`:st.pronto?'pronto: dispara na próxima checagem':'espera: '+esc(st.falta.join(' · '))}</span></span>${st.feito?'<span class="pill ok">feito</span>':`<button class="btn small" data-admevento="${e.k}">Disparar agora</button>`}</div>`;}).join('')}
+      <div class="adm-acts"><button class="btn small" data-adm="pausar">${campanha.autoPausado?'Retomar automação':'Pausar automação'}</button>
+      <label class="sr" for="cp-fase">Fase manual</label><select id="cp-fase" style="width:auto"><option value="">Fase automática (linha do tempo)</option>${[['ato1','Forçar Ato 1'],['queda','Forçar A Queda'],['kyoto','Forçar Kyoto']].map(([v,t])=>`<option value="${v}" ${campanha.faseManual===v?'selected':''}>${t}</option>`).join('')}</select></div></div>
     <div class="f"><span>Missões em andamento</span>${[...missoes.values()].filter(m=>m.status==='andamento').map(m=>`<div class="npc-item"><b>${esc(m.titulo)}</b><span class="note">Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')} · ${m.segredo?(m.objetivoCumprido?'objetivo cumprido':`etapa ${Math.min((+m.etapa||0)+1,m.segredo.etapas.length)} de ${m.segredo.etapas.length}`)+` · combates ${+m.combates||0}/${m.segredo.maxCombates} · ${+m.acoes||0} ações`:'sem roteiro ainda (o mestre cria na próxima ação no destino)'}</span>
       ${m.segredo?`<details><summary class="note">Ver roteiro secreto (spoiler)</summary><p style="font-size:13px;margin:6px 0">${esc(m.segredo.verdade)}</p><ol style="font-size:13px;margin:0;padding-left:18px">${m.segredo.etapas.map(t=>`<li>${esc(t)}</li>`).join('')}</ol><p style="font-size:13px;margin:6px 0">Chefe: ${esc(m.segredo.chefe.nome)} (grau ${m.segredo.chefe.grau}). Desfecho: ${esc(m.segredo.desfecho)}</p></details>`:''}
       <div class="adm-acts">${m.segredo&&!m.objetivoCumprido?`<button class="btn small" data-admetapa="${esc(m.id)}">Avançar etapa</button><button class="btn small" data-admcumprir="${esc(m.id)}">Marcar objetivo cumprido</button>`:''}<button class="btn small" data-admconcluir="${esc(m.id)}">Concluir e pagar agora</button></div></div>`).join('')||'<span class="note">Nenhuma.</span>'}</div>
     <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
-    <div class="adm-acts"><button class="btn primary" data-adm="campanha">Salvar campanha</button></div>`;
+    <div class="adm-acts"><button class="btn primary" data-adm="campanha">Salvar campanha</button></div>
+    <div class="f" style="border-top:1px solid var(--line);padding-top:10px"><span>Lançamento</span><span class="note">Apaga todos os personagens, chats, missões e NPCs e começa a campanha do dia 0. Os navegadores dos jogadores descartam as fichas antigas sozinhos.</span>
+      <div class="adm-acts"><button class="btn" data-adm="lancamento" style="border-color:var(--seal);color:var(--seal)">Apagar tudo e lançar a campanha</button></div></div>`;
 }
 function renderAdmLista(){
   const el=$('#adm-lista');if(!el)return;
@@ -2539,7 +2628,9 @@ async function admAcao(a){
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
-  if(a==='campanha'){try{await db.doc('config/campanha').set({...campanha,fase:$('#cp-fase').value,notas:$('#cp-notas').value.trim().slice(0,1500)});admStatus('Campanha salva.');}catch{admStatus('Não consegui salvar a campanha. Publique as regras novas do Firestore.',true);}return;}
+  if(a==='pausar'){try{await db.doc('config/campanha').set({...campanha,autoPausado:!campanha.autoPausado});admStatus(campanha.autoPausado?'Automação retomada.':'Automação pausada.');}catch{admStatus('Não consegui salvar.',true);}return;}
+  if(a==='lancamento'){openModal('Lançamento: apagar TUDO?','Apaga todos os personagens, chats, missões, NPCs, transferências e acontecimentos, e começa a campanha do zero (dia 0). Não dá para desfazer. Escreva RESETAR para confirmar.',' ','Apagar tudo e lançar',async()=>{if($('#modal-text').value.trim().toUpperCase()!=='RESETAR'){$('#modal-note').textContent='Escreva RESETAR para confirmar.';return;}closeModal();const ok=await resetarTudo();if(ok)setTimeout(()=>location.reload(),2500);});$('#modal-text').value='';$('#modal-text').placeholder='RESETAR';return;}
+  if(a==='campanha'){try{await db.doc('config/campanha').set({...campanha,faseManual:$('#cp-fase').value,notas:$('#cp-notas').value.trim().slice(0,1500)});admStatus('Campanha salva.');}catch{admStatus('Não consegui salvar a campanha. Publique as regras novas do Firestore.',true);}return;}
   if(a==='mover'){const loc=$('#adm-local').value;await admUpdate(id,{local:loc});if(loc)await admPost(loc,{tipo:'sistema',texto:`${j.nome} aparece aqui (movido pelo mestre).`});renderAdmEditor();}
   if(a==='addinv'){const box=$('#adm-inv');const i=box.children.length;box.insertAdjacentHTML('beforeend',admInvRow({nome:'',qtd:1,nota:''},i));box.lastElementChild.querySelector('input').focus();return;}
   if(a==='inventario'){await admUpdate(id,{inventario:lerInvAdm(),ienes:Math.max(0,v('adm-ienes'))});renderAdmEditor();}

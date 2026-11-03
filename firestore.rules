@@ -37,6 +37,12 @@ service cloud.firestore {
       allow read, create, update: if logado();
       allow delete: if mestre();
     }
+    // Acontecimentos da linha do tempo: qualquer jogador logado pode registrar um acontecimento novo
+    // (é assim que a história avança sozinha), mas só o mestre altera ou apaga.
+    match /eventos/{id} {
+      allow read, create: if logado();
+      allow update, delete: if mestre();
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();

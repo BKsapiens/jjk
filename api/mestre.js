@@ -15,7 +15,7 @@
 //
 //   MESTRE_PROVEDOR       opcional: "claude" ou "gemini", para forçar um dos dois quando as duas chaves existirem.
 
-import { CAMPANHA, FASES } from "./_campanha.js";
+import { CAMPANHA, FASES, EVENTOS } from "./_campanha.js";
 
 const GEMINI_PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
 const GEMINI_RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
@@ -109,7 +109,9 @@ export default async function handler(req, res) {
   let prompt = String(body.prompt || "").slice(0, 60000);
   if (prompt.includes("{{CAMPANHA}}")) {
     const fase = FASES[body.fase] || FASES.ato1;
-    prompt = prompt.replace("{{CAMPANHA}}", CAMPANHA + "\n\n" + fase);
+    const ocorridos = (Array.isArray(body.eventos) ? body.eventos : []).filter(k => EVENTOS[k]);
+    const linha = ocorridos.length ? "\n\nACONTECIMENTOS JÁ OCORRIDOS NA CAMPANHA (em ordem; o mundo reflete isso):\n" + ocorridos.map(k => "- " + EVENTOS[k]).join("\n") : "";
+    prompt = prompt.replace("{{CAMPANHA}}", CAMPANHA + "\n\n" + fase + linha);
   }
   if (!prompt) { res.status(400).send("Pedido vazio."); return; }
   const rapido = body.tier === "quick";

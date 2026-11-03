@@ -135,7 +135,7 @@ async function sample(entrada, opts = {}) {
     r = await fetch("/api/mestre", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: "Bearer " + token },
-      body: JSON.stringify({ prompt, tier: opts.modelTier || "default", fase: window.__faseCampanha || "ato1" })
+      body: JSON.stringify({ prompt, tier: opts.modelTier || "default", fase: window.__faseCampanha || "ato1", eventos: window.__eventosCampanha || [] })
     });
   } catch (e) { throw { code: "unavailable", message: "sem conexão com o servidor" }; }
   if (r.status === 429) throw { code: "rate_limited", message: "limite de mensagens da IA" };
