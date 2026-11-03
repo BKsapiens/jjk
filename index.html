@@ -214,8 +214,9 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .cel-hora{font:800 13px/1 var(--body);background:#000;color:#fff;padding:4px 8px;transform:skew(-10deg)}
 .cel-bt{width:34px;height:34px;display:grid;place-items:center;background:#000;color:#fff;border:2px solid #fff;font:900 18px/1 var(--body);cursor:pointer;transform:skew(-8deg)}
 .cel-bt:hover,.cel-bt:focus-visible{background:#fff;color:#000;outline:none}
-.cel-corpo{flex:1;overflow:auto;padding:10px 4px 60px 0;scrollbar-width:thin;scrollbar-color:#000 transparent}
+.cel-corpo{flex:1;overflow:auto;overflow-x:hidden;padding:10px 4px 60px 0;scrollbar-width:thin;scrollbar-color:#000 transparent}
 .cel-app{display:flex;flex-direction:column;gap:10px}
+.cel-app[data-app="conquistas"]>.panel,.cel-app[data-app="social"]>div{transform:none}
 .cel .panel,.cel .loc-card{background:#fff;color:#0b0a0c;border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 #000;padding:14px;transform:rotate(-.6deg)}
 .cel .panel:nth-of-type(2n){transform:rotate(.5deg)}
 .cel .panel h2,.cel .panel h3{color:#0b0a0c;font-family:var(--display);font-style:italic;font-weight:900}
@@ -415,6 +416,17 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .areas button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ash);font-size:13px;display:flex;gap:6px;align-items:center}
 .areas button.on{border-color:var(--seal);color:var(--bone);background:var(--ink-2)}
 .areas button .k{font-family:var(--display);color:var(--seal)}
+.conq-g{font-size:15px;margin:12px 0 6px}
+.conq{display:flex;gap:10px;align-items:flex-start;border:2px solid #0b0a0c;background:#f1eeea;color:#0b0a0c;padding:8px 10px;margin-bottom:6px;opacity:.85}
+.conq.ok{background:#fff;opacity:1;box-shadow:3px 3px 0 #d3121c}
+.conq .k{font-family:var(--display);font-size:22px;min-width:30px;text-align:center;color:#8a8486}.conq.ok .k{color:#d3121c}
+.conq-txt{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}.conq-txt small{color:#4a4446;font-size:12.5px}.conq-feita{color:#0d7a3a!important;font-weight:700}
+.conq-barra{display:block;height:6px;background:#d8d3d0;margin:4px 0 2px}.conq-barra i{display:block;height:100%;background:#d3121c}
+.conq-toast{position:fixed;top:16px;left:50%;transform:translate(-50%,-140%);z-index:9999;display:flex;gap:12px;align-items:center;background:#0b0a0c;color:#fff;border:3px solid #fff;box-shadow:6px 6px 0 #d3121c;padding:10px 16px;animation:conqEntra .45s cubic-bezier(.2,1.4,.4,1) forwards;max-width:92vw}
+.conq-toast .k{font-family:var(--display);font-size:30px;color:#d3121c}.conq-toast span:last-child{display:flex;flex-direction:column}.conq-toast small{font-size:12px;opacity:.85}.conq-toast b{font-size:17px}
+.conq-toast.sai{animation:conqSai .5s ease-in forwards}
+@keyframes conqEntra{to{transform:translate(-50%,0)}}@keyframes conqSai{from{transform:translate(-50%,0)}to{transform:translate(-50%,-160%)}}
+body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
 .cac-card{border:2px solid #0b0a0c;padding:10px 12px;margin-bottom:8px;background:#fff;color:#0b0a0c;box-shadow:4px 4px 0 #0b0a0c}
 .cac-card.usada{opacity:.5}
 .cac-card .note{color:#3a3536}
@@ -800,6 +812,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
         <section class="cel-app" data-app="mensagens" hidden><div id="cel-dm"></div></section>
         <section class="cel-app" data-app="social" hidden><div id="cel-social"></div></section>
         <section class="cel-app" data-app="cacadores" hidden><div class="panel" id="cel-cacadores"></div></section>
+        <section class="cel-app" data-app="conquistas" hidden><div class="panel" id="cel-conquistas"></div></section>
         <section class="cel-app" data-app="config" hidden><div class="panel" id="cel-config"></div></section>
       </div>
     </div></div>
@@ -1595,6 +1608,7 @@ async function atualizarMeu(patch){
   if(db&&uid){const ref=db.doc('jogadores/'+uid);writeChain=writeChain.then(()=>ref.update(patch)).catch(()=>{});await writeChain;}else salvarMeuLocal();
   renderHud();if(canalAtual)renderPresentes();if(mapaAberto)renderMapa();if(celApp==='inventario')renderInv();if(celApp==='ficha')renderCelFicha();
   if(patch.estado&&typeof sincronizarPvCombate==='function')sincronizarPvCombate();
+  if(!patch.conquistas&&typeof agendarConquistas==='function')agendarConquistas();
 }
 
 /* HUD */
@@ -1874,9 +1888,85 @@ async function _ganharXP(d,motivo,localId){
     renderAll();
   }else saveDraft();
   if(db&&uid)await salvarQuieto();
-  renderHud();
+  renderHud();agendarConquistas();
 }
 async function salvarQuieto(){const C=calc();try{await db.doc('fichas/'+uid).set({ficha:JSON.parse(JSON.stringify(F)),resumo:{nome:F.nome||'Sem nome',raca:C.raca?.n||'',classe:F.classe,nivel:C.n,pv:C.pv,pa:C.pa,pe:C.pe,xp:xpAtual(),pendencias:issues(C).length},donoId:uid,atualizado:new Date().toISOString()});}catch{}}
+/* ---------- Conquistas: lista fixa feita por nós, sem IA. Recompensas leves. ---------- */
+const mortes=g=>{const m=meu?.cont?.mortes||{};return g==null?Object.values(m).reduce((a,v)=>a+(+v||0),0):Object.entries(m).filter(([k])=>+k<=g).reduce((a,[,v])=>a+(+v||0),0);};
+const cont=k=>{const v=meu?.cont?.[k];return Array.isArray(v)?v.length:+v||0;};
+const CONQUISTAS=[
+  {id:'exorc1',g:'Combate',k:'祓',nome:'Primeiro Exorcismo',desc:'Derrote sua primeira maldição.',p:()=>[mortes(),1],r:{ienes:1000}},
+  {id:'exorc10',g:'Combate',k:'祓',nome:'Exorcista',desc:'Derrote 10 maldições.',p:()=>[mortes(),10],r:{xp:25}},
+  {id:'exorc50',g:'Combate',k:'祓',nome:'Praga dos Amaldiçoados',desc:'Derrote 50 maldições.',p:()=>[mortes(),50],r:{ienes:5000}},
+  {id:'grau3',g:'Combate',k:'参',nome:'Acima da Média',desc:'Derrote uma maldição de grau 3 ou mais forte.',p:()=>[mortes(3),1],r:{xp:25}},
+  {id:'grau2',g:'Combate',k:'弐',nome:'Caçador de Verdade',desc:'Derrote uma maldição de grau 2 ou mais forte.',p:()=>[mortes(2),1],r:{xp:25}},
+  {id:'umfio',g:'Combate',k:'糸',nome:'Por um Fio',desc:'Vença um combate com 1 PV ou menos.',p:()=>[cont('porUmFio'),1],r:{xp:25}},
+  {id:'duelo',g:'Combate',k:'決',nome:'Duelista',desc:'Vença um duelo contra outro jogador.',p:()=>[cont('duelos'),1],r:{ienes:1000}},
+  {id:'blackflash',g:'Combate',k:'黒',nome:'Faísca Negra',desc:'Acerte um Black Flash.',p:()=>[cont('blackflash'),1],r:{xp:25}},
+  {id:'dominio',g:'Combate',k:'域',nome:'Expansão de Domínio',desc:'Abra sua Expansão de Domínio em combate.',p:()=>[cont('dominios'),1],r:{xp:25}},
+  {id:'locais5',g:'Exploração',k:'旅',nome:'Turista',desc:'Visite 5 lugares diferentes.',p:()=>[(meu?.visitados||[]).length,5],r:{ienes:1000}},
+  {id:'locais15',g:'Exploração',k:'旅',nome:'Andarilho',desc:'Visite 15 lugares diferentes.',p:()=>[(meu?.visitados||[]).length,15],r:{ienes:2000}},
+  {id:'cidades',g:'Exploração',k:'線',nome:'Shinkansen',desc:'Visite Tóquio e Kyoto.',p:()=>{const r=new Set((meu?.visitados||[]).map(regiaoDe));return [(r.has('toquio')?1:0)+(r.has('kyoto')?1:0),2];},r:{xp:25}},
+  {id:'npc1',g:'Pessoas',k:'話',nome:'Quebrando o Gelo',desc:'Converse com um NPC.',p:()=>[cont('npcs'),1],r:{ienes:1000}},
+  {id:'npc10',g:'Pessoas',k:'縁',nome:'Rede de Contatos',desc:'Converse com 10 NPCs diferentes.',p:()=>[cont('npcs'),10],r:{xp:25}},
+  {id:'npc25',g:'Pessoas',k:'縁',nome:'Todo Mundo Me Conhece',desc:'Converse com 25 NPCs diferentes.',p:()=>[cont('npcs'),25],r:{ienes:3000}},
+  {id:'dms',g:'Pessoas',k:'信',nome:'Correspondente',desc:'Mande 10 mensagens diretas.',p:()=>[cont('dms'),10],r:{ienes:1000}},
+  {id:'posts',g:'Pessoas',k:'囁',nome:'Voz da Rua',desc:'Faça 5 posts no Sussurros.',p:()=>[cont('posts'),5],r:{ienes:1000}},
+  {id:'itens5',g:'Itens',k:'袋',nome:'Achados e Perdidos',desc:'Consiga 5 itens diferentes.',p:()=>[cont('itens'),5],r:{ienes:1000}},
+  {id:'artefato',g:'Itens',k:'呪',nome:'Objeto Amaldiçoado',desc:'Consiga um artefato ou ferramenta amaldiçoada.',p:()=>[cont('artefatos'),1],r:{xp:25}},
+  {id:'rico',g:'Itens',k:'¥',nome:'Bolso Cheio',desc:'Tenha ¥ 100.000 ao mesmo tempo.',p:()=>[Math.min(100000,+meu?.ienes||0),100000],r:{xp:25}},
+  {id:'missao1',g:'Carreira',k:'任',nome:'Serviço Prestado',desc:'Conclua uma missão da escola.',p:()=>[(meu?.missoesPagas||[]).length,1],r:{ienes:1000}},
+  {id:'missao5',g:'Carreira',k:'任',nome:'Feiticeiro de Confiança',desc:'Conclua 5 missões da escola.',p:()=>[(meu?.missoesPagas||[]).length,5],r:{xp:25}},
+  {id:'cacada1',g:'Carreira',k:'狩',nome:'Primeiro Contrato',desc:'Conclua uma caçada do app Caçadores.',p:()=>[+meu?.cacadasFeitas||0,1],r:{ienes:1000}},
+  {id:'cacada10',g:'Carreira',k:'狩',nome:'Nome Entre os Caçadores',desc:'Conclua 10 caçadas.',p:()=>[+meu?.cacadasFeitas||0,10],r:{xp:25}},
+  {id:'grauPromo',g:'Carreira',k:'級',nome:'Promovido',desc:'Chegue ao Grau 3 (300 pontos).',p:()=>[Math.min(300,+meu?.pg||0),300],r:{xp:25}},
+  {id:'nivel3',g:'Carreira',k:'昇',nome:'Pegando o Jeito',desc:'Chegue ao nível 3.',p:()=>[Math.min(3,calc().n),3],r:{ienes:2000}},
+  {id:'nivel5',g:'Carreira',k:'昇',nome:'Veterano',desc:'Chegue ao nível 5.',p:()=>[Math.min(5,calc().n),5],r:{ienes:5000}},
+  {id:'descanso5',g:'Carreira',k:'寮',nome:'Sono dos Justos',desc:'Descanse 5 vezes.',p:()=>[cont('descansos'),5],r:{ienes:1000}},
+];
+const txtRecomp=r=>[r.ienes?`¥ ${r.ienes.toLocaleString('pt-BR')}`:'',r.xp?`${r.xp} XP`:''].filter(Boolean).join(' + ');
+/* contadores das conquistas, em meu.cont */
+async function contarConquista(k,n){if(!meu)return;const c={...(meu.cont||{})};c[k]=(+c[k]||0)+(n||1);await atualizarMeu({cont:c});}
+async function registrarConjunto(k,valores){if(!meu)return;const c={...(meu.cont||{})};const set=new Set(Array.isArray(c[k])?c[k]:[]);const antes=set.size;
+  (valores||[]).forEach(v=>{const x=normNome(v);if(x)set.add(x);});if(set.size===antes)return;c[k]=[...set].slice(-200);await atualizarMeu({cont:c});}
+let conqOcupado=false,conqTimer=null;
+function agendarConquistas(){clearTimeout(conqTimer);conqTimer=setTimeout(checarConquistas,400);}
+async function checarConquistas(){
+  if(!meu||conqOcupado||!F.nome)return;conqOcupado=true;
+  try{const feitas={...(meu.conquistas||{})};const novas=CONQUISTAS.filter(c=>!feitas[c.id]&&(([a,m])=>a>=m)(c.p()));
+    if(!novas.length)return;
+    novas.forEach(c=>feitas[c.id]=Date.now());
+    const ienes=novas.reduce((a,c)=>a+(+c.r.ienes||0),0),xp=novas.reduce((a,c)=>a+(+c.r.xp||0),0);
+    await atualizarMeu({conquistas:feitas,...(ienes?{ienes:(meu.ienes||0)+ienes}:{})});
+    for(const c of novas){mostrarConquista(c);if(canalAtual)await postMsg(canalAtual,{tipo:'sistema',texto:`🏆 ${F.nome} desbloqueou a conquista "${c.nome}" (${txtRecomp(c.r)}).`});}
+    if(xp)await ganharXP(xp,'conquista',canalAtual);
+    if(celApp==='conquistas')renderConquistas();}
+  finally{conqOcupado=false;}
+}
+function mostrarConquista(c){const el=document.createElement('div');el.className='conq-toast';el.setAttribute('role','status');
+  el.innerHTML=`<span class="k">${esc(c.k)}</span><span><small>Conquista desbloqueada</small><b>${esc(c.nome)}</b><small>${esc(txtRecomp(c.r))}</small></span>`;
+  document.body.appendChild(el);setTimeout(()=>el.classList.add('sai'),3800);setTimeout(()=>el.remove(),4400);}
+function renderConquistas(){
+  const box=$('#cel-conquistas');if(!box||!meu)return;const feitas=meu.conquistas||{};const n=CONQUISTAS.filter(c=>feitas[c.id]).length;
+  const grupos=[...new Set(CONQUISTAS.map(c=>c.g))];
+  box.innerHTML=`<p class="counter" style="margin:0 0 10px">${n} de ${CONQUISTAS.length} conquistas</p>`+grupos.map(g=>`<h3 class="conq-g">${esc(g)}</h3>`+CONQUISTAS.filter(c=>c.g===g).map(c=>{
+    const ok=!!feitas[c.id];const [a,m]=c.p();const pct=Math.max(0,Math.min(100,Math.round(a/m*100)));
+    return `<div class="conq${ok?' ok':''}"><span class="k">${esc(c.k)}</span><span class="conq-txt"><b>${esc(c.nome)}</b><small>${esc(c.desc)}</small>
+      ${ok?`<small class="conq-feita">Desbloqueada em ${new Date(+feitas[c.id]).toLocaleDateString('pt-BR')} · ${esc(txtRecomp(c.r))}</small>`:`<span class="conq-barra" aria-label="${Math.min(a,m)} de ${m}"><i style="width:${pct}%"></i></span><small>${m>1?`${Math.min(a,m).toLocaleString('pt-BR')} / ${m.toLocaleString('pt-BR')} · `:''}Recompensa: ${esc(txtRecomp(c.r))}</small>`}</span></div>`;}).join('')).join('');
+}
+/* depois de cada combate: conta maldições derrotadas, duelos vencidos e vitórias por um fio (uma vez por combate) */
+let contCombateOcupado=false;
+async function contarCombate(){
+  if(!combate||combate.ativo||contCombateOcupado||!meu||!combate.participantes?.[myId()])return;
+  const marca=String(combate.iniciado);const c0=meu.cont||{};if((c0.marcas||[]).includes(marca))return;
+  contCombateOcupado=true;
+  try{const c={...c0,marcas:[...(c0.marcas||[]),marca].slice(-30)};
+    if(combate.resultado==='vitoria'){const m={...(c.mortes||{})};Object.values(combate.participantes).filter(p=>p.tipo==='inimigo'&&p.pv<=0).forEach(p=>{m[p.grau]=(+m[p.grau]||0)+1;});c.mortes=m;
+      if(meu.estado.pv>0&&meu.estado.pv<=1)c.porUmFio=(+c.porUmFio||0)+1;}
+    if(combate.resultado==='duelo'&&combate.vencedor===F.nome)c.duelos=(+c.duelos||0)+1;
+    await atualizarMeu({cont:c});}
+  finally{contCombateOcupado=false;}
+}
 let xpCombateOcupado=false;
 async function aplicarXpCombate(){
   if(!combate||xpCombateOcupado||!meu||combate.resultado!=='vitoria'||!combate.xpRecompensa)return;
@@ -2497,6 +2587,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     const narr=String(j.narracao||'').trim().slice(0,4000);
     if(narr||!falas.length||teste||Object.keys(ef).length||itens.length||ienes)await postMsg(id,{tipo:'mestre',texto:narr,teste,efeitos:ef,itens,ienes,alvoId:uid||'eu',alvoNome:F.nome});
     for(const f of falas)await postMsg(id,{tipo:'npc',npcNome:String(f.npc).slice(0,60),texto:String(f.texto).slice(0,1500)});
+    if(falas.length)await registrarConjunto('npcs',falas.map(f=>f.npc));
     const novosNpcs=(Array.isArray(j.npcs)?j.npcs:[]).filter(x=>x&&x.nome);
     falas.forEach(f=>{if(!npcs.has(npcId(f.npc))&&!novosNpcs.some(x=>npcId(x.nome)===npcId(f.npc)))novosNpcs.push({nome:f.npc});});
     if(novosNpcs.length)registrarNpcs(novosNpcs,id);
@@ -2507,7 +2598,9 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
       if(hit){const err=await transferirIenes(hit[0],tr.valor,id);if(err)toastChat(err);}}
     const patch={};
     if(Object.keys(ef).length){const e={...meu.estado};['pv','pa','pe'].forEach(k=>{if(ef[k])e[k]=Math.max(0,Math.min(meu.max[k],e[k]+ef[k]));});patch.estado=e;}
-    if(itens.length)patch.inventario=aplicarItens(meu.inventario||[],itens);
+    if(itens.length){patch.inventario=aplicarItens(meu.inventario||[],itens);const ganhos=itens.filter(x=>x.qtd>0);
+      if(ganhos.length){const c={...(meu.cont||{})};const set=new Set(Array.isArray(c.itens)?c.itens:[]);ganhos.forEach(x=>set.add(normNome(x.nome)));c.itens=[...set].slice(-200);
+        const art=ganhos.filter(x=>/amaldi[çc]oad|ferramenta|artefato|rel[íi]quia|talism|selad|maldit/i.test(x.nome)).length;if(art)c.artefatos=(+c.artefatos||0)+art;patch.cont=c;}}
     if(ienes)patch.ienes=Math.max(0,(meu.ienes||0)+ienes);
     const mem=String(j.memoria||'').trim();
     if(mem)patch.diario=[...(meu.diario||[]),{t:Date.now(),local:id,texto:mem.slice(0,240)}].slice(-40);
@@ -2573,7 +2666,7 @@ function assinarCombate(local){
   if(db){combateUnsub=db.doc('combates/'+local).onSnapshot(s=>{combate=s.exists?s.data():null;aposMudancaCombate();},()=>{});}
   else{combate=(window.__combatesLocais||{})[local]||null;renderCombate();}
 }
-function aposMudancaCombate(){aplicarGolpes();aplicarXpCombate();pagarCacada();renderCombate();checarPassagemAuto();}
+function aposMudancaCombate(){aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
 async function combateWrite(patch,full){
   const local=combateLocal;if(!local)return;
   combate=full?patch:deepMerge(combate||{},patch);
@@ -2915,7 +3008,7 @@ function esconderCarregando(){const box=$('#carregando');carreg=null;clearInterv
 
 /* ---------- Seu celular ---------- */
 let celApp=null;
-const CEL_APPS=[['mensagens','話','Mensagens'],['social','囁','Sussurros'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['config','設','Ajustes']];
+const CEL_APPS=[['mensagens','話','Mensagens'],['social','囁','Sussurros'],['mapa','地','Mapa'],['objetivos','任','Objetivos'],['inventario','袋','Inventário'],['cena','人','Na cena'],['descanso','寮','Descanso'],['npcs','書','NPCs'],['ficha','札','Ficha'],['cacadores','狩','Caçadores'],['conquistas','誉','Conquistas'],['config','設','Ajustes']];
 let mapaAberto=false;
 function abrirMapa(){fecharCel(true);const m=$('#mapa-tela');m.hidden=false;mapaAberto=true;m.classList.remove('detalhe');if(meu)selLoc=meu.local?raiz(meu.local):(selLoc||casaDe(myId()));renderMapa();
   setTimeout(()=>{mapaCentrar(selLoc,ehMobile()?2.1:1);const b=$('#mapa-fechar');b&&b.focus();},30);}
@@ -2951,7 +3044,7 @@ function mapaZoom(f,cx,cy){const svg=$('#map');const r=svg.getBoundingClientRect
 })();
 function fecharMapa(){const m=$('#mapa-tela');if(m.hidden)return;m.hidden=true;mapaAberto=false;m.classList.remove('detalhe');}
 
-const CEL_TIT={home:'Celular',mensagens:'Mensagens',social:'Sussurros',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',config:'Ajustes'};
+const CEL_TIT={home:'Celular',mensagens:'Mensagens',social:'Sussurros',mapa:'Mapa',objetivos:'Objetivos',descanso:'Descanso',cena:'Na cena',inventario:'Inventário',npcs:'Livro de NPCs',ficha:'Sua ficha',cacadores:'Caçadores',conquistas:'Conquistas',config:'Ajustes'};
 function abrirCel(app){
   const c=$('#cel');if(c.hidden){c.hidden=false;void c.offsetWidth;c.classList.add('show');}
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
@@ -2978,6 +3071,7 @@ function renderCelApp(){
   if(a==='ficha')renderCelFicha();
   if(a==='config')renderCelConfig();
   if(a==='cacadores')renderCacadores();
+  if(a==='conquistas')renderConquistas();
   if(a==='mensagens')renderDM();
   if(a==='social'){postsMarcarLido();atualizarAlertaDM();renderSocial();}
 }
@@ -3021,7 +3115,7 @@ function renderDM(){
 async function enviarDM(){
   const ta=$('#dm-texto');const t=(ta?.value||'').trim();if(!t||!dmAberto||dmEnviando)return;
   const k=dmAberto;const m={de:myId(),deNome:F.nome||'Sem nome',para:k,texto:t.slice(0,1500),ts:Date.now()};
-  dmEnviando=true;ta.value='';
+  dmEnviando=true;ta.value='';contarConquista('dms',1);
   try{if(db)await db.collection(`dms/${dmConv(k)}/msgs`).add(m);else dmMsgs.set(k,[...(dmMsgs.get(k)||[]),{id:'l'+m.ts,...m}]);}
   catch{ta.value=t;toastChat('Não consegui mandar a mensagem. Confira se as regras novas do Firestore foram publicadas.');}
   finally{dmEnviando=false;renderDM();const t2=$('#dm-texto');t2&&t2.focus();}
