@@ -1220,7 +1220,7 @@ async function ensureJogador(){
   if(db&&uid){
     try{const s=await db.doc('jogadores/'+uid).get();
       if(s.exists){const d=s.data();aplicarAdminNoJogador(d);const mx=maximos(d.bonusMax);meu={...d,max:mx,nome:F.nome,estado:{pv:Math.min(d.estado?.pv??mx.pv,mx.pv),pa:Math.min(d.estado?.pa??mx.pa,mx.pa),pe:Math.min(d.estado?.pe??mx.pe,mx.pe)}};
-        const patch={max:mx,nome:F.nome,escola:escolaDe(myId()),cor:corValida(F.cor)||'',estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};if(d.pg==null){patch.pg=0;meu.pg=0;}meu.cor=patch.cor;meu.escola=patch.escola;
+        meu.recursosRev=d.recursosRev||0;const patch={max:mx,nome:F.nome,escola:escolaDe(myId()),cor:corValida(F.cor)||'',estado:meu.estado,stats:meusStats(),atualizado:new Date().toISOString()};if(d.pg==null){patch.pg=0;meu.pg=0;}meu.cor=patch.cor;meu.escola=patch.escola;
         if(!Array.isArray(d.inventario)){Object.assign(patch,invInicial());Object.assign(meu,invInicial());}
         if(!Array.isArray(d.diario)){patch.diario=[];meu.diario=[];}
         await db.doc('jogadores/'+uid).update(patch);}
@@ -2436,6 +2436,7 @@ async function route(){
   if(!mundo){if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;return;}
   if(!F.nome.trim()){location.hash='ficha';return;}
   if(!meu)await ensureJogador();
+  else{const mx=maximos(meu.bonusMax);if(['pv','pa','pe'].some(k=>mx[k]!==meu.max?.[k]))await atualizarMeu({max:mx,estado:{pv:Math.min(meu.estado.pv,mx.pv),pa:Math.min(meu.estado.pa,mx.pa),pe:Math.min(meu.estado.pe,mx.pe)}});}
   renderHud();
   if(h==='mapa'){if(canalUnsub){canalUnsub();canalUnsub=null;}canalAtual=null;
     if(meu.local)selLoc=raiz(meu.local);else selLoc=raizDaEscola(escolaDe(myId()));
@@ -2568,7 +2569,7 @@ function renderAdmEditor(){
   const el=$('#adm-editor');if(!el)return;
   if(!admSel){el.innerHTML='<div class="panel"><p class="note" style="margin:0">Escolha um personagem à esquerda.</p></div>';return;}
   const j=jogadores.get(admSel)||{};const f=party.get(admSel);const fi=f?.ficha||{};
-  const e=j.estado||{pv:0,pa:0,pe:0},mx=j.max||{pv:0,pa:0,pe:0},bn=j.bonusMax||{pv:0,pa:0,pe:0};
+  const e=j.estado||{pv:0,pa:0,pe:0},bn=j.bonusMax||{pv:0,pa:0,pe:0};const rsE=f?.resumo;const mx=rsE&&rsE.pv!=null?{pv:+rsE.pv+(+bn.pv||0),pa:+rsE.pa+(+bn.pa||0),pe:+rsE.pe+(+bn.pe||0)}:(j.max||{pv:0,pa:0,pe:0});
   const num=(id,v,lbl,min)=>`<label class="f" for="${id}">${lbl}<input type="number" id="${id}" value="${esc(v)}" ${min!=null?`min="${min}"`:''}></label>`;
   el.innerHTML=`<div class="panel"><h2>${esc(j.nome||f?.resumo?.nome||'Sem nome')}</h2><p class="note" style="margin:0">${esc([f?.resumo?.raca,f?.resumo?.classe].filter(Boolean).join(' · '))}</p></div>
   <div class="panel"><h2>Recursos</h2>
@@ -2623,11 +2624,13 @@ async function admAcao(a){
   try{
   if(a==='recursos'||a==='curar'||a==='derrubar'){
     const bOld=j.bonusMax||{pv:0,pa:0,pe:0};const bn={pv:v('adm-bpv'),pa:v('adm-bpa'),pe:v('adm-bpe')};
-    const mx0=j.max||{pv:0,pa:0,pe:0};const mx={pv:Math.max(0,mx0.pv-(bOld.pv||0)+bn.pv),pa:Math.max(0,mx0.pa-(bOld.pa||0)+bn.pa),pe:Math.max(0,mx0.pe-(bOld.pe||0)+bn.pe)};
+    const rs=party.get(id)?.resumo;const mx0=j.max||{pv:0,pa:0,pe:0};
+    const base=k=>rs&&rs[k]!=null?+rs[k]:Math.max(0,(+mx0[k]||0)-(+bOld[k]||0));
+    const mx={pv:Math.max(0,base('pv')+bn.pv),pa:Math.max(0,base('pa')+bn.pa),pe:Math.max(0,base('pe')+bn.pe)};
     let e={pv:v('adm-pv'),pa:v('adm-pa'),pe:v('adm-pe')};
     if(a==='curar')e={...mx};if(a==='derrubar')e={...e,pv:0};
     const subiu=[];['pv','pa','pe'].forEach(k=>{e[k]=Math.max(0,e[k]);if(a==='recursos'&&e[k]>mx[k]){bn[k]+=e[k]-mx[k];subiu.push(`${k.toUpperCase()} máximo ${mx[k]} → ${e[k]}`);mx[k]=e[k];}});
-    await admUpdate(id,{estado:e,max:mx,bonusMax:bn});
+    await admUpdate(id,{estado:e,max:mx,bonusMax:bn,recursosRev:Date.now()});
     for(const [loc,c] of Object.entries(admComb)){if(c&&c.ativo&&c.participantes?.[id]){try{await db.doc('combates/'+loc).update({participantes:{[id]:{pv:e.pv,pvMax:mx.pv}}});}catch{}}}
     if(subiu.length)admStatus(`Salvo. O valor passou do máximo, então o máximo subiu junto (${subiu.join(', ')}).`);
     renderAdmEditor();}
@@ -2751,7 +2754,10 @@ async function boot(){
   try{const mine=await db.doc('fichas/'+uid).get();if(mine.exists&&!draft)loadFicha(Object.assign(blank(),mine.data().ficha));}catch{}
   db.collection('fichas').onSnapshot(snap=>{party.clear();snap.docs.forEach(d=>{const x=d.data();if(x&&x.resumo)party.set(x.donoId||d.id,x);});renderParty();if(!$('#view-ficha').hidden){const C=calc();renderAnt(C);renderSheet(C);}},()=>{});
   db.collection('jogadores').onSnapshot(snap=>{jogadores.clear();snap.docs.forEach(d=>{const x=d.data();if(!x)return;jogadores.set(d.id,x);
-      if(d.id===uid&&meu&&!snap.metadata.hasPendingWrites){const antes=meu.local;
+      if(d.id===uid&&meu&&x.recursosRev&&x.recursosRev!==meu.recursosRev){
+        meu={...meu,estado:x.estado||meu.estado,max:x.max||meu.max,bonusMax:x.bonusMax||meu.bonusMax,recursosRev:x.recursosRev};
+        setTimeout(()=>{sincronizarPvCombate();renderHud();},0);}
+      else if(d.id===uid&&meu&&!snap.metadata.hasPendingWrites){const antes=meu.local;
         meu={...meu,estado:x.estado||meu.estado,max:x.max||meu.max,bonusMax:x.bonusMax||meu.bonusMax,local:x.local,inventario:x.inventario||meu.inventario,ienes:x.ienes??meu.ienes,diario:x.diario||meu.diario,missoesPagas:x.missoesPagas||meu.missoesPagas,visitados:x.visitados||meu.visitados,pg:x.pg??meu.pg,missaoPessoal:x.missaoPessoal??meu.missaoPessoal,bonusAtaque:x.bonusAtaque===undefined?meu.bonusAtaque:x.bonusAtaque,transfRecebidas:x.transfRecebidas||meu.transfRecebidas};
         if(x.local!==antes&&location.hash.startsWith('#local-')&&x.local)setTimeout(()=>{location.hash='local-'+x.local;},50);
         setTimeout(()=>{sincronizarPvCombate();},0);}
