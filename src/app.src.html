@@ -1243,6 +1243,7 @@ async function chamarIA(prompt,tier,aoEsperar){
   }
 }
 function avisoEspera(ms){const el=$('#chat-thinking');if(!el)return;el.hidden=false;el.firstChild.textContent=`O mestre está com muitas mensagens ao mesmo tempo. Ele responde em ${Math.ceil(ms/1000)} s, não precisa mandar de novo`;}
+function avisoRoteiro(){const el=$('#chat-thinking');if(el){el.hidden=false;el.firstChild.textContent='O mestre está organizando o roteiro desta missão';}}
 function avisoNormal(){const el=$('#chat-thinking');if(el)el.firstChild.textContent='O mestre está narrando';}
 
 /* Missões */
@@ -1263,12 +1264,68 @@ async function missaoCriar(m){
 }
 const MISSAO_PESSOAL_PADRAO={'Clã Elmos':'Encontrar as outras cabeças de Cérberus espalhadas pelo Japão (Inércia já está com você), antes que o Clã Elmos o capture para devolver Cérberus a outro receptáculo.'};
 const missaoPessoal=()=>String(meu?.missaoPessoal||MISSAO_PESSOAL_PADRAO[F.antecedente]||'').trim();
+/* Roteiro secreto de cada missão: o que realmente acontece, etapas, chefe e limite de combates.
+   Os jogadores só veem o progresso ("etapa 2 de 4"); o mestre de IA recebe o roteiro inteiro. */
+const MAX_COMB={4:2,3:3,2:3,1:4,0:4};const LIM_ACOES={4:16,3:24,2:30,1:36,0:40};
+const SEGREDO_FORMATO=`{"verdade":"o que realmente está acontecendo, quem ou o que causa o problema e por quê (2 a 3 frases)","etapas":["chegada e primeira pista: ...","investigação ou obstáculo: ...","confronto com o chefe: ...","desfecho: ..."],"chefe":{"nome":"nome da maldição ou inimigo principal","grau":4,"descricao":"curta"},"desfecho":"como a missão termina e o que o grupo leva de volta para o relatório","pista":"fio pequeno ligado à campanha, ou string vazia"}`;
+function normSegredo(x,grau){
+  if(!x||typeof x!=='object')return null;const g=GRAUS[+x?.chefe?.grau]!=null?+x.chefe.grau:(+grau===3?3:4);
+  const etapas=(Array.isArray(x.etapas)?x.etapas:[]).map(e=>String(e||'').trim().slice(0,240)).filter(Boolean).slice(0,5);
+  if(etapas.length<2)return null;
+  return {verdade:String(x.verdade||'').slice(0,600),etapas,chefe:{nome:String(x.chefe?.nome||'Maldição principal').slice(0,60),grau:g,descricao:String(x.chefe?.descricao||'').slice(0,200)},desfecho:String(x.desfecho||'').slice(0,400),pista:String(x.pista||'').slice(0,300),maxCombates:MAX_COMB[+grau]??2,criado:Date.now()};
+}
+let gerandoSegredo=null;
+async function gerarSegredo(m,emAndamento){
+  if(!sample||!m)return null;
+  if(gerandoSegredo&&gerandoSegredo.id===m.id)return gerandoSegredo.p;
+  const p=(async()=>{
+    const prompt=`Você é o mestre de uma campanha de RPG de Jujutsu Kaisen (sistema Era dos Feiticeiros).
+{{CAMPANHA}}
+
+${direcaoMestre()}Escreva o ROTEIRO SECRETO desta missão (os jogadores nunca leem isto). Uma missão é uma história curta com começo, meio e fim, que se resolve em uma sessão de uns 30 a 60 minutos: no máximo ${MAX_COMB[+m.grau]??2} combates contando o chefe, nada de ondas infinitas de maldições.
+Missão: "${m.titulo}" (grau ${m.grau}, destino ${nomeLocal(m.destino)}). ${m.descricao}${m.olho?instrucaoOlho(m):''}
+${emAndamento?`O GRUPO JÁ ESTÁ NESTA MISSÃO HÁ MUITO TEMPO, lutando contra maldição atrás de maldição. Use o que já aconteceu e coloque o grupo perto do fim: diga em "etapaAtual" (0 = primeira etapa) em qual etapa eles estão agora, normalmente a do confronto com o chefe.
+Memória recente:
+${memoriaCampanha()}
+Histórico recente do canal:
+${historico().split('\n').slice(-14).join('\n')}`:''}
+Responda SOMENTE com JSON: {"segredo":${SEGREDO_FORMATO}${emAndamento?',"etapaAtual":2':''}}`;
+    try{const res=await chamarIA(prompt,'default');const j=JSON.parse((res.text||'').match(/\{[\s\S]*\}/)[0]);
+      const sg=normSegredo(j.segredo,m.grau);if(!sg)return null;
+      const etapa=emAndamento?Math.max(0,Math.min(sg.etapas.length-1,Math.round(+j.etapaAtual||0))):0;
+      const patch={segredo:sg,etapa,...(emAndamento?{combates:sg.maxCombates-1,acoes:0}:{})};
+      await missaoWrite(m.id,patch);return {...m,...patch};}
+    catch{return null;}
+  })();
+  gerandoSegredo={id:m.id,p};try{return await p;}finally{gerandoSegredo=null;}
+}
+const naMissao=(mm,id)=>!!(mm&&id&&raiz(id)===raiz(mm.destino));
+function roteiroMissao(mm,id){
+  const sg=mm?.segredo;if(!sg)return '';
+  const n=sg.etapas.length;const e=Math.min(+mm.etapa||0,n);const c=+mm.combates||0;const max=sg.maxCombates||2;const ac=+mm.acoes||0;const lim=LIM_ACOES[+mm.grau]??18;
+  if(mm.objetivoCumprido)return `\nROTEIRO SECRETO: o objetivo desta missão JÁ FOI CUMPRIDO (${sg.desfecho}). Não crie novos combates nem novas etapas aqui. Lembre o grupo de voltar à escola e entregar o relatório na Sala dos Professores.`;
+  return `
+ROTEIRO SECRETO DA MISSÃO (só para o mestre; revele aos poucos, pela cena, nunca de uma vez):
+- Verdade: ${sg.verdade}
+- Etapas: ${sg.etapas.map((t,i)=>`${i+1}. ${t}${i<e?' (FEITA)':i===e?' (ATUAL)':''}`).join(' | ')}
+- Chefe: ${sg.chefe.nome} (grau ${sg.chefe.grau}) ${sg.chefe.descricao}
+- Desfecho: ${sg.desfecho}${sg.pista?`\n- Fio para a campanha: ${sg.pista}`:''}
+- ETAPA ATUAL: ${e+1} de ${n}. ${naMissao(mm,id)?'Conduza a cena para essa etapa se resolver em poucas respostas (2 a 4). Quando o grupo cumprir a etapa atual, use "etapaConcluida": true.':'O grupo ainda não está no destino; a missão anda quando eles chegarem lá.'}
+- Combates nesta missão: ${c} de ${max} (o último é contra o chefe). ${c>=max?'LIMITE ATINGIDO: não crie mais inimigos nesta missão. Leve direto ao desfecho.':c===max-1?'Só resta o combate contra o chefe: não crie maldições comuns, só o chefe quando chegar a hora.':''}
+- NÃO fique mandando onda após onda de maldições. Missão é história: pistas, escolhas, um ou dois combates que importam, e fim.${ac>=lim?`\n- A MISSÃO JÁ PASSOU DO TEMPO (${ac} ações): resolva AGORA, nesta resposta ou na próxima, indo direto ao chefe ou ao desfecho.`:''}`;
+}
+async function avancarEtapa(mm,local){
+  const sg=mm?.segredo;if(!sg)return;const e=(+mm.etapa||0)+1;
+  if(e>=sg.etapas.length){await missaoWrite(mm.id,{etapa:sg.etapas.length,objetivoCumprido:true});
+    await postMsg(local,{tipo:'sistema',texto:`Objetivo da missão "${mm.titulo}" cumprido! Voltem à escola e entreguem o relatório na Sala dos Professores para receber.`});}
+  else{await missaoWrite(mm.id,{etapa:e});await postMsg(local,{tipo:'sistema',texto:`Missão "${mm.titulo}": etapa ${e} de ${sg.etapas.length} concluída.`});}
+}
 const quadroAtual=()=>locById(canalAtual)?.tipo==='missoes'?canalAtual:`${raizDaEscola(escolaDe(myId()))}-missoes`;
 const minhaMissao=()=>[...missoes.values()].find(m=>m.status==='andamento'&&(m.membros||[]).includes(myId()));
 const nomeJog=id=>id===myId()?F.nome:(jogadores.get(id)?.nome||party.get(id)?.resumo?.nome||'alguém');
 function renderMissoes(){
   const mm=minhaMissao();const box=$('#minha-missao');
-  if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p><p>Para receber, entregue o relatório na Sala dos Professores.</p></div>`:'')
+  if(box){const mp=missaoPessoal();box.hidden=!mm&&!mp;box.innerHTML=(mm?`<h2>Sua missão</h2><div class="missao minha"><div class="tt"><b>${esc(mm.titulo)}</b><span class="pill warn">Grau ${esc(mm.grau)}</span>${mm.olho?'<span class="pill info">Olho</span>':''}</div><p>${esc(mm.descricao)}</p><p>Destino: <b style="color:var(--bone)">${esc(nomeLocal(mm.destino)||mm.destino)}</b> · Grupo: ${(mm.membros||[]).map(nomeJog).map(esc).join(', ')}</p>${mm.segredo?`<p>Progresso: <b style="color:var(--bone)">${mm.objetivoCumprido?'objetivo cumprido':`etapa ${Math.min((+mm.etapa||0)+1,mm.segredo.etapas.length)} de ${mm.segredo.etapas.length}`}</b></p>`:''}<p>Para receber, entregue o relatório na Sala dos Professores.</p></div>`:'')
     +(mp?`<h2 style="margin-top:${mm?'10px':'0'}">Missão pessoal</h2><p class="note" style="margin:0">${esc(mp)}</p>`:'');}
   const p=$('#missoes-panel');if(!p)return;
   if(locById(canalAtual)?.tipo!=='missoes'){p.hidden=true;p.innerHTML='';return;}
@@ -1331,11 +1388,13 @@ ${livroNpcs(15)}
 Chamados que já existem (não repita): ${existentes||'nenhum'}.
 Estas são missões comuns (não são das Semanas dos Olhos): nada de olhos de Sōgen aqui, mas cada chamado pode deixar um fio pequeno para as ameaças da campanha. Pelo menos um chamado deve ser uma side quest que apresenta um personagem secundário com nome (uma pessoa comum, um feiticeiro de fora, alguém ligado a um NPC já conhecido), descrito em "npc".
 Regras: grau 4 na maioria (às vezes 3) para nível 1-3. Recompensa do livro: grau 4 = 10 a 30 XP, grau 3 = 31 a 80 XP. Dinheiro entre 10000 e 60000 ienes. Descrição em 1 ou 2 frases, como um chamado oficial, com um gancho de mistério.
-Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""}}]}`;
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","destino":"shibuya","grau":4,"descricao":"...","xp":20,"ienes":20000,"npc":{"nome":"","descricao":""},"segredo":${SEGREDO_FORMATO}}]}
+Cada missão precisa de um "segredo": o roteiro escondido dos jogadores, uma história curta com começo, meio e fim que se resolve em 30 a 60 minutos de jogo, com no máximo 2 combates (grau 4) ou 3 (grau 3), contando o chefe.`;
   try{const res=await chamarIA(prompt,'default');const m=(res.text||'').match(/\{[\s\S]*\}/);const j=JSON.parse(m[0]);
     for(const x of (j.missoes||[]).slice(0,3)){const destino=locById(x.destino)?x.destino:(kyotoQ?'gion':'shibuya');
       if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Ligado ao chamado "${String(x.titulo||'').slice(0,80)}".`}],destino);
-      await missaoCriar({titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:+x.grau===3?3:4,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now(),quadro});}
+      const gr=+x.grau===3?3:4;const sg=normSegredo(x.segredo,gr);
+      await missaoCriar({...(sg?{segredo:sg,etapa:0,combates:0,acoes:0}:{}),titulo:String(x.titulo||'Chamado').slice(0,80),destino,grau:gr,descricao:String(x.descricao||'').slice(0,300),xp:Math.max(5,Math.min(80,Math.round(+x.xp||20))),ienes:Math.max(0,Math.min(100000,Math.round(+x.ienes||20000))),status:'aberta',membros:[],criada:Date.now(),quadro});}
     await postMsg(`${quadro}-missoes`,{tipo:'sistema',texto:'Novos chamados foram pregados no quadro.'});
   }catch{toastChat('Os professores não conseguiram preparar chamados agora. Tente de novo.');}
   finally{gerandoMissoes=false;renderMissoes();}
@@ -1465,12 +1524,14 @@ ${memoriaCampanha()}
 ${livroNpcs(15)}
 
 Crie os 3 chamados da SEMANA DOS OLHOS número ${sem}. Cada um é uma pista de que um olho de Kokonoe Sōgen está num lugar diferente. Para os jogadores, os chamados parecem missões oficiais da escola sobre "um objeto amaldiçoado de grau especial" (não diga o nome de Sōgen no título). Destinos, nesta ordem: ${destinos.join(', ')} (ids). Cada descrição em 1 ou 2 frases, com um gancho diferente (onde o olho foi visto, quem relatou, que maldições se agitaram).
-Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc":{"nome":"testemunha ou contato","descricao":"curta"}}]}`;
+Cada chamado precisa de um "segredo": o roteiro escondido dos jogadores, curto (30 a 60 minutos de jogo, no máximo 3 combates contando o chefe). Na ordem dos chamados: ${destinos.map((d,i)=>`${i+1}º ${i===achavel?'o olho PODE ser recuperado: o chefe é a maldição que comeu o olho':'o olho NÃO pode ser encontrado: no desfecho ele já sumiu, com pista de quem levou'}`).join('; ')}.
+Responda SOMENTE com JSON: {"missoes":[{"titulo":"curto","descricao":"...","npc":{"nome":"testemunha ou contato","descricao":"curta"},"segredo":${SEGREDO_FORMATO}}]}`;
   let j;try{const res=await chamarIA(prompt,'default');j=JSON.parse((res.text||'').match(/\{[\s\S]*\}/)[0]);}catch{return 'A IA não conseguiu preparar os chamados. Tente de novo.';}
   const lista=(j.missoes||[]).slice(0,3);if(lista.length<3)return 'A IA respondeu com menos de 3 chamados. Tente de novo.';
   for(let i=0;i<3;i++){const x=lista[i];
     if(x.npc&&x.npc.nome)await registrarNpcs([{nome:x.npc.nome,descricao:x.npc.descricao,nota:`Contato do chamado "${String(x.titulo||'').slice(0,80)}" (Semana dos Olhos ${sem}).`}],destinos[i]);
-    await missaoCriar({titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now(),quadro:'todos'});}
+    const sg=normSegredo(x.segredo,3);
+    await missaoCriar({...(sg?{segredo:sg,etapa:0,combates:0,acoes:0}:{}),titulo:String(x.titulo||'Objeto de grau especial').slice(0,80),destino:destinos[i],grau:3,descricao:String(x.descricao||'').slice(0,300),xp:60,ienes:60000,pg:120,olho:{semana:sem,encontravel:i===achavel},status:'aberta',membros:[],criada:Date.now(),quadro:'todos'});}
   try{await db.doc('config/campanha').set({...campanha,semana:sem});}catch{}
   await postMsg('kyoto-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
   await postMsg('escola-missoes',{tipo:'sistema',texto:`Chamados urgentes foram pregados no quadro: objetos amaldiçoados de grau especial (Semana dos Olhos ${sem}).`});
@@ -1707,6 +1768,7 @@ async function narrar(id,g){
   if(!sample){await postMsg(id,{tipo:'sistema',texto:'O mestre de IA não está disponível nesta visualização. Abra a página no Claude e permita o uso da IA.'});return;}
   if(narrando)return;narrando=true;const obs=g.tipo==='observar'||g.tipo==='duelo'||g.tipo==='retorno';if(!obs){$('#chat-thinking').hidden=false;}renderRoll();renderCombate();
   let viajar=null,anteriorTxt='',iniciarDepois=null;
+  {const mm0=minhaMissao();if(mm0&&!mm0.segredo&&!obs&&g.tipo!=='turno'&&naMissao(mm0,id)){avisoRoteiro();await gerarSegredo(mm0,true);avisoNormal();}}
   const l=locById(id);const outros=[...jogadores.entries()].filter(([k,j])=>j.local===id&&k!==(uid||'eu')).map(([k,j])=>`${j.nome} (aluno de ${escolaCurta(escolaDe(k))}, ${grauEscola(j.pg)}, PV ${j.estado?.pv}/${j.max?.pv})`);
   const so=g.sobreRolagem;const txtSobre=g.sobrecarga?(so?` Ele investe +${g.sobrecarga} PA EXTRA na técnica (sobrecarga). O SISTEMA JÁ ROLOU o dano extra: ${so.q}${so.dado} = ${so.dados.join('+')} = ${so.total}. Some EXATAMENTE +${so.total} ao dano que a técnica causaria (em danoInimigos/danoJogadores e na narração) e desconte o custo base + ${g.sobrecarga} em efeitos.pa (sem passar do limite por ativação).`:` Ele investe +${g.sobrecarga} PA extra na técnica.`):'';
   const txtDados=(g.dados||[]).length?` Dados que ele escreveu na mensagem, JÁ ROLADOS pelo sistema (use exatamente estes valores, não role de novo nem ignore): ${g.dados.map(d=>`${d.expr} = ${d.total}`).join('; ')}.`:'';
@@ -1743,6 +1805,7 @@ COMO NARRAR
 - BÔNUS DECLARADOS: quando o jogador usa uma habilidade que dá bônus (ex.: "uso Impulso, +1d8 de dano"), confira na ficha e CONTE o bônus. Se ele escreveu os dados, o sistema já rolou e informa o resultado: use exatamente esse número. Se o bônus vale para o próximo ataque com arma (feito pelo botão Atacar), preencha "bonusProximoAtaque": {"dano":"1d8","acerto":0,"motivo":"Impulso"} e o sistema soma no próximo ataque. Se o bônus vale para uma técnica que você resolve agora, some direto em danoInimigos/danoJogadores.
 - NPCs E FALAS: quando um NPC fala, coloque a fala em "falas" ([{"npc":"Nome","texto":"o que ele diz"}]), e não dentro da narração. Cada fala aparece no chat com o nome do NPC, logo depois da narração. A narração descreve a cena e os gestos; as falas são só as palavras. Todo NPC novo com nome, ou NPC conhecido com quem acontece algo marcante, vai em "npcs" ([{"nome":"Nome","descricao":"quem é, aparência e jeito, 1 frase","nota":"o que ele vai lembrar desta cena, 1 frase"}]). Use os nomes do LIVRO DE NPCs exatamente iguais quando eles voltarem, e faça eles lembrarem do que está anotado.
 - DINHEIRO ENTRE JOGADORES: se ${F.nome} der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
+- RITMO: nunca prenda os jogadores em ondas infinitas de inimigos. Fora do que o roteiro secreto da missão prevê, não invente combates novos só para ter luta. Se uma cena virou repetição, avance a história.
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
@@ -1754,7 +1817,7 @@ ${livroNpcs(40)}
 
 OUTROS JOGADORES NESTE LOCAL: ${outros.join('; ')||'nenhum'}.
 
-${(()=>{const mm=minhaMissao();return mm?`MISSÃO ATIVA DE ${F.nome}: "${mm.titulo}" (grau ${mm.grau}, destino ${nomeLocal(mm.destino)}). ${mm.descricao} Grupo: ${(mm.membros||[]).map(nomeJog).join(', ')}.${instrucaoOlho(mm)}`:`${F.nome} não está em nenhuma missão no momento.`;})()}
+${(()=>{const mm=minhaMissao();return mm?`MISSÃO ATIVA DE ${F.nome}: "${mm.titulo}" (grau ${mm.grau}, destino ${nomeLocal(mm.destino)}). ${mm.descricao} Grupo: ${(mm.membros||[]).map(nomeJog).join(', ')}.${instrucaoOlho(mm)}${roteiroMissao(mm,id)}`:`${F.nome} não está em nenhuma missão no momento.`;})()}
 ${missaoPessoal()?`MISSÃO PESSOAL DE ${F.nome} (dê espaço para ela com pistas e cenas, sem resolver de uma vez): ${missaoPessoal()}`:''}
 
 ${resumoCombate()}
@@ -1772,7 +1835,7 @@ ${historico()||'(vazio)'}
 AGORA: ${gat}
 
 Responda SOMENTE com um objeto JSON, sem texto fora dele:
-{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta","olho":false}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true,"falas":[],"npcs":[],"bonusProximoAtaque":null,"transferir":[]}
+{"narracao":"texto, parágrafos separados por \\n\\n","teste":null ou {"pericia":"nome exato da lista","cd":15,"motivo":"frase curta"},"efeitos":{"pv":0,"pa":0,"pe":0},"itens":[{"nome":"Flechas","qtd":-1}],"ienes":0,"viajar":null,"combate":null ou {"inimigos":[{"nome":"Maldição da escada","grau":4,"qtd":1,"descricao":"curta","olho":false}],"jogadores":[]},"danoInimigos":[{"id":"id do inimigo","dano":0}],"danoJogadores":[{"id":"id do jogador","dano":0}],"resumo":"","fimCombate":false,"memoria":"fato importante desta resposta para lembrar depois, ou string vazia","xp":0,"missaoConcluida":false,"recuperarPA":false,"foraDoJogo":false,"intervir":true,"falas":[],"npcs":[],"bonusProximoAtaque":null,"transferir":[],"etapaConcluida":false}
 "efeitos", "itens" e "ienes" são mudanças para ${F.nome} (negativo gasta/perde, positivo ganha). Use os nomes dos itens exatamente como estão no inventário. "itens" pode ser []. "memoria" é uma frase curta só quando algo relevante acontecer (pista, NPC conhecido, ferimento, missão, item importante, decisão).`;
   try{
     const res=await chamarIA(prompt,obs?'quick':'default',obs?null:avisoEspera);avisoNormal();
@@ -1813,6 +1876,9 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     if(mem)patch.diario=[...(meu.diario||[]),{t:Date.now(),local:id,texto:mem.slice(0,240)}].slice(-40);
     if(Object.keys(patch).length)await atualizarMeu(patch);
     if(j.missaoConcluida===true&&minhaMissao())await concluirMissao(minhaMissao(),id);
+    {const mm=minhaMissao();if(mm&&mm.segredo&&!mm.objetivoCumprido&&naMissao(mm,id)){
+      if(g.tipo==='acao')missaoWrite(mm.id,{acoes:(+mm.acoes||0)+1});
+      if(j.etapaConcluida===true)await avancarEtapa(mm,id);}}
     if(j.recuperarPA===true&&combate&&combate.ativo&&combateLocal===id&&minhaVez())await recuperarPA(false);
     const xpG=Math.max(0,Math.min(300,Math.round(+j.xp||0)));if(xpG)await ganharXP(xpG,'mestre',id);
     if(combate&&combate.ativo&&combateLocal===id&&Array.isArray(j.danoInimigos)){const up={};const linhas=[];
@@ -1822,7 +1888,17 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     else if(combate&&combate.ativo&&combateLocal===id&&g.tipo!=='turno')await checarFim();
     if(j.combate&&(Array.isArray(j.combate.inimigos)&&j.combate.inimigos.length||Array.isArray(j.combate.jogadores)&&j.combate.jogadores.length)){
       const ids=(j.combate.jogadores||[]).map(n=>{const nn=normNome(n);const hit=[...jogadores.entries()].find(([k,x])=>k!==myId()&&x.local===id&&(k===n||normNome(x.nome)===nn||normNome(x.nome).includes(nn)||nn.includes(normNome(x.nome))));return hit?hit[0]:null;}).filter(Boolean);
-      iniciarDepois={inimigos:j.combate.inimigos||[],jogadores:ids};}
+      iniciarDepois={inimigos:j.combate.inimigos||[],jogadores:ids};
+      const mm=minhaMissao();const ativo=combate&&combate.ativo&&combateLocal===id;
+      if(mm&&mm.segredo&&naMissao(mm,id)&&iniciarDepois.inimigos.length){
+        const max=mm.segredo.maxCombates||2;
+        if(mm.objetivoCumprido||(!ativo&&(+mm.combates||0)>=max)){iniciarDepois.inimigos=[];}
+        else if(ativo){if(vivos('inimigo').length>=3)iniciarDepois.inimigos=[];else iniciarDepois.inimigos=iniciarDepois.inimigos.slice(0,1).map(e=>({...e,qtd:1}));}
+        else{const c=+mm.combates||0;
+          if(c===max-1){const ch=mm.segredo.chefe;const e=iniciarDepois.inimigos.find(x=>normNome(x.nome).includes(normNome(ch.nome).split(' ')[0]))||iniciarDepois.inimigos[0];
+            iniciarDepois.inimigos=[{...e,nome:ch.nome,grau:ch.grau,qtd:1,descricao:e.descricao||ch.descricao}];}
+          await missaoWrite(mm.id,{combates:c+1});}
+        if(!iniciarDepois.inimigos.length&&!iniciarDepois.jogadores.length)iniciarDepois=null;}}
     if(j.viajar&&locById(j.viajar)&&j.viajar!==id)viajar=j.viajar;
     else if(g.tipo==='acao'){const v=detectarViagem(g.texto);if(v&&v!==id)viajar=v;}
     if(viajar)anteriorTxt=historico().split('\n').slice(-6).join('\n');
@@ -2197,6 +2273,11 @@ document.addEventListener('click',e=>{
   if(b.dataset.admfalar){const loc=b.dataset.admfalar;const t=$('#am-'+loc).value.trim();if(!t)return;const modo=$('#amm-'+loc).value;const npcN=$('#amn-'+loc).value.trim();
     if(modo==='p'&&!npcN){admStatus('Escreva o nome do NPC.',true);return;}
     admPost(loc,modo==='p'?{tipo:'npc',npcNome:npcN.slice(0,60),texto:t}:{tipo:'mestre',texto:t,fora:modo==='f',alvoId:'',alvoNome:''}).then(()=>{$('#am-'+loc).value='';if(modo==='p'&&!npcs.has(npcId(npcN)))registrarNpcs([{nome:npcN}],loc);});return;}
+  if(b.dataset.admetapa||b.dataset.admcumprir||b.dataset.admconcluir){const m=missoes.get(b.dataset.admetapa||b.dataset.admcumprir||b.dataset.admconcluir);if(!m)return;const loc=m.destino;
+    (async()=>{if(b.dataset.admetapa)await avancarEtapa(m,loc);
+      else if(b.dataset.admcumprir){await missaoWrite(m.id,{objetivoCumprido:true,etapa:m.segredo.etapas.length});await postMsg(loc,{tipo:'sistema',texto:`Objetivo da missão "${m.titulo}" cumprido (mestre). Voltem à escola e entreguem o relatório na Sala dos Professores.`});}
+      else await concluirMissao(m,`${m.quadro&&m.quadro!=='todos'?m.quadro:'escola'}-professores`);
+      admStatus('Feito.');renderAdmCampanha();})();return;}
   if(b.dataset.admolhos){const n=+b.dataset.admolhos;openModal(`Lançar a Semana dos Olhos ${n}?`,n===2?'A IA cria 3 chamados; em um deles (sorteado) a maldição que comeu o olho pode ser derrotada e o olho recuperado.':'A IA cria 3 chamados; em todos eles o olho vai ter sumido no fim.','','Lançar',async()=>{closeModal();admStatus('Os professores estão preparando os chamados...');const err=await lancarSemanaOlhos(n);admStatus(err||`Semana dos Olhos ${n} lançada: 3 chamados no quadro.`,!!err);renderAdmCampanha();});return;}
   if(b.dataset.admlimpar){const loc=b.dataset.admlimpar;openModal(`Limpar o canal de ${locById(loc).curto}?`,'Todas as mensagens deste canal são apagadas para todo mundo. O diário do mestre continua.','','Limpar canal',async()=>{closeModal();await admLimparCanal(loc);});return;}
   if(b.id==='btn-hist-importar'){importarHistorico();return;}
@@ -2254,6 +2335,9 @@ function renderAdmCampanha(){
         <div class="adm-acts">${[1,2,3].map(n=>`<button class="btn small${n===sem+1?' primary':''}" data-admolhos="${n}">Lançar semana ${n}</button>`).join('')}</div>
         <span class="note">Semanas 1 e 3: o olho some em todas as missões. Semana 2: uma das três missões tem a maldição que comeu o olho (+100 PV) e o olho pode ser recuperado.</span></div>
     </div>
+    <div class="f"><span>Missões em andamento</span>${[...missoes.values()].filter(m=>m.status==='andamento').map(m=>`<div class="npc-item"><b>${esc(m.titulo)}</b><span class="note">Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')} · ${m.segredo?(m.objetivoCumprido?'objetivo cumprido':`etapa ${Math.min((+m.etapa||0)+1,m.segredo.etapas.length)} de ${m.segredo.etapas.length}`)+` · combates ${+m.combates||0}/${m.segredo.maxCombates} · ${+m.acoes||0} ações`:'sem roteiro ainda (o mestre cria na próxima ação no destino)'}</span>
+      ${m.segredo?`<details><summary class="note">Ver roteiro secreto (spoiler)</summary><p style="font-size:13px;margin:6px 0">${esc(m.segredo.verdade)}</p><ol style="font-size:13px;margin:0;padding-left:18px">${m.segredo.etapas.map(t=>`<li>${esc(t)}</li>`).join('')}</ol><p style="font-size:13px;margin:6px 0">Chefe: ${esc(m.segredo.chefe.nome)} (grau ${m.segredo.chefe.grau}). Desfecho: ${esc(m.segredo.desfecho)}</p></details>`:''}
+      <div class="adm-acts">${m.segredo&&!m.objetivoCumprido?`<button class="btn small" data-admetapa="${esc(m.id)}">Avançar etapa</button><button class="btn small" data-admcumprir="${esc(m.id)}">Marcar objetivo cumprido</button>`:''}<button class="btn small" data-admconcluir="${esc(m.id)}">Concluir e pagar agora</button></div></div>`).join('')||'<span class="note">Nenhuma.</span>'}</div>
     <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
     <div class="adm-acts"><button class="btn primary" data-adm="campanha">Salvar campanha</button></div>`;
 }
