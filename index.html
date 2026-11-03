@@ -425,6 +425,7 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .areas button{background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer;color:var(--ash);font-size:13px;display:flex;gap:6px;align-items:center}
 .areas button.on{border-color:var(--seal);color:var(--bone);background:var(--ink-2)}
 .areas button .k{font-family:var(--display);color:var(--seal)}
+.chk-kok{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}.chk-kok input{margin-top:3px;accent-color:#e8101c}
 .dom-aviso{margin:0;padding:6px 10px;background:var(--dom-cor,#6a1fb0);color:#fff;font-size:13px;border:2px solid #000;text-shadow:1px 1px 0 #000}
 .dom-bt{background:var(--dom-cor)!important;color:#fff!important;border:2px solid #000!important;font-weight:900;text-shadow:1px 1px 0 #000}
 body.em-dominio #canal-view{--dc:var(--dom-cor,#6a1fb0)}
@@ -1941,7 +1942,7 @@ const CONQUISTAS=[
   {id:'grau2',g:'Combate',k:'弐',nome:'Caçador de Verdade',desc:'Derrote uma maldição de grau 2 ou mais forte.',p:()=>[mortes(2),1],r:{xp:25}},
   {id:'umfio',g:'Combate',k:'糸',nome:'Por um Fio',desc:'Vença um combate com 1 PV ou menos.',p:()=>[cont('porUmFio'),1],r:{xp:25}},
   {id:'duelo',g:'Combate',k:'決',nome:'Duelista',desc:'Vença um duelo contra outro jogador.',p:()=>[cont('duelos'),1],r:{ienes:1000}},
-  {id:'blackflash',g:'Combate',k:'黒',nome:'Faísca Negra',desc:'Acerte um Black Flash.',p:()=>[cont('blackflash'),1],r:{xp:25}},
+  {id:'blackflash',g:'Combate',k:'黒',nome:'Faísca Negra',desc:'Acerte um Kokusen (Black Flash).',p:()=>[cont('blackflash'),1],r:{xp:25}},
   {id:'dominio',g:'Combate',k:'域',nome:'Expansão de Domínio',desc:'Abra sua Expansão de Domínio em combate.',p:()=>[cont('dominios'),1],r:{xp:25}},
   {id:'locais5',g:'Exploração',k:'旅',nome:'Turista',desc:'Visite 5 lugares diferentes.',p:()=>[(meu?.visitados||[]).length,5],r:{ienes:1000}},
   {id:'locais15',g:'Exploração',k:'旅',nome:'Andarilho',desc:'Visite 15 lugares diferentes.',p:()=>[(meu?.visitados||[]).length,15],r:{ienes:2000}},
@@ -2607,7 +2608,7 @@ COMO NARRAR
 - NPCs E FALAS: quando um NPC fala, coloque a fala em "falas" ([{"npc":"Nome","texto":"o que ele diz"}]), e não dentro da narração. Cada fala aparece no chat com o nome do NPC, logo depois da narração. A narração descreve a cena e os gestos; as falas são só as palavras. Todo NPC novo com nome, ou NPC conhecido com quem acontece algo marcante, vai em "npcs" ([{"nome":"Nome","descricao":"quem é, aparência e jeito, 1 frase","nota":"o que ele vai lembrar desta cena, 1 frase"}]). Use os nomes do LIVRO DE NPCs exatamente iguais quando eles voltarem, e faça eles lembrarem do que está anotado.
 - DINHEIRO ENTRE JOGADORES: se quem agiu der, pagar ou emprestar ienes a outro jogador presente, use "transferir": [{"para":"Nome do jogador","valor":N}] (o sistema tira de um e dá ao outro; não use "ienes" para isso).
 - RITMO: nunca prenda os jogadores em ondas infinitas de inimigos. Respeite o limite de criaturas da missão e não invente combates novos só para ter luta. Se uma cena virou repetição, avance a história.
-- BLACK FLASH: o sistema rola sozinho nos ataques corpo a corpo (20 natural; Humano Determinado 18 a 20) e avisa no histórico com "BLACK FLASH". Narre com peso quando aparecer, mas não invente Black Flash por conta própria.
+- KOKUSEN (BLACK FLASH): o sistema rola sozinho nos ataques com energia amaldiçoada (20 natural; +2 na margem com a habilidade de +10% e +2 se o jogador passou a vez focando) e avisa no histórico com "KOKUSEN". Se o jogador declarar que passa a vez para focar no Kokusen, responda com "focarKokusen": true (o sistema aplica e passa a vez). Narre com peso quando sair, mas não invente Kokusen por conta própria.
 - EXPANSÃO DE DOMÍNIO: o jogador abre pelo botão do combate; o sistema mostra a barreira e avisa você. Resolva o efeito pela ficha e cobre o PA em "efeitos".
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
@@ -2687,6 +2688,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     if(Object.keys(patch).length)await atualizarMeu(patch);
     if(j.missaoConcluida===true&&minhaMissao())await concluirMissao(minhaMissao(),id);
     if(j.recuperarPA===true&&combate&&combate.ativo&&combateLocal===id&&minhaVez())await recuperarPA(false);
+    if(j.focarKokusen===true&&combate&&combate.ativo&&combateLocal===id&&minhaVez())await focarKokusen();
     const xpG=Math.max(0,Math.min(300,Math.round(+j.xp||0)));if(xpG)await ganharXP(xpG,'mestre',id);
     if(Array.isArray(j.condicoes)&&j.condicoes.length)await aplicarCondicoes(j.condicoes,id);
     {const mm=minhaMissao();const ms=j.missaoStatus;if(mm&&ms&&typeof ms==='object'){const patch={};
@@ -2938,7 +2940,7 @@ async function recuperarPA(passar){
   if(passar)await passarVez(false);
   return true;
 }
-let ultimaArma=null,cbArma=null,cbAlvo=null,cbExtra='';
+let ultimaArma=null,cbArma=null,cbAlvo=null,cbExtra='',cbEnergia=true;
 /* bônus deste ataque: campo "Dano extra" do painel + bônus guardado pelo mestre (ex.: Impulso +1d8) */
 async function bonusDoAtaque(){
   const out={acerto:0,dano:0,notas:[]};
@@ -2969,20 +2971,23 @@ async function atacar(alvoId,armaNome){
   const bx=await bonusDoAtaque();
   const sk=C.skill[arma.skill].v+bx.acerto;const ra=d20();const at=ra+sk+pen;
   if(invPatch)await atualizarMeu({inventario:invPatch});
-  const bonusDano=C.a[arma.attr]+arma.flat+bx.dano;const notaB=bx.notas.length?` (${bx.notas.join(', ')})`:'';
+  const energia=!!cbEnergia;const dEn=energia?dN(6):0;const bfMarg=margemKokusen();const bfAqui=ehBlackFlash(ra,energia);
+  if(energia&&meu?.focoKokusen)await atualizarMeu({focoKokusen:false});
+  if(energia)bx.notas.push(`energia amaldiçoada +1d6=${dEn}${bfMarg<20?`, Kokusen com ${bfMarg}+`:''}`);
+  const bonusDano=C.a[arma.attr]+arma.flat+bx.dano+dEn;const notaB=bx.notas.length?` (${bx.notas.join(', ')})`:'';
   if(alvo.tipo==='jogador'){
     if(ra===1){const txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}: 1 natural. Falha crítica: o golpe sai totalmente errado.`;turnoLog.push(txt);await postMsg(combateLocal,{tipo:'combate',texto:txt});checarPassagemAuto();return;}
     const pid=`p${Date.now().toString(36)}${dN(999)}`;
-    await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20||ehBlackFlash(ra,arma),bf:ehBlackFlash(ra,arma),t:Date.now()}}});
+    await combateWrite({pendentes:{[pid]:{id:pid,atacante:myId(),atacanteNome:F.nome,alvo:alvo.id,arma:arma.nome,dados:arma.dados,bonusDano,d20:ra,bonus:sk+pen,total:at,crit:ra===20||bfAqui,bf:bfAqui,t:Date.now()}}});
     await postMsg(combateLocal,{tipo:'combate',pedido:true,alvoId:alvo.id,texto:`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at}${ra===20?' (20 natural!)':''}. ${alvo.nome}, role Esquiva ou Bloqueio (Luta) para se defender.`});
     return;}
   const defA=(alvo.def||0)+modCond(alvo,'def');const rd=d20();const df=rd+defA;
   let txt=`${F.nome} ataca ${alvo.nome} com ${arma.nome}${notaB}: ${ra}+${sk}${pen?pen:''} = ${at} contra defesa ${rd}+${defA} = ${df}.`;
   const patch={};
-  const bf=ehBlackFlash(ra,arma);
+  const bf=bfAqui;
   if(ra!==1&&(bf||ra===20||at>df)){const p=parseDados(arma.dados);const crit=bf||ra===20;const dados=rolarDados(p.q*(crit?2:1),p.l);const bruto=dados.reduce((a,b)=>a+b,0)+bonusDano*(bf?2:1);const dano=Math.max(1,bruto-(alvo.rd||0));
     const novo=Math.max(0,alvo.pv-dano);patch.participantes={[alvoId]:{pv:novo}};if(bf){patch.ultimoBF={alvo:alvoId,de:myId(),t:Date.now()};contarConquista('blackflash',1);}
-    txt+=` ${bf?'⚡ BLACK FLASH! A energia amaldiçoada colide com o golpe numa faísca negra (dano dobrado). ':crit?'CRÍTICO! ':''}Acerta: ${dados.join('+')}+${bonusDano} = ${bruto}${alvo.rd?` − ${alvo.rd} de RD`:''} → ${dano} de dano.${novo<=0?` ${alvo.nome} é exorcizado.`:''}`;}
+    txt+=` ${bf?'⚡ KOKUSEN (BLACK FLASH)! A energia amaldiçoada colide com o golpe numa faísca negra (dano dobrado). ':crit?'CRÍTICO! ':''}Acerta: ${dados.join('+')}+${bonusDano}${bf?'×2':''} = ${bruto}${alvo.rd?` − ${alvo.rd} de RD`:''} → ${dano} de dano.${novo<=0?` ${alvo.nome} é exorcizado.`:''}`;}
   else txt+=ra===1?' Falha crítica: o golpe sai totalmente errado.':` ${alvo.nome} se defende.`;
   turnoLog.push(txt);
   await postMsg(combateLocal,{tipo:'combate',texto:txt,...(bf&&patch.participantes?{efeito:'blackflash',alvoId}:{})});
@@ -3005,7 +3010,7 @@ async function resolverDefesa(pid,tipoDef){
       const novo=Math.max(0,alvo.pv-dano);patch.participantes[alvo.id].pv=novo;
       patch.golpes={[`g${Date.now().toString(36)}${dN(9999)}`]:{alvo:alvo.id,pv:-dano,de:pe.atacanteNome,t:Date.now()}};
       if(pe.bf)patch.ultimoBF={alvo:alvo.id,de:pe.atacante,t:Date.now()};
-      txt+=` ${pe.bf?'⚡ BLACK FLASH! ':pe.crit?'CRÍTICO! ':''}${pe.atacanteNome} acerta: ${dados.join('+')}+${pe.bonusDano} = ${bruto} − ${red} de RD = ${dano} de dano.${novo<=0?` ${alvo.nome} cai.`:''}`;}
+      txt+=` ${pe.bf?'⚡ KOKUSEN (BLACK FLASH)! ':pe.crit?'CRÍTICO! ':''}${pe.atacanteNome} acerta: ${dados.join('+')}+${pe.bonusDano}${pe.bf?'×2':''} = ${bruto} − ${red} de RD = ${dano} de dano.${novo<=0?` ${alvo.nome} cai.`:''}`;}
     else txt+=` ${alvo.nome} se defende do golpe de ${pe.atacanteNome}.`;
     await combateWrite(patch);
     await postMsg(combateLocal,{tipo:'combate',texto:txt});
@@ -3038,9 +3043,21 @@ Participantes (id · nome · PV): ${ordem().map(p=>`${p.id} · ${p.nome}${p.tipo
 Ataques com armas, defesas e dano são resolvidos pelo sistema (não refaça essas contas). Técnicas e ações especiais você resolve e aplica com "danoInimigos" (inimigos) ou "danoJogadores" (jogadores).`;
 }
 /* ---------- Cenas especiais (sem IA extra) ---------- */
-/* Black Flash: golpe corpo a corpo (Luta) com 20 natural; Humano Determinado tem margem 18-20 (+10%). Conta como crítico e dobra também o bônus de dano. */
+/* Kokusen (Black Flash), regra da casa:
+   - só no ataque com energia amaldiçoada (+1d6 de dano);
+   - acontece com 20 natural no d20 (sem bônus);
+   - quem tem +10% de Kokusen (Humano Determinado) acerta com 18-20;
+   - quem passou a vez focando no Kokusen ganha +2 na margem no próximo ataque com energia (foco + 10% = 16-20).
+   Kokusen acerta sempre, conta como crítico e dobra também o bônus de dano. */
 const ehDeterminado=()=>F.semTecArq==='determinado'||F.receptArq==='determinado';
-const ehBlackFlash=(ra,arma)=>arma?.skill==='Luta'&&ra!==1&&ra>=(ehDeterminado()?18:20);
+const margemKokusen=()=>20-(ehDeterminado()?2:0)-(meu?.focoKokusen?2:0);
+const ehBlackFlash=(ra,energia)=>!!energia&&ra!==1&&ra>=margemKokusen();
+async function focarKokusen(){
+  if(!minhaVez()||ataquesTurno>0||meu?.focoKokusen)return;
+  await atualizarMeu({focoKokusen:true});
+  await postMsg(combateLocal,{tipo:'combate',texto:`${F.nome} passa a vez concentrando a energia amaldiçoada para o Kokusen. No próximo ataque com energia, acerta o Kokusen com ${margemKokusen()} ou mais natural.`});
+  await passarVez(false);
+}
 const dominioAtivo=()=>{const d=combate&&combate.ativo&&combate.dominio;return d&&(+combate.rodada||1)<=(+d.ate||0)?d:null;};
 async function abrirDominio(){
   const d=F.dominio||{};if(!d.nome||!combate||!combate.ativo||!minhaVez()||dominioAtivo())return;
@@ -3066,7 +3083,7 @@ function tocarDominio(d){
 }
 /* Black Flash: o card do inimigo treme com raios vermelhos e pretos (para todos que estão vendo o combate) */
 let bfVisto=0,bfAtivo=null;
-const BF_SVG=`<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#e8101c" stroke-width="5"/><path d="M6 40 L30 30 L46 48 L70 24 L92 42 L116 26 L136 50 L158 28 L196 42" fill="none" stroke="#0b0a0c" stroke-width="4"/><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#fff" stroke-width="1.5"/></svg><b>BLACK FLASH</b>`;
+const BF_SVG=`<svg viewBox="0 0 200 60" preserveAspectRatio="none"><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#e8101c" stroke-width="5"/><path d="M6 40 L30 30 L46 48 L70 24 L92 42 L116 26 L136 50 L158 28 L196 42" fill="none" stroke="#0b0a0c" stroke-width="4"/><path d="M0 30 L28 22 L40 38 L66 12 L80 34 L104 18 L120 44 L142 16 L160 36 L178 20 L200 30" fill="none" stroke="#fff" stroke-width="1.5"/></svg><b>黒閃 BLACK FLASH</b>`;
 function tocarBlackFlash(){
   const u=combate&&combate.ultimoBF;
   if(u&&+u.t>bfVisto){bfVisto=+u.t;if(Date.now()-(+u.t||0)<15000)bfAtivo={alvo:u.alvo,ate:Date.now()+1700};}
@@ -3094,11 +3111,14 @@ function renderCombate(){
      ${aguardo?`<div class="pedido">Esperando ${esc(combate.participantes[aguardo.alvo]?.nome||'o alvo')} rolar a defesa. <button class="btn small" data-defauto="${aguardo.id}">Rolar defesa automática</button></div>`:''}
      <label class="f" for="cb-alvo">Alvo<select id="cb-alvo">${alvos.map(a=>`<option value="${a.id}" ${a.id===cbAlvo?'selected':''}>${esc(a.nome)} (${a.pv} PV)</option>`).join('')}</select></label>
      <label class="f" for="cb-arma">Arma<select id="cb-arma">${armas.map(a=>`<option value="${esc(a.nome)}" ${a.nome===cbArma?'selected':''}>${esc(a.nome)} · ${a.dados}+${C.a[a.attr]+a.flat} · ${a.skill}</option>`).join('')}</select></label>
+     <label class="chk-kok"><input type="checkbox" id="cb-energia" ${cbEnergia?'checked':''}> Ataque com energia amaldiçoada (+1d6 de dano; Kokusen com ${margemKokusen()}${margemKokusen()<20?'–20':''} natural)</label>
+     ${meu?.focoKokusen?'<p class="note" style="margin:0;color:#ff5b63"><b>Foco no Kokusen ativo:</b> +2 na margem no próximo ataque com energia.</p>':''}
      <label class="f" for="cb-extra">Dano extra neste ataque (opcional)<input type="text" id="cb-extra" value="${esc(cbExtra)}" placeholder="Ex.: 1d8 ou 3"></label>
      ${meu?.bonusAtaque&&(meu.bonusAtaque.dano||meu.bonusAtaque.acerto)?`<p class="note" style="margin:0">Guardado para o próximo ataque: ${esc(meu.bonusAtaque.motivo||'bônus')}${meu.bonusAtaque.dano?` +${esc(meu.bonusAtaque.dano)} de dano`:''}${meu.bonusAtaque.acerto?` ${meu.bonusAtaque.acerto>0?'+':''}${meu.bonusAtaque.acerto} no acerto`:''}.</p>`:''}
      ${F.dominio?.nome&&!dominioAtivo()?`<button class="btn dom-bt" id="btn-dominio" style="--dom-cor:${esc(corValida(F.dominio.cor)||'#6a1fb0')}" ${narrando?'disabled':''}>領域展開 Expansão de Domínio: ${esc(F.dominio.nome)}</button>`:''}
      ${dominioAtivo()?.dono===myId()?'<button class="btn small" id="btn-fechardominio">Desfazer domínio</button>':''}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="btn-atacar" ${narrando||!alvos.length||aguardo?'disabled':''}>Atacar</button><button class="btn" id="btn-fimturno" ${narrando||aguardo?'disabled':''}>Encerrar turno</button></div>
+     <button class="btn" id="btn-focokok" ${narrando||ataquesTurno>0||meu?.focoKokusen||aguardo?'disabled':''} title="Gasta o turno: +2 na margem do Kokusen no próximo ataque com energia">Focar no Kokusen (passa a vez)</button>
      ${C.celestial?'':`<button class="btn" id="btn-recuperar" ${narrando||ataquesTurno>0||recuperouTurno?'disabled':''} title="Regra da casa: gasta a ação do turno">Recuperar energia (1d8 PA)</button>`}
      <p class="note" style="margin:0">Recuperar energia usa a ação do turno no lugar dos ataques. Para técnicas (com PA extra para mais dano), manobras ou Energia Reversa, descreva no chat para o mestre.</p>`
    :eu?`<p class="note" style="margin:0">Vez de ${esc(vez?.nome||'...')}.</p>${vez&&vez.tipo==='jogador'?`<button class="btn small" id="btn-passar">Passar a vez de ${esc(vez.nome)}</button>`:''}`:''}
@@ -3468,6 +3488,7 @@ document.addEventListener('click',e=>{
   if(b.id==='btn-entrar-combate'){entrarCombate();return;}
   if(b.id==='btn-atacar'){atacar($('#cb-alvo').value,$('#cb-arma').value);return;}
   if(b.id==='btn-fimturno'){passarVez(false);return;}
+  if(b.id==='btn-focokok'){focarKokusen();return;}
   if(b.id==='btn-recuperar'){recuperarPA(true);return;}
   if(b.id==='btn-dominio'){openModal(`Abrir a Expansão de Domínio "${F.dominio.nome}"?`,'A barreira dura 3 rodadas e o chat de todos muda para a cor do seu domínio. O mestre resolve o efeito e cobra o PA pela sua ficha.','','Abrir domínio',async()=>{closeModal();await abrirDominio();});return;}
   if(b.id==='btn-fechardominio'){fecharDominio();return;}
@@ -3501,7 +3522,7 @@ document.addEventListener('keydown',e=>{
   const n=e.target.closest&&e.target.closest('#map .node');if(n&&(e.key==='Enter'||e.key===' ')){e.preventDefault();selLoc=n.dataset.loc;renderMapa();const el=document.querySelector(`#map .node[data-loc="${selLoc}"]`);el&&el.focus();}
   if(e.target.id==='chat-input'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviar();}
 });
-document.addEventListener('change',e=>{if(e.target.id==='hist-arq'&&e.target.files[0]){e.target.files[0].text().then(lerHistorico);}if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='cb-extra'){cbExtra=e.target.value;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
+document.addEventListener('change',e=>{if(e.target.id==='hist-arq'&&e.target.files[0]){e.target.files[0].text().then(lerHistorico);}if(e.target.id==='adm-import-arq'&&e.target.files[0]){e.target.files[0].text().then(t=>{$('#adm-import').value=t;});}if(e.target.id==='cb-arma'){cbArma=e.target.value;renderCombate();}if(e.target.id==='cb-alvo'){cbAlvo=e.target.value;}if(e.target.id==='cb-extra'){cbExtra=e.target.value;}if(e.target.id==='cb-energia'){cbEnergia=e.target.checked;}if(e.target.id==='roll-skill'){rollSkill=e.target.value;renderRoll();}if(e.target.id==='anexo-sk'&&anexo){anexo.pericia=e.target.value;}});
 $('#chat-form').addEventListener('submit',e=>{e.preventDefault();enviar();});
 async function entrarMundo(){
   const st=$('#save-status');
