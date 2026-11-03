@@ -3634,6 +3634,7 @@ function renderAdmLocais(){
       <label class="f" for="am-${l.id}">Falar como mestre neste canal<textarea id="am-${l.id}" rows="2" placeholder="Ex.: Um apagão derruba as luzes da estação."></textarea></label>
       <div class="adm-acts"><label class="sr" for="amm-${l.id}">Tipo</label><select id="amm-${l.id}" style="width:auto"><option value="n">Narração</option><option value="f">Fora do jogo</option><option value="p">Fala de NPC</option></select><label class="sr" for="amn-${l.id}">Nome do NPC</label><input type="text" id="amn-${l.id}" placeholder="Nome do NPC" style="max-width:150px"><button class="btn small primary" data-admfalar="${l.id}">Enviar</button><button class="btn small" data-admlimpar="${l.id}">Limpar canal</button></div></div>`;}).join('');
 }
+let admConfirmado=false;
 async function admAcao(a){
   const id=admSel;const j=jogadores.get(id)||{};const v=k=>parseInt($('#'+k).value)||0;
   try{
@@ -3644,7 +3645,8 @@ async function admAcao(a){
     const mx={pv:Math.max(0,base('pv')+bn.pv),pa:Math.max(0,base('pa')+bn.pa),pe:Math.max(0,base('pe')+bn.pe)};
     let e={pv:v('adm-pv'),pa:v('adm-pa'),pe:v('adm-pe')};
     if(a==='curar')e={...mx};if(a==='derrubar')e={...e,pv:0};
-    const subiu=[];['pv','pa','pe'].forEach(k=>{e[k]=Math.max(0,e[k]);if(a==='recursos'&&e[k]>mx[k]){bn[k]+=e[k]-mx[k];subiu.push(`${k.toUpperCase()} máximo ${mx[k]} → ${e[k]}`);mx[k]=e[k];}});
+    const subiu=[],estranho=[];['pv','pa','pe'].forEach(k=>{e[k]=Math.max(0,e[k]);if(a==='recursos'&&e[k]>mx[k]){if(e[k]>Math.max(mx[k]*2,mx[k]+20))estranho.push(`${k.toUpperCase()} máximo ${mx[k]} → ${e[k]}`);bn[k]+=e[k]-mx[k];subiu.push(`${k.toUpperCase()} máximo ${mx[k]} → ${e[k]}`);mx[k]=e[k];}});
+    if(estranho.length&&!admConfirmado){openModal('Esse valor é bem maior que o máximo','Salvar assim vai subir o máximo também: '+estranho.join(', ')+'. Se foi um número digitado errado, cancele e corrija.','','Salvar mesmo assim',()=>{closeModal();admConfirmado=true;admAcao(a).finally(()=>{admConfirmado=false;});});return;}
     await admUpdate(id,{estado:e,max:mx,bonusMax:bn,recursosRev:Date.now()});
     for(const [loc,c] of Object.entries(admComb)){if(c&&c.ativo&&c.participantes?.[id]){try{await db.doc('combates/'+loc).update({participantes:{[id]:{pv:e.pv,pvMax:mx.pv}}});}catch{}}}
     if(subiu.length)admStatus(`Salvo. O valor passou do máximo, então o máximo subiu junto (${subiu.join(', ')}).`);
