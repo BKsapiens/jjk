@@ -269,6 +269,15 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .post-bt{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:800;font-size:13px;padding:3px 10px;cursor:pointer;transform:skew(-6deg)}
 .post-bt.on{background:#d3121c;color:#fff}.post-bt:hover,.post-bt:focus-visible{background:#0b0a0c;color:#fff;outline:none}
 .post-form{margin-bottom:4px}
+.titulo-conq{font-size:.78em;font-weight:800;color:#f6d32b;white-space:nowrap}
+.post .titulo-conq,.rank .titulo-conq,.conq .titulo-conq{color:#b4141c}
+.conq-tit{align-self:flex-start;margin-top:4px;font-size:12px}
+.soc-abas{display:flex;gap:6px;margin-bottom:8px}.soc-abas button{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:900;padding:5px 14px;cursor:pointer;transform:skew(-6deg)}.soc-abas button.on{background:#0b0a0c;color:#fff}
+.rank{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:8px 12px;margin-bottom:10px}
+.rank h3{margin:0 0 6px;font-size:15px}.rank h3 span{color:#d3121c;font-family:var(--display)}
+.rank ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.rank li{display:flex;gap:8px;align-items:center;padding:3px 4px}.rank li.eu{background:#ffe9ea;outline:2px solid #d3121c}
+.rk-pos{font-weight:900;min-width:26px}.rk-nome{display:flex;flex-direction:column;min-width:0;flex:1}.rk-nome small{color:#555;font-size:11.5px}.rk-v{font-weight:900}.rk-sep{justify-content:center;color:#888}
 .cel-relogio{margin:0 0 10px;color:#fff;text-shadow:2px 2px 0 #000;font-size:14px}.cel-relogio b{font-size:16px}
 .desc-rec{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;font-weight:800}
 .desc-barra{display:block;height:10px;background:#d8d3d0;border:2px solid #0b0a0c}.desc-barra i{display:block;height:100%;background:#d3121c;transition:width .6s}
@@ -1623,7 +1632,7 @@ function corDe(id){return corValida(dadosJog(id).cor)||PALETA[hashStr(id)%PALETA
 const corNpc=n=>PALETA_NPC[hashStr(String(n||'').toLowerCase())%PALETA_NPC.length];
 const grauDe=id=>grauEscola(dadosJog(id).pg);
 const identDe=id=>`${escolaCurta(escolaDe(id))} · ${grauDe(id)}`;
-const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b> <span class="grau${escolaDe(id)==='kyoto'?' kyoto':ehFree(id)?' free':''}" title="Escola e grau">${esc(identDe(id))}</span>`;
+const nomeCor=(id,nome)=>`<b class="nm" style="color:${corDe(id)}">${esc(nome)}</b>${tagTitulo(id)} <span class="grau${escolaDe(id)==='kyoto'?' kyoto':ehFree(id)?' free':''}" title="Escola e grau">${esc(identDe(id))}</span>`;
 const jogadores=new Map();let meu=null;let writeChain=Promise.resolve();const localMsgs={};
 let canalAtual=null,canalUnsub=null,msgs=[],selLoc='escola',narrando=false,rollMode=0,rollSkill='Percepção';
 const iniciais=n=>(n||'?').split(/\s+/).filter(Boolean).slice(0,2).map(s=>s[0]).join('').toUpperCase();
@@ -1979,6 +1988,9 @@ const CONQUISTAS=[
   {id:'nivel5',g:'Carreira',k:'昇',nome:'Veterano',desc:'Chegue ao nível 5.',p:()=>[Math.min(5,calc().n),5],r:{ienes:5000}},
   {id:'descanso5',g:'Carreira',k:'寮',nome:'Sono dos Justos',desc:'Descanse 5 vezes.',p:()=>[cont('descansos'),5],r:{ienes:1000}},
 ];
+const tituloDe=id=>{const t=dadosJog(id)?.titulo;const c=t&&CONQUISTAS.find(x=>x.id===t);return c?c.nome:'';};
+const tagTitulo=id=>{const t=tituloDe(id);return t?` <span class="titulo-conq" title="Título de conquista">「${esc(t)}」</span>`:'';};
+async function definirTitulo(cid){if(!meu)return;if(cid&&!(meu.conquistas||{})[cid])return;await atualizarMeu({titulo:cid||null});renderConquistas();if(canalAtual)renderChat();}
 const txtRecomp=r=>[r.ienes?`¥ ${r.ienes.toLocaleString('pt-BR')}`:'',r.xp?`${r.xp} XP`:''].filter(Boolean).join(' + ');
 /* contadores das conquistas, em meu.cont */
 async function contarConquista(k,n){if(!meu)return;const c={...(meu.cont||{})};c[k]=(+c[k]||0)+(n||1);await atualizarMeu({cont:c});}
@@ -2004,10 +2016,10 @@ function mostrarConquista(c){const el=document.createElement('div');el.className
 function renderConquistas(){
   const box=$('#cel-conquistas');if(!box||!meu)return;const feitas=meu.conquistas||{};const n=CONQUISTAS.filter(c=>feitas[c.id]).length;
   const grupos=[...new Set(CONQUISTAS.map(c=>c.g))];
-  box.innerHTML=`<p class="counter" style="margin:0 0 10px">${n} de ${CONQUISTAS.length} conquistas</p>`+grupos.map(g=>`<h3 class="conq-g">${esc(g)}</h3>`+CONQUISTAS.filter(c=>c.g===g).map(c=>{
+  box.innerHTML=`<p class="counter" style="margin:0 0 4px">${n} de ${CONQUISTAS.length} conquistas</p><p class="note" style="margin:0 0 10px">${meu.titulo&&tituloDe(myId())?`Seu título: <b>「${esc(tituloDe(myId()))}」</b>, aparece ao lado do seu nome no chat, no Sussurros e em Na cena.`:'Toque em "Usar como título" numa conquista desbloqueada para mostrá-la ao lado do seu nome.'}</p>`+grupos.map(g=>`<h3 class="conq-g">${esc(g)}</h3>`+CONQUISTAS.filter(c=>c.g===g).map(c=>{
     const ok=!!feitas[c.id];const [a,m]=c.p();const pct=Math.max(0,Math.min(100,Math.round(a/m*100)));
     return `<div class="conq${ok?' ok':''}"><span class="k">${esc(c.k)}</span><span class="conq-txt"><b>${esc(c.nome)}</b><small>${esc(c.desc)}</small>
-      ${ok?`<small class="conq-feita">Desbloqueada em ${new Date(+feitas[c.id]).toLocaleDateString('pt-BR')} · ${esc(txtRecomp(c.r))}</small>`:`<span class="conq-barra" aria-label="${Math.min(a,m)} de ${m}"><i style="width:${pct}%"></i></span><small>${m>1?`${Math.min(a,m).toLocaleString('pt-BR')} / ${m.toLocaleString('pt-BR')} · `:''}Recompensa: ${esc(txtRecomp(c.r))}</small>`}</span></div>`;}).join('')).join('');
+      ${ok?`<small class="conq-feita">Desbloqueada em ${new Date(+feitas[c.id]).toLocaleDateString('pt-BR')} · ${esc(txtRecomp(c.r))}</small>${meu.titulo===c.id?'<button type="button" class="post-bt on conq-tit" data-ctitulo="">Título em uso · tirar</button>':`<button type="button" class="post-bt conq-tit" data-ctitulo="${c.id}">Usar como título</button>`}`:`<span class="conq-barra" aria-label="${Math.min(a,m)} de ${m}"><i style="width:${pct}%"></i></span><small>${m>1?`${Math.min(a,m).toLocaleString('pt-BR')} / ${m.toLocaleString('pt-BR')} · `:''}Recompensa: ${esc(txtRecomp(c.r))}</small>`}</span></div>`;}).join('')).join('');
 }
 /* depois de cada combate: conta maldições derrotadas, duelos vencidos e vitórias por um fio (uma vez por combate) */
 let contCombateOcupado=false;
@@ -2537,7 +2549,7 @@ function renderAreas(){
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
-  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${k!==(uid||'eu')&&ehFree(k)&&!ehFree(myId())&&ehEscola(casaDe(myId()))?(conviteValido(k,casaDe(myId()))?'<span class="note">Convidado à escola</span>':`<button class="btn small" data-convidar="${esc(k)}">Convidar à escola</button>`):''}${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}">Desafiar</button>`:''}</span></div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
+  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${tagTitulo(k)}${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${k!==(uid||'eu')&&ehFree(k)&&!ehFree(myId())&&ehEscola(casaDe(myId()))?(conviteValido(k,casaDe(myId()))?'<span class="note">Convidado à escola</span>':`<button class="btn small" data-convidar="${esc(k)}">Convidar à escola</button>`):''}${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}">Desafiar</button>`:''}</span></div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
   const l=locById(id);
   $('#loc-info').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p class="note" style="margin:0;font-size:13px">${esc(l.desc)}</p><a class="btn small" href="#mapa">Voltar ao mapa</a>`;
 }
@@ -3426,21 +3438,38 @@ const tempoAtras=ts=>{const m=Math.round((Date.now()-ts)/60000);return m<1?'agor
 function htmlPost(pp,emThread){
   const curt=Array.isArray(pp.curtidas)?pp.curtidas:[];const eu=curt.includes(myId());const nResp=[...posts.values()].filter(x=>x.pai===pp.id).length;
   return `<article class="post"><div class="post-topo"><span class="tok" style="background:${corDe(pp.autor)};color:#141216">${esc(iniciais(pp.autorNome))}</span>
-    <span class="post-quem"><b>${esc(pp.autorNome||'Alguém')}</b><small>${esc(identDe(pp.autor))} · ${tempoAtras(+pp.ts)}</small></span></div>
+    <span class="post-quem"><b>${esc(pp.autorNome||'Alguém')}</b>${tagTitulo(pp.autor)}<small>${esc(identDe(pp.autor))} · ${tempoAtras(+pp.ts)}</small></span></div>
     <p class="post-txt">${esc(pp.texto)}</p>
     <div class="post-acoes"><button type="button" class="post-bt${eu?' on':''}" data-pcurtir="${pp.id}" aria-pressed="${eu}">♥ ${curt.length||''}</button>
       ${pp.pai||emThread?'':`<button type="button" class="post-bt" data-pthread="${pp.id}">↩ ${nResp?`${nResp} ${nResp>1?'respostas':'resposta'}`:'Responder'}</button>`}
       ${pp.autor===myId()||souDono?`<button type="button" class="post-bt" data-papagar="${pp.id}">Apagar</button>`:''}</div></article>`;
+}
+let socialAba='feed';
+const RANKINGS=[
+  ['Caçadas concluídas',j=>+j.cacadasFeitas||0,'狩'],
+  ['Maldições derrotadas',j=>Object.values(j.cont?.mortes||{}).reduce((a,v)=>a+(+v||0),0),'祓'],
+  ['Conquistas',j=>Object.keys(j.conquistas||{}).length,'誉'],
+  ['Pontos de grau',j=>+j.pg||0,'級'],
+  ['Ienes no bolso',j=>+j.ienes||0,'¥']];
+function htmlRanking(){
+  const todos=[...jogadores.entries()].filter(([k,j])=>j&&j.nome).map(([k,j])=>[k,k===myId()?{...j,...meu}:j]);
+  return `<p class="note dm-vazio" style="margin:6px 0 10px">Ranking de todos os jogadores. Atualiza sozinho.</p>`+RANKINGS.map(([t,f,kj])=>{
+    const ord=todos.map(([k,j])=>({k,j,v:f(j)})).sort((a,b)=>b.v-a.v||String(a.j.nome).localeCompare(String(b.j.nome)));
+    const top=ord.slice(0,5);const eu=ord.findIndex(x=>x.k===myId());
+    const linha=(x,i)=>`<li class="${x.k===myId()?'eu':''}"><span class="rk-pos">${i+1}º</span><span class="tok" style="background:${corDe(x.k)};color:#141216">${esc(iniciais(x.j.nome))}</span><span class="rk-nome"><b>${esc(x.j.nome)}</b>${tagTitulo(x.k)}<small>${esc(identDe(x.k))}</small></span><b class="rk-v">${t.startsWith('Ienes')?'¥ ':''}${x.v.toLocaleString('pt-BR')}</b></li>`;
+    return `<section class="rank"><h3><span>${kj}</span> ${esc(t)}</h3><ol>${top.map(linha).join('')}${eu>=5?`<li class="rk-sep">…</li>${linha(ord[eu],eu)}`:''}</ol></section>`;}).join('');
 }
 function renderSocial(){
   const box=$('#cel-social');if(!box)return;
   const ae=document.activeElement;const dig=ae&&ae.id==='post-texto'?{v:ae.value,s:ae.selectionStart}:null;
   const topo=[...posts.values()].filter(p=>!p.pai).sort((a,b)=>b.ts-a.ts);
   const form=(ph)=>`<form class="dm-form post-form" id="post-form"><label class="sr" for="post-texto">${ph}</label><textarea id="post-texto" rows="2" maxlength="280" placeholder="${ph}"></textarea><button class="btn primary" type="submit" ${postEnviando?'disabled':''}>${postThread?'Responder':'Postar'}</button></form>`;
+  const abas=`<div class="soc-abas" role="tablist"><button role="tab" aria-selected="${socialAba==='feed'}" class="${socialAba==='feed'?'on':''}" data-sociaba="feed">Feed</button><button role="tab" aria-selected="${socialAba==='ranking'}" class="${socialAba==='ranking'?'on':''}" data-sociaba="ranking">Ranking</button></div>`;
+  if(socialAba==='ranking'){box.innerHTML=abas+htmlRanking();return;}
   if(postThread&&posts.has(postThread)){const pai=posts.get(postThread);const resp=[...posts.values()].filter(p=>p.pai===postThread).sort((a,b)=>a.ts-b.ts);
     box.innerHTML=`<button type="button" class="btn small dm-voltar" data-pvoltar="1">‹ Feed</button>${htmlPost(pai,true)}<div class="post-resps">${resp.map(r=>htmlPost(r,true)).join('')||'<p class="note dm-vazio" style="margin:6px 0">Nenhuma resposta ainda.</p>'}</div>${form('Escreva uma resposta...')}`;}
   else{postThread=null;
-    box.innerHTML=`${form('O que está acontecendo?')}<p class="note dm-vazio" style="margin:6px 0 10px">Tudo que você posta aqui todos os jogadores veem. O mestre de IA não lê.</p>${topo.length?topo.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ninguém postou nada ainda. Seja o primeiro.</p>'}`;}
+    box.innerHTML=`${abas}${form('O que está acontecendo?')}<p class="note dm-vazio" style="margin:6px 0 10px">Tudo que você posta aqui todos os jogadores veem. O mestre de IA não lê.</p>${topo.length?topo.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ninguém postou nada ainda. Seja o primeiro.</p>'}`;}
   const ta=$('#post-texto');if(ta&&dig){ta.value=dig.v;ta.focus();try{ta.setSelectionRange(dig.s,dig.s);}catch{}}
 }
 async function enviarPost(){
@@ -3458,7 +3487,9 @@ async function apagarPost(id){const pp=posts.get(id);if(!pp||(pp.autor!==myId()&
   posts.delete(id);if(postThread===id)postThread=null;renderSocial();
   if(db){try{await db.doc('posts/'+id).delete();for(const r of [...posts.values()].filter(x=>x.pai===id)){try{await db.doc('posts/'+r.id).delete();}catch{}}}catch{}}}
 document.addEventListener('submit',e=>{if(e.target.id!=='post-form')return;e.preventDefault();enviarPost();});
-document.addEventListener('click',e=>{const b=e.target.closest('[data-pcurtir],[data-pthread],[data-papagar],[data-pvoltar]');if(!b)return;
+document.addEventListener('click',e=>{const t=e.target.closest('[data-ctitulo]');if(t){definirTitulo(t.dataset.ctitulo);}});
+document.addEventListener('click',e=>{const b=e.target.closest('[data-pcurtir],[data-pthread],[data-papagar],[data-pvoltar],[data-sociaba]');if(!b)return;
+  if(b.dataset.sociaba){socialAba=b.dataset.sociaba;postThread=null;renderSocial();return;}
   if(b.dataset.pcurtir){curtirPost(b.dataset.pcurtir);return;}
   if(b.dataset.pthread){postThread=b.dataset.pthread;renderSocial();$('#cel-corpo').scrollTop=0;return;}
   if(b.dataset.pvoltar){postThread=null;renderSocial();return;}
