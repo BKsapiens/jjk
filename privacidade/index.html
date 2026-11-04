@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacidade · Era dos Feiticeiros</title>
+<link rel="stylesheet" href="/legal.css">
+</head>
+<body>
+<main>
+  <header><div class="hanko" aria-hidden="true">呪</div><div><h1>Política de Privacidade</h1><small>Era dos Feiticeiros · versão <span class="versao" data-versao>…</span></small></div></header>
+
+  <p class="provisorio">Texto provisório. A versão final desta política ainda vai ser publicada aqui.</p>
+
+  <h2>1. Que dados guardamos</h2>
+  <ul>
+    <li><b>Da sua conta Google:</b> nome, e-mail e um identificador da conta, para fazer o login.</li>
+    <li><b>Da lista de espera:</b> o nome que você informou, por onde conheceu o site, o que espera dele, a confirmação de idade, o aceite dos termos (com a versão aceita), sua posição na fila e a data.</li>
+    <li><b>Do jogo:</b> sua ficha de personagem, mensagens nos chats, mensagens diretas, posts na rede social, notas e o progresso no jogo.</li>
+  </ul>
+
+  <h2>2. Para que usamos</h2>
+  <p>Para fazer o jogo funcionar, organizar a lista de espera e liberar o acesso ao beta. O texto que você manda para o mestre de IA é enviado ao provedor da IA para gerar a narração.</p>
+
+  <h2>3. Com quem compartilhamos</h2>
+  <p>Os dados ficam no Firebase (Google), e o site é hospedado na Vercel. As mensagens ao mestre passam pelo provedor da IA. Não vendemos seus dados.</p>
+
+  <h2>4. Seus direitos</h2>
+  <p>Você pode pedir para ver, corrigir ou apagar seus dados a qualquer momento, falando com o mestre pelo Discord.</p>
+
+  <h2>5. Idade</h2>
+  <p>O site é para pessoas com 13 anos ou mais.</p>
+
+  <p><a href="/termos">Termos de Uso</a></p>
+</main>
+<footer><span data-aviso></span><br><a href="/termos">Termos de Uso</a> · <a href="/privacidade">Privacidade</a></footer>
+<script type="module">
+  import { TERMS_VERSION, AVISO_FA } from "/legal.js";
+  document.querySelectorAll("[data-versao]").forEach(e => e.textContent = TERMS_VERSION);
+  document.querySelectorAll("[data-aviso]").forEach(e => e.textContent = AVISO_FA);
+</script>
+</body>
+</html>

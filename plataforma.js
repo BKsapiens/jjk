@@ -4,6 +4,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { AVISO_FA } from "./legal.js";
 import {
   getFirestore, doc as fsDoc, collection as fsCollection, getDoc, getDocs, setDoc, updateDoc,
   deleteDoc, onSnapshot as fsOnSnapshot, query, orderBy as fsOrderBy, limit as fsLimit,
@@ -22,18 +23,28 @@ tela.innerHTML = `
     <h1>Era dos Feiticeiros</h1>
     <p id="login-msg">Entre com sua conta Google para criar sua ficha e jogar com o grupo.</p>
     <button class="btn primary" id="btn-login" type="button">Entrar com Google</button>
-  </div>`;
+  </div>
+  <p class="login-rodape">${AVISO_FA}<br><a href="/termos" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade" target="_blank" rel="noopener">Privacidade</a></p>`;
 const estilo = document.createElement("style");
 estilo.textContent = `
-  #tela-login{position:fixed;inset:0;z-index:100;background:var(--ink,#100e12);display:none;align-items:center;justify-content:center;padding:16px}
+  #tela-login{position:fixed;inset:0;z-index:100;background:#0b0a0c;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:16px;background-image:repeating-linear-gradient(135deg,rgba(211,18,28,.07) 0 2px,transparent 2px 22px)}
+  #tela-login .login-rodape{margin:0;max-width:420px;text-align:center;font-size:12px;color:#8f867c;line-height:1.5}
+  #tela-login .login-rodape a{color:#c9c0b6}
+  .aviso-fa{text-align:center;font-size:12px;color:var(--ash,#8f867c);padding:18px 12px 70px;line-height:1.5}
+  .aviso-fa a{color:inherit}
   #tela-login.show{display:flex}
-  #tela-login .login-box{max-width:420px;width:100%;border:1px solid var(--line,#332d35);border-radius:12px;background:var(--ink-2,#1a171d);padding:28px;display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+  #tela-login .login-box{max-width:420px;width:100%;border:3px solid #d3121c;border-radius:0;background:#151216;box-shadow:8px 8px 0 #d3121c;padding:28px;display:flex;flex-direction:column;gap:14px;align-items:flex-start}
   #tela-login h1{font-size:28px}
   #tela-login p{margin:0;color:var(--ash,#a39a8e)}
   #btn-sair{position:fixed;bottom:12px;left:12px;z-index:20;font-size:12px;opacity:.7}
 `;
 document.head.appendChild(estilo);
 document.body.appendChild(tela);
+/* aviso de fã no rodapé de todas as páginas do jogo */
+const rodape = document.createElement("footer");
+rodape.className = "aviso-fa";
+rodape.innerHTML = `${AVISO_FA}<br><a href="/termos" target="_blank" rel="noopener">Termos de Uso</a> · <a href="/privacidade" target="_blank" rel="noopener">Privacidade</a>`;
+document.body.appendChild(rodape);
 
 let resolverLogin;
 const loginPronto = new Promise(r => { resolverLogin = r; });
@@ -51,16 +62,24 @@ if (!configOk) {
     try { await signInWithPopup(auth, new GoogleAuthProvider()); }
     catch (e) { tela.querySelector("#login-msg").textContent = "Não deu para entrar: " + (e.code === "auth/popup-blocked" ? "o navegador bloqueou a janela de login. Libere pop-ups para este site." : (e.message || e.code)); }
   });
-  onAuthStateChanged(auth, u => {
+  const sair = async () => { await signOut(auth); location.reload(); };
+  const liberar = u => {
+    resolverLogin(u);
+    if (!document.getElementById("btn-sair")) {
+      const b = document.createElement("button");
+      b.id = "btn-sair"; b.className = "btn small"; b.type = "button"; b.textContent = "Sair (" + (u.email || "conta") + ")";
+      b.addEventListener("click", sair);
+      document.body.appendChild(b);
+    }
+  };
+  onAuthStateChanged(auth, async u => {
     if (u) {
       tela.classList.remove("show");
-      resolverLogin(u);
-      if (!document.getElementById("btn-sair")) {
-        const b = document.createElement("button");
-        b.id = "btn-sair"; b.className = "btn small"; b.type = "button"; b.textContent = "Sair (" + (u.email || "conta") + ")";
-        b.addEventListener("click", async () => { await signOut(auth); location.reload(); });
-        document.body.appendChild(b);
-      }
+      // Depois do login: mestre entra direto; os outros passam pela lista de espera
+      // (beta liberado → jogo; já na fila → tela final; senão → formulário).
+      if (ADMINS.includes(String(u.email || "").toLowerCase())) { liberar(u); return; }
+      const { portaoListaEspera } = await import("./listaespera.js");
+      portaoListaEspera({ fs, user: u, liberar: () => liberar(u), sair });
     } else {
       tela.classList.add("show");
     }
@@ -140,10 +159,14 @@ async function sample(entrada, opts = {}) {
   } catch (e) { throw { code: "unavailable", message: "sem conexão com o servidor" }; }
   if (r.status === 429) throw { code: "rate_limited", message: "limite de mensagens da IA" };
   if (r.status === 401) throw { code: "not_granted", message: "login expirado" };
+  if (r.status === 403) throw { code: "not_granted", message: await r.text() };
   if (!r.ok) throw { code: "unavailable", message: await r.text() };
   const j = await r.json();
   return { text: j.text || "", truncated: false };
 }
+
+/* token do login para as rotas do painel (lista de espera) */
+window.__idToken = async () => auth && auth.currentUser ? auth.currentUser.getIdToken() : null;
 
 window.claude = {
   use: async nome => {

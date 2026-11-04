@@ -15,7 +15,11 @@ Roda na Vercel, com:
 | `src/app.src.html`, `src/data.json` | Código do jogo e regras extraídas do livro |
 | `plataforma.js` | Liga o jogo ao Firebase, ao login e à função do Gemini |
 | `config.js` | Configuração do Firebase e e-mail do mestre |
-| `api/mestre.js` | Função da Vercel que conversa com o Gemini |
+| `api/mestre.js` | Função da Vercel que conversa com a IA (só com beta) |
+| `api/waitlist/join.js`, `api/waitlist/admin.js`, `api/_firebase.js` | Lista de espera, painel e acesso de servidor ao Firebase |
+| `listaespera.js`, `waitlist-regras.js`, `legal.js` | Tela da lista de espera, regras do formulário, versão dos termos |
+| `termos/`, `privacidade/`, `legal.css` | Páginas de Termos de Uso e Privacidade |
+| `testes/` | Testes locais das rotas da API |
 | `firestore.rules` | Regras de segurança do banco |
 | `build.py` | Gera o `index.html` a partir de `src/` |
 
@@ -46,6 +50,30 @@ Roda na Vercel, com:
 5. Depois do primeiro deploy, copie o domínio do site (ex.: `jjk.vercel.app`) e adicione em **Firebase > Authentication > Configurações > Domínios autorizados**. Sem isso o login com Google não abre.
 
 Pronto: a cada push no GitHub, a Vercel publica a versão nova sozinha.
+
+## Lista de espera (beta fechado)
+
+Depois do login, o site decide a tela:
+- `usuarios/{uid}.beta == true` (ou e-mail do mestre) → entra no jogo;
+- já tem `waitlist/{uid}` → tela final com o número na fila;
+- senão → formulário.
+
+Só o servidor grava fila, contador e beta (rotas `api/waitlist/join.js` e `api/waitlist/admin.js`, com `firebase-admin`).
+O mestre de IA (`api/mestre.js`) e as regras do Firestore também exigem beta.
+
+Configuração extra na Vercel (Environment Variables):
+- `FIREBASE_SERVICE_ACCOUNT` = JSON da conta de serviço (Firebase > Configurações do projeto > Contas de serviço > Gerar nova chave privada). Pode colar o JSON inteiro ou em base64.
+- (opcional) `ADMIN_EMAILS` = e-mails do mestre separados por vírgula (padrão: o do `config.js`).
+- `FIREBASE_API_KEY` não é mais usada.
+
+Outras constantes:
+- `config.js` → `DISCORD_CONVITE` (link do convite do Discord).
+- `legal.js` → `TERMS_VERSION` (versão dos termos) e o aviso de fã do rodapé.
+- `waitlist-regras.js` → opções de "Por onde conheceu" e limites de caracteres.
+
+Antes do primeiro deploy com a lista: publique o `firestore.rules` novo e, no Painel do mestre, use "Liberar todos os jogadores atuais" para quem já jogava não ficar preso na fila.
+
+Testes locais das rotas: `npm install` e depois `node testes/api.test.js`.
 
 ## Mudar o jogo
 

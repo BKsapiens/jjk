@@ -3,7 +3,8 @@
 // nas variáveis de ambiente da Vercel, nunca no código do site.
 //
 // Variáveis de ambiente (Vercel > Project > Settings > Environment Variables):
-//   FIREBASE_API_KEY      o mesmo apiKey do config.js (obrigatória, usada para conferir o login)
+//   FIREBASE_SERVICE_ACCOUNT  JSON da conta de serviço do Firebase (obrigatória): confere o login e se o
+//                             jogador tem beta liberado (usuarios/{uid}.beta). Veja api/_firebase.js.
 //
 //   ANTHROPIC_API_KEY     chave do Claude Console (platform.claude.com). Se existir, o mestre usa o Claude.
 //   CLAUDE_MODEL          opcional, modelo da narração (padrão: claude-haiku-5-5)
@@ -16,19 +17,10 @@
 //   MESTRE_PROVEDOR       opcional: "claude" ou "gemini", para forçar um dos dois quando as duas chaves existirem.
 
 import { CAMPANHA, FASES, EVENTOS, ROTEIROS } from "./_campanha.js";
+import { usuarioDoPedido, temBeta, ErroHttp } from "./_firebase.js";
 
 const GEMINI_PADRAO = ["gemini-3-flash-preview", "gemini-3-flash", "gemini-2.5-flash"];
 const GEMINI_RAPIDO = ["gemini-3.1-flash-lite", "gemini-2.5-flash-lite", "gemini-3-flash-preview"];
-
-async function usuarioValido(token) {
-  if (!token) return false;
-  const r = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${process.env.FIREBASE_API_KEY}`, {
-    method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken: token })
-  });
-  if (!r.ok) return false;
-  const j = await r.json();
-  return Array.isArray(j.users) && j.users.length > 0;
-}
 
 function escolherProvedor() {
   const forcado = String(process.env.MESTRE_PROVEDOR || "").toLowerCase();
@@ -109,14 +101,17 @@ async function responderGemini(prompt, rapido) {
 
 export default async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).send("Use POST"); return; }
-  if (!process.env.FIREBASE_API_KEY) { res.status(500).send("Falta a variável FIREBASE_API_KEY na Vercel."); return; }
   const provedor = escolherProvedor();
   if (!provedor) { res.status(500).send("Falta a chave da IA na Vercel: ANTHROPIC_API_KEY (Claude) ou GEMINI_API_KEY (Gemini)."); return; }
 
-  const token = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
+  // Só quem tem beta liberado (ou o mestre) gasta créditos da IA. A checagem é aqui no servidor.
   try {
-    if (!(await usuarioValido(token))) { res.status(401).send("Login inválido ou expirado."); return; }
-  } catch { res.status(502).send("Não consegui conferir o login."); return; }
+    const u = await usuarioDoPedido(req);
+    if (!(await temBeta(u))) { res.status(403).send("Seu acesso ao jogo ainda não foi liberado. Você está na lista de espera."); return; }
+  } catch (e) {
+    if (e instanceof ErroHttp) { res.status(e.status).send(e.message); return; }
+    console.error(e); res.status(502).send("Não consegui conferir o login."); return;
+  }
 
   const body = typeof req.body === "string" ? JSON.parse(req.body || "{}") : (req.body || {});
   let prompt = String(body.prompt || "").slice(0, 60000);

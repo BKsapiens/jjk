@@ -1,0 +1,17 @@
+/* Estilo das páginas /termos e /privacidade (mobile primeiro, preto e vermelho). */
+*{box-sizing:border-box}
+html{background:#0b0a0c}
+body{margin:0;color:#ece5dc;font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#0b0a0c;
+  background-image:repeating-linear-gradient(135deg,rgba(211,18,28,.06) 0 2px,transparent 2px 22px)}
+main{max-width:720px;margin:0 auto;padding:20px 16px 8px}
+header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.hanko{width:48px;height:48px;flex:none;display:grid;place-items:center;background:#d3121c;color:#fff;font:900 28px/1 serif;border:3px solid #fff;transform:rotate(-6deg);box-shadow:4px 4px 0 #000}
+h1{margin:0;font:900 26px/1.15 serif}
+header small{display:block;color:#a99f95;font-size:13px}
+h2{margin:26px 0 8px;font-size:19px;color:#ff5b63}
+p,li{color:#d9d0c6}
+a{color:#ff6b72}
+.provisorio{border:2px dashed #d3121c;background:#1a0d10;padding:12px;font-weight:700}
+.versao{display:inline-block;background:#d3121c;color:#fff;font-weight:800;padding:3px 10px;transform:skew(-8deg);border:2px solid #fff;font-size:13px}
+footer{max-width:720px;margin:24px auto 0;padding:16px;text-align:center;font-size:12px;color:#8f867c;border-top:1px solid #2c2530}
+footer a{color:#c9c0b6}

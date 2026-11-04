@@ -15,3 +15,7 @@ window.FIREBASE_CONFIG = {
 // E-mail da conta Google do mestre (quem vê o Painel do mestre).
 // Use o MESMO e-mail no arquivo firestore.rules.
 window.ADMINS = ["bksapiens007@gmail.com"];
+
+// Convite do Discord mostrado na lista de espera. Troque pelo link do seu servidor
+// (ex.: "https://discord.gg/abc123"). Deixe "" para mostrar "Convite do Discord em breve".
+window.DISCORD_CONVITE = "";

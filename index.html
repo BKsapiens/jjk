@@ -447,6 +447,11 @@ textarea.mono{font-family:ui-monospace,monospace;font-size:12px}
 .areas button.on{border-color:var(--seal);color:var(--bone);background:var(--ink-2)}
 .areas button .k{font-family:var(--display);color:var(--seal)}
 .chk-kok{display:flex;gap:8px;align-items:flex-start;font-size:14px;cursor:pointer}.chk-kok input{margin-top:3px;accent-color:#e8101c}
+.fila-adm-lista{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}
+.fila-adm-item{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;border:1px solid var(--line);padding:10px;background:var(--ink-2)}
+.fila-adm-item.ok{opacity:.7}.fila-adm-pos{font-weight:900;color:var(--seal);font-size:18px;min-width:52px}
+.fila-adm-acoes{display:flex;flex-direction:column;gap:6px;align-items:stretch}
+@media (max-width:760px){.fila-adm-item{grid-template-columns:1fr}.fila-adm-acoes{flex-direction:row;flex-wrap:wrap}}
 .dom-aviso{margin:0;padding:6px 10px;background:var(--dom-cor,#6a1fb0);color:#fff;font-size:13px;border:2px solid #000;text-shadow:1px 1px 0 #000}
 .dom-bt{background:var(--dom-cor)!important;color:#fff!important;border:2px solid #000!important;font-weight:900;text-shadow:1px 1px 0 #000}
 body.em-dominio #canal-view{--dc:var(--dom-cor,#6a1fb0)}
@@ -3886,11 +3891,47 @@ function admAssinarCombates(){
   if(admSubs.length||!db)return;
   LOCAIS.forEach(l=>admSubs.push(db.doc('combates/'+l.id).onSnapshot(s=>{admComb[l.id]=s.exists?s.data():null;renderAdmLocais();},()=>{})));
 }
+/* ---------- Lista de espera (painel do mestre). Tudo passa pela rota /api/waitlist/admin,
+   porque nenhum cliente pode alterar waitlist, meta ou o beta. ---------- */
+let filaAdm=null,filaAdmErro='',filaAdmOcupado=false;
+async function filaApi(metodo,corpo){
+  const tk=typeof window.__idToken==='function'?await window.__idToken():null;
+  if(!tk)throw new Error('O painel da lista de espera só funciona no site, com login.');
+  const r=await fetch('/api/waitlist/admin',{method:metodo,headers:{'content-type':'application/json',authorization:'Bearer '+tk},...(corpo?{body:JSON.stringify(corpo)}:{})});
+  let j={};try{j=await r.json();}catch{}
+  if(!r.ok)throw new Error(j.erro||`Erro ${r.status}`);
+  return j;
+}
+async function carregarFilaAdm(){filaAdmErro='';try{filaAdm=await filaApi('GET');}catch(e){filaAdmErro=e.message;}renderFilaAdm();}
+function renderFilaAdm(){
+  const box=$('#adm-fila');if(!box)return;
+  const f=filaAdm;const lista=f?.lista||[];const data=t=>t?new Date(t).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}):'-';
+  box.innerHTML=`<h2>Lista de espera</h2>
+    ${filaAdmErro?`<p class="note" style="color:var(--seal)">${esc(filaAdmErro)}</p>`:''}
+    ${f?`<p class="counter" style="margin:0">Esperando: <b>${f.esperando}</b> · Com beta liberado: <b>${f.liberados}</b> · Inscritos na lista: <b>${lista.length}</b></p>`:'<p class="note">Carregando…</p>'}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0"><button class="btn small" data-fila="recarregar" ${filaAdmOcupado?'disabled':''}>Atualizar</button>
+      <button class="btn small" data-fila="atuais" ${filaAdmOcupado?'disabled':''} title="Libera o beta para todo mundo que já tem personagem no jogo">Liberar todos os jogadores atuais</button></div>
+    ${lista.length?`<div class="fila-adm-lista">${lista.map(x=>`<div class="fila-adm-item${x.liberado?' ok':''}">
+      <div class="fila-adm-pos">Nº ${x.position}</div>
+      <div class="fila-adm-dados"><b>${esc(x.nome)}</b> <span class="note">${esc(x.email||'')}</span><br>
+        <span class="note">Conheceu por: ${esc(x.comoConheceu||'-')} · ${data(x.createdAt)} · termos ${esc(x.termsVersion||'-')}</span>
+        <p style="margin:4px 0 0">${esc(x.oQueEspera||'')}</p></div>
+      <div class="fila-adm-acoes">${x.liberado?'<span class="pill ok">beta liberado</span>':`<button class="btn small primary" data-fila="liberar" data-uid="${esc(x.uid)}" ${filaAdmOcupado?'disabled':''}>Liberar beta</button>`}
+        <button class="btn small" data-fila="remover" data-uid="${esc(x.uid)}" data-nome="${esc(x.nome)}" ${filaAdmOcupado?'disabled':''}>Remover</button></div></div>`).join('')}</div>`
+      :f?'<p class="note">Ninguém na lista ainda.</p>':''}`;
+}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-fila]');if(!b||filaAdmOcupado)return;const a=b.dataset.fila;
+  const fazer=async(corpo,msg)=>{filaAdmOcupado=true;renderFilaAdm();try{const r=await filaApi('POST',corpo);admStatus(typeof msg==='function'?msg(r):msg);}catch(err){admStatus(err.message,true);}finally{filaAdmOcupado=false;await carregarFilaAdm();}};
+  if(a==='recarregar'){carregarFilaAdm();return;}
+  if(a==='liberar'){fazer({acao:'liberar',uid:b.dataset.uid},'Beta liberado. A pessoa entra no jogo na hora, se estiver com a página aberta.');return;}
+  if(a==='remover'){const uid=b.dataset.uid;openModal(`Remover ${b.dataset.nome||'esta pessoa'} da lista?`,'Apaga o cadastro da fila e tira o beta, se ela tiver.','','Remover',()=>{closeModal();fazer({acao:'remover',uid},'Removido da lista.');});return;}
+  if(a==='atuais'){openModal('Liberar o beta para todos os jogadores atuais?','Todo mundo que já tem personagem no jogo passa a ter beta = true e continua entrando normalmente.','','Liberar todos',()=>{closeModal();fazer({acao:'liberarJogadoresAtuais'},r=>`${r.liberados} jogador(es) liberado(s).`);});}
+});
 function renderAdmin(){
   if(!souDono){$('#adm-body').innerHTML='<p class="lead">Este painel é só para o dono da página.</p>';return;}
   if(!db){$('#adm-body').innerHTML='<p class="lead">O painel precisa do armazenamento do grupo. Entre com a conta Google do mestre.</p>';return;}
-  admAssinarCombates();
-  $('#adm-body').innerHTML=`<div class="panel" style="margin-bottom:16px" id="adm-campanha"></div><div class="adm-grid"><div class="panel"><h2>Personagens</h2><div class="party" id="adm-lista"></div></div><div id="adm-editor"></div></div>
+  admAssinarCombates();setTimeout(carregarFilaAdm,0);
+  $('#adm-body').innerHTML=`<div class="panel" style="margin-bottom:16px" id="adm-fila"></div><div class="panel" style="margin-bottom:16px" id="adm-campanha"></div><div class="adm-grid"><div class="panel"><h2>Personagens</h2><div class="party" id="adm-lista"></div></div><div id="adm-editor"></div></div>
     <div class="panel" style="margin-top:16px"><h2>Locais, combates e canais</h2><div id="adm-locais" class="adm-locais"></div></div>
     <div class="panel" style="margin-top:16px"><h2>Importar histórico dos chats</h2>
       <p class="note" style="margin:0">Use o arquivo gerado no site antigo pelo botão "Exportar histórico para o site novo". Antes, cada jogador precisa ter entrado aqui e salvo a ficha, para aparecer na lista abaixo.</p>

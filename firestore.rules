@@ -5,73 +5,99 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function logado() { return request.auth != null; }
     function mestre() { return logado() && request.auth.token.email in ['bksapiens007@gmail.com']; }
+    // Beta: só quem foi liberado (usuarios/{uid}.beta == true, gravado só pelo servidor) ou o mestre usa o jogo.
+    function liberado() {
+      return mestre() || (logado()
+        && exists(/databases/$(database)/documents/usuarios/$(request.auth.uid))
+        && get(/databases/$(database)/documents/usuarios/$(request.auth.uid)).data.beta == true);
+    }
 
     // Ficha e estado de cada jogador: todos leem, só o dono (ou o mestre) escreve.
     match /fichas/{uid} {
-      allow read: if logado();
-      allow write: if logado() && (request.auth.uid == uid || mestre());
+      allow read: if liberado();
+      allow write: if liberado() && (request.auth.uid == uid || mestre());
     }
     match /jogadores/{uid} {
-      allow read: if logado();
-      allow write: if logado() && (request.auth.uid == uid || mestre());
+      allow read: if liberado();
+      allow write: if liberado() && (request.auth.uid == uid || mestre());
     }
 
     // Chat, combates e missões são compartilhados entre os jogadores logados.
     match /canais/{local}/msgs/{msg} {
-      allow read, write: if logado();
+      allow read, write: if liberado();
     }
     match /combates/{local} {
-      allow read, write: if logado();
+      allow read, write: if liberado();
     }
     match /missoes/{id} {
-      allow read, write: if logado();
+      allow read, write: if liberado();
     }
 
     // Ienes mandados entre jogadores (quem recebe marca como aplicada).
     match /transferencias/{id} {
-      allow read, create, update: if logado();
+      allow read, create, update: if liberado();
       allow delete: if mestre();
     }
     // Livro de NPCs: o mestre de IA anota; só o mestre humano apaga.
     match /npcs/{id} {
-      allow read, create, update: if logado();
+      allow read, create, update: if liberado();
       allow delete: if mestre();
     }
     // Acontecimentos da linha do tempo: qualquer jogador logado pode registrar um acontecimento novo
     // (é assim que a história avança sozinha), mas só o mestre altera ou apaga.
     match /eventos/{id} {
-      allow read, create: if logado();
+      allow read, create: if liberado();
       allow update, delete: if mestre();
     }
     // Mensagens diretas: só os dois jogadores da conversa (o id da conversa é "uidA__uidB").
     match /dms/{conversa}/msgs/{msg} {
-      allow read, create: if logado() && request.auth.uid in conversa.split('__');
+      allow read, create: if liberado() && request.auth.uid in conversa.split('__');
       allow delete: if mestre();
     }
     // Convite de um aluno para um freelancer entrar na escola (id "uidDoFreelancer__escola").
     match /convites/{id} {
-      allow read: if logado();
-      allow create, update: if logado() && request.resource.data.de == request.auth.uid;
-      allow delete: if mestre() || (logado() && (resource.data.de == request.auth.uid || resource.data.para == request.auth.uid));
+      allow read: if liberado();
+      allow create, update: if liberado() && request.resource.data.de == request.auth.uid;
+      allow delete: if mestre() || (liberado() && (resource.data.de == request.auth.uid || resource.data.para == request.auth.uid));
     }
     // Rede social (Sussurros): todos leem; cada um posta em nome próprio; qualquer um curte; só o autor ou o mestre apaga.
     match /posts/{id} {
-      allow read: if logado();
-      allow create: if logado() && request.resource.data.autor == request.auth.uid && request.resource.data.texto is string && request.resource.data.texto.size() <= 280;
-      allow update: if logado() && (resource.data.autor == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curtidas']));
-      allow delete: if mestre() || (logado() && resource.data.autor == request.auth.uid);
+      allow read: if liberado();
+      allow create: if liberado() && request.resource.data.autor == request.auth.uid && request.resource.data.texto is string && request.resource.data.texto.size() <= 280;
+      allow update: if liberado() && (resource.data.autor == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curtidas']));
+      allow delete: if mestre() || (liberado() && resource.data.autor == request.auth.uid);
     }
     // Bloco de notas pessoal: só o dono lê e escreve.
     match /notas/{uid} {
-      allow read, write: if logado() && request.auth.uid == uid;
+      allow read, write: if liberado() && request.auth.uid == uid;
     }
     // Estado dos NPCs com agenda (para onde foram, quem acompanham, memória e relação com cada jogador).
     match /npcEstado/{id} {
-      allow read, write: if logado();
+      allow read, write: if liberado();
+    }
+    // ---------- Lista de espera e beta ----------
+    // Ninguém (nem o mestre) grava por aqui: quem grava é o servidor (/api/waitlist/*, com firebase-admin).
+    // Cada pessoa lê só o próprio documento; o mestre lê todos.
+    match /usuarios/{uid} {
+      allow read: if logado() && (request.auth.uid == uid || mestre());
+      allow write: if false;
+    }
+    match /waitlist/{uid} {
+      allow read: if logado() && (request.auth.uid == uid || mestre());
+      allow write: if false;
+    }
+    // Contador público ("X pessoas esperando"): qualquer pessoa logada lê.
+    match /meta/{id} {
+      allow read: if logado();
+      allow write: if false;
+    }
+    // Limites de pedidos por uid (só o servidor usa).
+    match /limites/{id} {
+      allow read, write: if false;
     }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
-      allow read: if logado();
+      allow read: if liberado();
       allow write: if mestre();
     }
   }

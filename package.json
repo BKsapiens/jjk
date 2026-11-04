@@ -3,5 +3,10 @@
   "private": true,
   "type": "module",
   "description": "RPG de Jujutsu Kaisen (Era dos Feiticeiros 0.3) com mestre de IA",
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.10.0"
+  }
 }

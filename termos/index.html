@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Termos de Uso · Era dos Feiticeiros</title>
+<link rel="stylesheet" href="/legal.css">
+</head>
+<body>
+<main>
+  <header><div class="hanko" aria-hidden="true">呪</div><div><h1>Termos de Uso</h1><small>Era dos Feiticeiros · versão <span class="versao" data-versao>…</span></small></div></header>
+
+  <p class="provisorio">Texto provisório. A versão final destes termos ainda vai ser publicada aqui.</p>
+
+  <h2>1. O que é o site</h2>
+  <p>Era dos Feiticeiros é um RPG de mesa on-line, gratuito, feito por fãs, com um mestre de inteligência artificial. O jogo está em beta fechado: o acesso é liberado aos poucos, pela lista de espera.</p>
+
+  <h2>2. Quem pode usar</h2>
+  <p>Para usar o site você precisa ter 13 anos ou mais. Ao entrar na lista de espera, você confirma isso.</p>
+
+  <h2>3. Sua conta</h2>
+  <p>O login é feito com uma conta Google. Você é responsável pelo que acontece na sua conta. Não compartilhe o acesso.</p>
+
+  <h2>4. Regras de convivência</h2>
+  <ul>
+    <li>Respeite os outros jogadores no chat, nas mensagens diretas e na rede social do jogo.</li>
+    <li>Não publique conteúdo ofensivo, discriminatório, sexual, violento de forma gratuita ou dados pessoais de outras pessoas.</li>
+    <li>Não tente burlar o sistema, explorar falhas ou usar o mestre de IA para gerar conteúdo proibido.</li>
+  </ul>
+  <p>Quem descumprir estas regras pode ter o acesso suspenso ou removido.</p>
+
+  <h2>5. Mestre de inteligência artificial</h2>
+  <p>As narrações são geradas por IA e podem conter erros. O mestre humano do grupo tem a palavra final sobre o jogo.</p>
+
+  <h2>6. Projeto de fã</h2>
+  <p>O site é inspirado em Jujutsu Kaisen e não tem ligação com a Shueisha, com Gege Akutami ou com os detentores dos direitos da obra. Personagens e marcas da obra pertencem aos seus donos. O sistema de regras é baseado no Era dos Feiticeiros, adaptado com autorização.</p>
+
+  <h2>7. Mudanças nestes termos</h2>
+  <p>Estes termos podem mudar. Quando isso acontecer, a versão no topo desta página muda e avisaremos no Discord.</p>
+
+  <p><a href="/privacidade">Política de Privacidade</a></p>
+</main>
+<footer><span data-aviso></span><br><a href="/termos">Termos de Uso</a> · <a href="/privacidade">Privacidade</a></footer>
+<script type="module">
+  import { TERMS_VERSION, AVISO_FA } from "/legal.js";
+  document.querySelectorAll("[data-versao]").forEach(e => e.textContent = TERMS_VERSION);
+  document.querySelectorAll("[data-aviso]").forEach(e => e.textContent = AVISO_FA);
+</script>
+</body>
+</html>
