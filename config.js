@@ -18,4 +18,4 @@ window.ADMINS = ["bksapiens007@gmail.com"];
 
 // Convite do Discord mostrado na lista de espera. Troque pelo link do seu servidor
 // (ex.: "https://discord.gg/abc123"). Deixe "" para mostrar "Convite do Discord em breve".
-window.DISCORD_CONVITE = "";
+window.DISCORD_CONVITE = "https://discord.gg/uGXfJSQm56";
