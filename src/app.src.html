@@ -1567,6 +1567,15 @@ LOCAIS.push(
   subArea('gion','casadecha','Casa de Chá','茶','casa de ch[áa]|ch[áa]','Casa de chá tradicional em Gion: tatames, jardim interno, cerimônia do chá, uma anfitriã elegante que ouve tudo e esquece nada. Clãs de Kyoto marcam encontros discretos aqui.',['conversa','tradição']),
   subArea('fushimi','trilha','Trilha dos Torii','鳥','trilha|t[úu]nel de torii|montanha','Trilha que sobe o monte Inari por túneis de torii vermelhos: degraus de pedra, altares pequenos, estátuas de raposa, lanternas. Quanto mais alto, mais vazio e mais escuro.',['montanha','espíritos'])
 );
+/* Cidade Fantasma: cidade escondida perto de Yokohama, só para feiticeiros sem escola (freelancers) */
+LOCAIS.push(
+  {id:'fantasma',nome:'Cidade Fantasma · Kurogane',curto:'Cid. Fantasma',kanji:'幽',regiao:'toquio',area:'Estação Abandonada',kw:'cidade fantasma|kurogane',tags:['abandonada','freelancers','barreira'],x:70,y:585,restrito:{cacadas:0},
+   desc:'Uma cidadezinha evacuada há décadas, escondida por uma barreira velha. Só quem não deve nada a escola nenhuma encontra a entrada.',
+   contexto:'Kurogane, a Cidade Fantasma: cidadezinha costeira perto de Yokohama, evacuada às pressas há uns quarenta anos depois de um incidente com maldições que o governo chamou de vazamento químico. Uma barreira antiga, mantida por ninguém sabe quem, desvia os olhos de civis e de feiticeiros das escolas: só freelancers acham o caminho. Hoje é refúgio de caçadores sem afiliação, com regras próprias e nenhum professor olhando. A entrada é a Estação Abandonada: plataforma tomada pelo mato, relógio parado nas 4h44, um trem enferrujado que ainda chega de vez em quando sem maquinista.'},
+  {...subArea('fantasma','rua','Rua dos Letreiros Apagados','灯','rua|letreiro|comércio fechado','Rua comercial de Kurogane: lojas de portas de aço baixadas, letreiros de neon apagados que às vezes acendem sozinhos, máquinas de bebida que ainda funcionam sem energia. Restos de maldições fracas rondam, e freelancers caçam aqui para treinar.',['ruínas','maldições fracas']),restrito:{cacadas:0}},
+  {...subArea('fantasma','pensao','Pensão dos Caçadores','宿','pens[ãa]o|hospedaria|caçadores','Uma pensão de madeira de dois andares que os freelancers reocuparam: fogareiro sempre aceso, mural de recados com pedidos de ajuda e recompensas, quartos baratos, uma dona velha e calada que não aceita brigas lá dentro. É o lugar para trocar informação e fazer contatos.',['encontro','informação']),restrito:{cacadas:0}},
+  {...subArea('fantasma','templo','Templo Partido','祠','templo|santu[áa]rio','Templo xintoísta no alto da colina, partido ao meio por uma rachadura de energia amaldiçoada. É onde a barreira da cidade parece nascer: talismãs antigos, um sino que toca sem vento e uma presença que observa quem sobe a escadaria. Ninguém sabe se protege a cidade ou prende algo nela.',['mistério','barreira']),restrito:{cacadas:0}}
+);
 /* Áreas exclusivas de freelancers, liberadas com caçadas concluídas (app Caçadores) */
 LOCAIS.push(
   {...subArea('shinjuku','mercado','Mercado Negro','闇','mercado negro|contrabando|receptador','Mercado Negro de Shinjuku: um estacionamento subterrâneo atrás de Kabukichō que vira feira à meia-noite. Barracas de lona vendem ferramentas amaldiçoadas de segunda mão, talismãs falsificados, informação e restos de maldições. Ninguém pergunta nomes; quem paga em dinheiro vivo é atendido primeiro. Feiticeiros de escola não são bem-vindos.',['comércio','ilegal']),restrito:{cacadas:3},programado:true},
@@ -1588,6 +1597,7 @@ const LINHAS=[
   {cor:'#3fc1d6',nos:['avenida','odaiba']},
   {cor:'#e7e7e7',nos:['shibuya','yokohama']},
   {cor:'#2f7fd8',nos:['yokohama','miura']},
+  {cor:'#6b6470',nos:['yokohama','fantasma'],free:true},
   {cor:'#c94fb5',nos:['roppongi','odaiba']},
   {cor:'#f6d32b',nos:['kyoto','gion','fushimi']}];
 
@@ -1616,7 +1626,7 @@ function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'
     contexto:`Quarto de ${nome} no dormitório dos estudantes da Escola Jujutsu de ${E.curta}: ${pai==='kyoto'?'tatame, futon, mesa baixa, armário de correr':'cama estreita, escrivaninha, armário'}, ${janela}. É o espaço pessoal de ${nome}; outros alunos só entram se forem convidados. Descanso acontece pelo botão de descanso (o sistema aplica a recuperação); converse e narre o clima, mas não dê PV/PA/PE por descanso.`};}
 const locById=id=>LOCAIS.find(l=>l.id===id)||(ehQuarto(id)?quartoLoc(id):undefined);
 const raiz=id=>(locById(id)?.pai)||id;
-const MAPA=()=>LOCAIS.filter(l=>!l.pai);
+const MAPA=()=>LOCAIS.filter(l=>!l.pai&&areaVisivel(l));
 const nomeDestino=id=>{const l=locById(id);if(!l)return id||'';return l.pai&&!ehEscola(l.pai)?`${locById(l.pai)?.curto} · ${l.area}`:l.pai?`${locById(l.pai)?.curto} · ${l.area}`:l.curto;};
 const nomeLocal=id=>{const l=locById(id);if(!l)return '';return l.pai?l.area:l.curto;};
 const GRAUS_PG=[[3000,'Grau Especial'],[2500,'Semi-Grau Especial'],[2000,'Grau 1'],[1500,'Semi-Grau 1'],[850,'Grau 2'],[500,'Semi-Grau 2'],[300,'Grau 3'],[100,'Grau 4'],[0,'Aprendiz']];
@@ -1708,7 +1718,7 @@ function renderMapa(){
     <path d="M590 130 L700 230 L930 352" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
     <path d="M590 130 L700 230 L930 352" fill="none" stroke="#0b0a0c" stroke-width="4" stroke-dasharray="10 8"/>
     <text x="735" y="242" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" transform="rotate(28 735 242)" stroke="#000" stroke-width="4" paint-order="stroke">SHINKANSEN</text>`;
-  LINHAS.forEach(L=>{const pts=L.nos.map(P);const d='M'+pts.map(([x,y])=>`${x} ${y}`).join(' L');
+  LINHAS.filter(L=>!L.free||ehFree(myId())).forEach(L=>{const pts=L.nos.map(P);const d='M'+pts.map(([x,y])=>`${x} ${y}`).join(' L');
     s+=`<path d="${d}" fill="none" stroke="#0b0a0c" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${L.cor}" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>`;
     for(let k=1;k<pts.length;k++){const [x1,y1]=pts[k-1],[x2,y2]=pts[k];s+=`<circle cx="${(x1+x2)/2}" cy="${(y1+y2)/2}" r="3.6" fill="#fff"/>`;}});
   MAPA().forEach(l=>{const here=meu?.local&&raiz(meu.local)===l.id;const sel=selLoc===l.id;const ps=present(l.id);const r=rot(l.id);
@@ -1729,7 +1739,7 @@ function renderMapa(){
   $('#map').innerHTML=s;
   const l=locById(raiz(selLoc));const ps=present(l.id);const here=meu?.local&&raiz(meu.local)===l.id;
   const minhaE=casaDe(myId());
-  $('#loc-card').innerHTML=`<button type="button" class="btn small so-mob mapa-voltar" data-mapavoltar="1">‹ Voltar ao mapa</button><h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${ehFree(myId())?(conviteValido(myId(),l.id)?`Você foi convidado por ${esc(conviteValido(myId(),l.id).deNome||'um aluno')} e pode entrar até ${new Date(+conviteValido(myId(),l.id).t+CONVITE_MS).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'})}.`:'Você é freelancer: só entra aqui se um aluno desta escola te convidar (o convite vale 24 horas).'):l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:l.id==='shinjuku'&&ehFree(myId())?'<p class="note" style="margin:0">Seu apartamento fica aqui.</p>':''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
+  $('#loc-card').innerHTML=`<button type="button" class="btn small so-mob mapa-voltar" data-mapavoltar="1">‹ Voltar ao mapa</button><h2>${esc(l.nome)}</h2>${ehEscola(l.id)?`<p class="note" style="margin:0">${ehFree(myId())?(conviteValido(myId(),l.id)?`Você foi convidado por ${esc(conviteValido(myId(),l.id).deNome||'um aluno')} e pode entrar até ${new Date(+conviteValido(myId(),l.id).t+CONVITE_MS).toLocaleString('pt-BR',{weekday:'short',hour:'2-digit',minute:'2-digit'})}.`:'Você é freelancer: só entra aqui se um aluno desta escola te convidar (o convite vale 24 horas).'):l.id===minhaE?'Sua escola: seu quarto fica aqui.':`Você é aluno da ${esc(ESCOLAS[minhaE].nome)}. Aqui você é visitante.`}</p>`:l.id==='shinjuku'&&ehFree(myId())?'<p class="note" style="margin:0">Seu apartamento fica aqui.</p>':l.restrito?'<p class="note" style="margin:0">Só feiticeiros sem escola encontram este lugar. Alunos nem sabem que ele existe.</p>':''}<div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p>${esc(l.desc)}</p>
     ${(()=>{const ar=LOCAIS.filter(z=>z.pai===l.id&&areaVisivel(z));return ar.length?`<p class="note" style="margin:0"><b style="color:var(--bone)">Áreas:</b> ${esc([l.area||'Centro',...ar.map(z=>z.area+(areaLiberada(z)?'':' (trancada)'))].join(' · '))}</p>`:'';})()}
     <div><h3 style="font-size:14px;margin-bottom:6px">Quem está lá</h3><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}">${esc(iniciais(j.nome))}</span>${esc(j.nome)}${k===(uid||'eu')?' (você)':''}${locById(j.local)?.pai?` <span class="note">· ${esc(nomeLocal(j.local))}</span>`:''}</div>`).join(''):'<div class="note">Ninguém por enquanto.</div>'}</div></div>
     <button class="btn primary" data-entrar="${here?meu.local:l.id}">${here?'Voltar para o canal':'Ir para '+esc(l.curto)}</button>
@@ -1739,7 +1749,7 @@ function renderMapa(){
 function bloqueioDe(id){
   if(meu?.descanso)return 'Você está descansando. Abra o app Descanso e toque em Levantar antes de sair.';
   if(ehEscola(raiz(id))&&!podeEntrarEscola(raiz(id)))return `Você é freelancer: só entra na ${ESCOLAS[raiz(id)].nome} se um aluno de lá te convidar.`;
-  const l=locById(id);if(!areaLiberada(l))return `${l.area} só abre para freelancers com ${l.restrito.cacadas} caçadas concluídas (você tem ${+meu?.cacadasFeitas||0}).`;
+  const l=locById(id);if(!areaLiberada(l))return !ehFree(myId())?`Esse lugar só existe para feiticeiros sem escola.`:`${l.area} só abre para freelancers com ${l.restrito.cacadas} caçadas concluídas (você tem ${+meu?.cacadasFeitas||0}).`;
   return '';}
 async function irPara(id,anterior){
   if(!meu)await ensureJogador();
@@ -2240,7 +2250,7 @@ const RECOMP_CACADA={4:{ienes:2000,xp:2,pg:3},3:{ienes:5000,xp:5,pg:6},2:{ienes:
 function rngSeed(seed){let x=hashStr(seed)||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
 function ofertasCacada(){
   const dia=diaJogo();const r=rngSeed(myId()+'|caca|'+dia);const n=calc().n;
-  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&!l.restrito&&!(faseEfetiva()==='kyoto'&&raiz(l.id)==='shibuya'));
+  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&(!l.restrito||areaLiberada(l))&&!l.programado&&!(faseEfetiva()==='kyoto'&&raiz(l.id)==='shibuya'));
   const usadas=meu?.cacadasDia?.dia===dia?(meu.cacadasDia.usadas||[]):[];
   return [0,1,2,3].map(i=>{const [alvo,desc]=CRIATURAS[Math.floor(r()*CRIATURAS.length)];const d=destinos[Math.floor(r()*destinos.length)];
     const x=r();const grau=n>=6?(x<.3?2:3):n>=4?(x<.7?3:4):n>=2?(x<.2?3:4):4;
@@ -2724,7 +2734,7 @@ COMO NARRAR
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].sort().map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 {{FIXO_FIM}}
-${direcaoMestre()}${dominioAtivo()&&combateLocal===id?`EXPANSÃO DE DOMÍNIO ATIVA: "${dominioAtivo().nome}" de ${dominioAtivo().donoNome} (até a rodada ${dominioAtivo().ate})${dominioAtivo().desc?`: ${dominioAtivo().desc}`:''}. Dentro da barreira, aplique o efeito do domínio.\n`:''}HORA NO JOGO: ${relogioTxt()} (${periodoDia()}).${ehNoite()?' À noite as ruas esvaziam e as maldições ficam mais ativas e ousadas.':''} NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}).`:''}
+${direcaoMestre()}${dominioAtivo()&&combateLocal===id?`EXPANSÃO DE DOMÍNIO ATIVA: "${dominioAtivo().nome}" de ${dominioAtivo().donoNome} (até a rodada ${dominioAtivo().ate})${dominioAtivo().desc?`: ${dominioAtivo().desc}`:''}. Dentro da barreira, aplique o efeito do domínio.\n`:''}HORA NO JOGO: ${relogioTxt()} (${periodoDia()}).${ehNoite()?' À noite as ruas esvaziam e as maldições ficam mais ativas e ousadas.':''} NÍVEL DE QUEM AGIU: ${calc().n}.${ehFree(myId())?` Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma ainda'}. Freelancers moram em apartamento próprio (${quartoId(myId())}). A Cidade Fantasma (Kurogane) fica a uns 20 minutos de trem de Yokohama: civis e alunos das escolas não a encontram.`:''}
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
