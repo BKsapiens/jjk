@@ -3937,7 +3937,7 @@ async function admAcao(a){
     const f=party.get(id)?.ficha||{};let nivel=Math.max(1,Math.min(20,v('adm-nivel'))),xp=Math.max(0,v('adm-xp'));
     if(a==='darxp'){xp=Math.max(+f.xp||0,XP_TAB[Math.max(1,+f.nivel||1)-1])+v('adm-darxp');nivel=Math.max(+f.nivel||1,nivelPorXp(xp));}
     await admUpdate(id,{admin:{rev:Date.now(),xp,nivel,ficha:null}});
-    try{await db.doc('fichas/'+id).update({ficha:{xp,nivel:String(nivel)}});}catch{}
+    try{await db.doc('fichas/'+id).update({ficha:{xp,nivel:String(nivel),_editado:Date.now()}});}catch{}
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
@@ -3950,7 +3950,7 @@ async function admAcao(a){
   if(a==='nota'){const t=$('#adm-novanota').value.trim();if(!t)return;await admUpdate(id,{diario:[...(j.diario||[]),{t:Date.now(),local:j.local||'',texto:t.slice(0,240)}].slice(-40)});renderAdmEditor();}
   if(a==='limpardiario'){openModal('Limpar o diário?','O mestre de IA esquece tudo o que anotou sobre este personagem.','','Limpar diário',async()=>{closeModal();await admUpdate(id,{diario:[]});renderAdmEditor();});return;}
   if(a==='addesp'){const box=$('#adm-esp');box.insertAdjacentHTML('beforeend',admEspRow({},box.children.length));box.lastElementChild.querySelector('input').focus();return;}
-  if(a==='especiais'){const es=lerEspAdm();await admUpdate(id,{admin:{rev:Date.now(),especiais:es,ficha:null,xp:null,nivel:null}});try{await db.doc('fichas/'+id).update({ficha:{especiais:es}});}catch{}renderAdmEditor();}
+  if(a==='especiais'){const es=lerEspAdm();await admUpdate(id,{admin:{rev:Date.now(),especiais:es,ficha:null,xp:null,nivel:null}});try{await db.doc('fichas/'+id).update({ficha:{especiais:es,_editado:Date.now()}});}catch{}renderAdmEditor();}
   if(a==='importar'){let o;try{o=JSON.parse($('#adm-import').value);}catch{admStatus('O arquivo de importação não é um JSON válido.',true);return;}
     if(!o||!o.ficha){admStatus('Esse arquivo não tem uma ficha (campo "ficha").',true);return;}
     const f={...o.ficha};delete f.adminRev;const jg={...(o.jogador||{})};
@@ -3961,13 +3961,13 @@ async function admAcao(a){
       inventario:Array.isArray(jg.inventario)?jg.inventario:(atual.inventario||[]),ienes:+jg.ienes||0,diario:Array.isArray(jg.diario)?jg.diario.slice(-40):[],visitados:Array.isArray(jg.visitados)?jg.visitados:[],missoesPagas:[],
       stats:jg.stats||atual.stats||null,admin:{rev,ficha:f,xp:null,nivel:null,especiais:Array.isArray(f.especiais)?f.especiais:[]},atualizado:new Date().toISOString()};
     try{await db.doc('jogadores/'+id).set(doc);
-      await db.doc('fichas/'+id).set({ficha:f,resumo:{nome:f.nome||'Sem nome',classe:f.classe||'',nivel:+f.nivel||1,xp:+f.xp||0,pendencias:0},donoId:id,atualizado:new Date().toISOString()});
+      await db.doc('fichas/'+id).set({ficha:{...f,_editado:Date.now()},resumo:{nome:f.nome||'Sem nome',classe:f.classe||'',nivel:+f.nivel||1,xp:+f.xp||0,pendencias:0},donoId:id,atualizado:new Date().toISOString()});
       admStatus(`${f.nome||'Personagem'} importado. A tela do jogador atualiza sozinha.`);$('#adm-import').value='';renderAdmEditor();}
     catch{admStatus('Não consegui importar. Confira se você está logado com a conta do mestre e se as regras do Firestore foram publicadas.',true);}
     return;}
   if(a==='ficha'){let o;try{o=JSON.parse($('#adm-ficha').value);}catch{admStatus('O JSON da ficha tem erro de formatação. Confira vírgulas e aspas.',true);return;}
     await admUpdate(id,{admin:{rev:Date.now(),ficha:o,xp:null,nivel:null,especiais:Array.isArray(o.especiais)?o.especiais:[]}});
-    try{await db.doc('fichas/'+id).update({ficha:o});}catch{}
+    try{await db.doc('fichas/'+id).update({ficha:{...o,_editado:Date.now()}});}catch{}
     renderAdmEditor();}
   }catch{}
 }
@@ -4020,7 +4020,28 @@ function aplicarAdminNoJogador(x){
 
 /* ---------- Armazenamento ---------- */
 let db=null,user=null,uid=null,sample=null;const party=new Map();
-function saveDraft(){try{localStorage.setItem('jjk-ficha-rascunho',JSON.stringify(F));}catch{}}
+/* Ficha em tempo real: toda mudança carimba a hora (_editado), fica no navegador e vai para o banco em ~1 s.
+   Ao abrir, vale a versão mais nova (navegador ou banco). Mudanças feitas em outro aparelho ou pelo mestre chegam na hora. */
+let fichaRemota=false,fichaTimer=null,fichaPendente=null,fichaPronta=false; /* só carimba e envia depois de comparar com o banco */
+function saveDraft(){
+  if(!fichaRemota&&fichaPronta)F._editado=Date.now();
+  try{localStorage.setItem('jjk-ficha-rascunho',JSON.stringify(F));}catch{}
+  if(!fichaRemota&&fichaPronta&&db&&uid&&String(F.nome||'').trim()){clearTimeout(fichaTimer);fichaTimer=setTimeout(()=>{salvarQuieto();const st=$('#save-status');if(st&&!$('#view-ficha').hidden)st.textContent='Salvo automaticamente.';},1100);}
+}
+const editandoFicha=()=>{const a=document.activeElement;return !!(a&&a.matches&&a.matches('#view-ficha input,#view-ficha textarea,#view-ficha select,#view-tecnica input,#view-tecnica textarea,#view-tecnica select'));};
+function aplicarFichaRemota(f){
+  fichaRemota=true;
+  try{loadFicha(Object.assign(blank(),f));renderAll();try{localStorage.setItem('jjk-ficha-rascunho',JSON.stringify(F));}catch{}if(meu)renderHud();}
+  finally{fichaRemota=false;}
+}
+function assinarMinhaFicha(){
+  if(!db||!uid)return;
+  db.doc('fichas/'+uid).onSnapshot(s=>{if(!s.exists)return;const f=s.data()?.ficha;if(!f)return;
+    if((+f._editado||0)<=(+F._editado||0))return;
+    if(editandoFicha()){fichaPendente=f;return;}
+    aplicarFichaRemota(f);},()=>{});
+  document.addEventListener('focusout',()=>setTimeout(()=>{if(fichaPendente&&!editandoFicha()){const f=fichaPendente;fichaPendente=null;if((+f._editado||0)>(+F._editado||0))aplicarFichaRemota(f);}},50));
+}
 function loadDraft(){try{const s=localStorage.getItem('jjk-ficha-rascunho');if(s)return Object.assign(blank(),JSON.parse(s));}catch{}return null;}
 async function salvar(){
   const st=$('#save-status');
@@ -4044,14 +4065,17 @@ async function boot(){
   const timer=setTimeout(()=>{if(!db)$('#save-status').textContent='Entre com sua conta Google para salvar a ficha no grupo.';},10000);
   let w=window.claude;
   for(let i=0;i<150&&!(w&&typeof w.use==='function');i++){await new Promise(r=>setTimeout(r,100));w=window.claude;}
-  if(!w||typeof w.use!=='function'){clearTimeout(timer);$('#save-status').textContent='Modo local: a ficha fica salva neste navegador.';route();return;}
+  if(!w||typeof w.use!=='function'){fichaPronta=true;clearTimeout(timer);$('#save-status').textContent='Modo local: a ficha fica salva neste navegador.';route();return;}
   [db,user,sample]=await Promise.all([w.use('db'),w.use('user'),w.use('sample')]);
   if(sample&&typeof window.__embrulharSample==='function')sample=window.__embrulharSample(sample);
   clearTimeout(timer);
   if(user)try{uid=await user.id();}catch{}
   if(db&&!uid)db=null;
-  if(!db){$('#save-status').textContent='Modo local: a ficha fica salva neste navegador.';renderAll();route();return;}
-  try{const mine=await db.doc('fichas/'+uid).get();if(mine.exists&&!draft)loadFicha(Object.assign(blank(),mine.data().ficha));}catch{}
+  if(!db){fichaPronta=true;$('#save-status').textContent='Modo local: a ficha fica salva neste navegador.';renderAll();route();return;}
+  try{const mine=await db.doc('fichas/'+uid).get();
+    if(mine.exists&&mine.data().ficha){const nv=mine.data().ficha;const tN=+nv._editado||Date.parse(mine.data().atualizado||'')||1;
+      if(!draft||tN>(+draft._editado||0)){fichaRemota=true;try{loadFicha(Object.assign(blank(),nv));if(!F._editado)F._editado=tN;try{localStorage.setItem('jjk-ficha-rascunho',JSON.stringify(F));}catch{}}finally{fichaRemota=false;}}}}catch{}
+  fichaPronta=true;assinarMinhaFicha();
   db.collection('fichas').onSnapshot(snap=>{party.clear();snap.docs.forEach(d=>{const x=d.data();if(x&&x.resumo)party.set(x.donoId||d.id,x);});renderParty();if(!$('#view-ficha').hidden){const C=calc();renderAnt(C);renderSheet(C);}},()=>{});
   db.collection('jogadores').onSnapshot(snap=>{jogadores.clear();snap.docs.forEach(d=>{const x=d.data();if(!x)return;jogadores.set(d.id,x);
       if(d.id===uid&&meu&&x.recursosRev&&x.recursosRev!==meu.recursosRev){
