@@ -2403,14 +2403,19 @@ async function comecarCacada(){
   const c=meu?.cacada;if(!c||!canalAtual||meu.local!==c.destino)return;
   if(combate&&combate.ativo&&combateLocal===canalAtual){toastChat('Já tem um combate acontecendo aqui.');return;}
   fecharCel(true);
-  await narrar(canalAtual,{tipo:'cacada',c});
-  if(combate&&combate.ativo&&combateLocal===canalAtual)return;
-  await iniciarCombate(canalAtual,[{nome:c.alvo,grau:c.grau,qtd:c.qtd,descricao:c.desc}],[],{cacada:{dono:myId(),id:c.id}});
+  const loc=canalAtual;
+  await narrar(loc,{tipo:'cacada',c});
+  if(combate&&combate.ativo&&combateLocal===loc){if(!combate.cacada)await combateWrite({cacada:{dono:myId(),id:c.id}});return;}
+  await iniciarCombate(loc,[{nome:c.alvo,grau:c.grau,qtd:c.qtd,descricao:c.desc}],[],{cacada:{dono:myId(),id:c.id}});
 }
 let pagandoCacada=false;
 async function pagarCacada(){
   const c=meu?.cacada;
-  if(!c||pagandoCacada||!combate||combate.ativo||combate.resultado!=='vitoria'||combate.cacada?.id!==c.id||combate.cacada?.dono!==myId())return;
+  if(!c||pagandoCacada||!combate||combate.ativo||combate.resultado!=='vitoria')return;
+  /* conta a caçada se o combate era dela, ou se foi uma vitória no lugar do contrato depois de aceitar (mesmo que o combate tenha nascido de outro jeito) */
+  const marcado=combate.cacada?.id===c.id&&combate.cacada?.dono===myId();
+  const noLugar=raiz(combateLocal||'')===raiz(c.destino)&&(+combate.iniciado||0)>=(+c.aceita||0)&&!!combate.participantes?.[myId()];
+  if(!marcado&&!noLugar)return;
   pagandoCacada=true;
   try{const feitas=(+meu.cacadasFeitas||0)+1;const loc=combateLocal;
     await atualizarMeu({cacada:null,cacadasFeitas:feitas,ienes:(meu.ienes||0)+c.ienes,pg:(+meu.pg||0)+c.pg});
@@ -2963,7 +2968,7 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
       if(linhas.length){await combateWrite({participantes:up});await postMsg(id,{tipo:'combate',texto:linhas.join(' ')});}}
     if(j.fimCombate&&combate&&combate.ativo&&combateLocal===id)await encerrarCombate('encerrado');
     else if(combate&&combate.ativo&&combateLocal===id&&g.tipo!=='turno')await checarFim();
-    if(j.combate&&(Array.isArray(j.combate.inimigos)&&j.combate.inimigos.length||Array.isArray(j.combate.jogadores)&&j.combate.jogadores.length)){
+    if(g.tipo!=='cacada'&&j.combate&&(Array.isArray(j.combate.inimigos)&&j.combate.inimigos.length||Array.isArray(j.combate.jogadores)&&j.combate.jogadores.length)){
       const ids=(j.combate.jogadores||[]).map(n=>{const nn=normNome(n);const hit=[...jogadores.entries()].find(([k,x])=>k!==myId()&&x.local===id&&(k===n||normNome(x.nome)===nn||normNome(x.nome).includes(nn)||nn.includes(normNome(x.nome))));return hit?hit[0]:null;}).filter(Boolean);
       iniciarDepois={inimigos:j.combate.inimigos||[],jogadores:ids};
       const mm=minhaMissao();
@@ -3087,6 +3092,7 @@ async function encerrarCombate(res,silencioso,vencedor){
   if(!combate||!combate.ativo)return;
   const xp=res==='vitoria'?Object.values(combate.participantes||{}).filter(p=>p.tipo==='inimigo').reduce((a,p)=>a+(XP_GRAU[p.grau]??12),0):0;
   await combateWrite({ativo:false,resultado:res||'encerrado',fim:Date.now(),...(xp?{xpRecompensa:xp}:{}),...(vencedor?{vencedor}:{})});
+  if(res==='vitoria'){try{await pagarCacada();}catch{}}
   if(!silencioso)await postMsg(combateLocal,{tipo:'combate',texto:res==='vitoria'?'Todos os inimigos caíram. Fim do combate.':res==='derrota'?'Todos os jogadores caíram. Fim do combate.':res==='duelo'?`Fim do duelo: ${vencedor||'alguém'} venceu.`:'Combate encerrado.'});
 }
 function penalDefesa(p){const d=p.defesas||{};return d.rodada===combate.rodada?(+d.n||0):0;}
