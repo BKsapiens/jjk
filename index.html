@@ -457,6 +457,23 @@ body.sem-animacao .ordem li.bf-hit,body.sem-animacao .bf-raios{animation:none}
 .conq-toast.sai{animation:conqSai .5s ease-in forwards}
 @keyframes conqEntra{to{transform:translate(-50%,0)}}@keyframes conqSai{from{transform:translate(-50%,0)}to{transform:translate(-50%,-160%)}}
 body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
+.mercado{position:fixed;inset:0;z-index:9000;background:rgba(5,4,6,.82);display:grid;place-items:center;padding:16px}
+.mercado[hidden]{display:none}
+.merc-caixa{width:min(760px,100%);max-height:calc(100vh - 32px);display:flex;flex-direction:column;background:#141016;border:3px solid #fff;box-shadow:10px 10px 0 #5b0d8f;color:#eee;overflow:hidden}
+.merc-topo{display:flex;align-items:center;gap:12px;padding:12px 16px;background:#0b0a0c;border-bottom:3px solid #5b0d8f}
+.merc-topo small{color:#b9a7c9;letter-spacing:1px}.merc-topo h2{margin:0;font-family:var(--display);font-size:24px}
+.merc-dinheiro{margin-left:auto;font-weight:900;background:#f6d32b;color:#000;padding:4px 10px;transform:skew(-8deg)}
+.merc-npc{display:flex;gap:10px;align-items:center;padding:10px 16px;background:#211a26}.merc-npc p{margin:0;font-style:italic}
+.merc-abas{display:flex;gap:6px;padding:8px 16px 0}.merc-abas button{background:transparent;border:2px solid #5b0d8f;color:#ddd;padding:6px 12px;font-weight:800;cursor:pointer;transform:skew(-6deg)}.merc-abas button.on{background:#5b0d8f;color:#fff}
+.merc-corpo{overflow:auto;padding:8px 16px 16px;flex:1}.merc-corpo h3{font-size:15px;margin:14px 0 6px;color:#c9a7ff}
+.merc-item{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid #2c2433;padding:8px 0}
+.merc-item>div:first-child{display:flex;flex-direction:column;min-width:0}.merc-item small{color:#a99cb3;font-size:12.5px}
+.merc-preco{display:flex;gap:8px;align-items:center;white-space:nowrap;font-weight:800}
+.merc-preco [aria-disabled="true"]{opacity:.45}
+.merc-chat{display:flex;flex-direction:column;gap:6px;min-height:240px}.merc-msg{margin:0;padding:6px 10px;background:#211a26;border-left:3px solid #5b0d8f}.merc-msg.eu{border-left-color:#f6d32b}.merc-msg.npc{font-style:italic;border-left-color:#8a7a5a}.merc-msg.sis{opacity:.7;font-size:13px;border-left-color:#444}
+.mercado .dm-form{margin:0 16px 16px}
+.merc-abrir{background:#5b0d8f!important;color:#fff!important;border:2px solid #fff!important;font-weight:900}
+@media (max-width:760px){.mercado{padding:0}.merc-caixa{max-height:100%;height:100%;border:0;box-shadow:none}.merc-item{flex-wrap:wrap}}
 .cac-card{border:2px solid #0b0a0c;padding:10px 12px;margin-bottom:8px;background:#fff;color:#0b0a0c;box-shadow:4px 4px 0 #0b0a0c}
 .cac-card.usada{opacity:.5}
 .cac-card .note{color:#3a3536}
@@ -1545,7 +1562,7 @@ LOCAIS.push(
 );
 /* Áreas exclusivas de freelancers, liberadas com caçadas concluídas (app Caçadores) */
 LOCAIS.push(
-  {...subArea('shinjuku','mercado','Mercado Negro','闇','mercado negro|contrabando|receptador','Mercado Negro de Shinjuku: um estacionamento subterrâneo atrás de Kabukichō que vira feira à meia-noite. Barracas de lona vendem ferramentas amaldiçoadas de segunda mão, talismãs falsificados, informação e restos de maldições. Ninguém pergunta nomes; quem paga em dinheiro vivo é atendido primeiro. Feiticeiros de escola não são bem-vindos.',['comércio','ilegal']),restrito:{cacadas:3}},
+  {...subArea('shinjuku','mercado','Mercado Negro','闇','mercado negro|contrabando|receptador','Mercado Negro de Shinjuku: um estacionamento subterrâneo atrás de Kabukichō que vira feira à meia-noite. Barracas de lona vendem ferramentas amaldiçoadas de segunda mão, talismãs falsificados, informação e restos de maldições. Ninguém pergunta nomes; quem paga em dinheiro vivo é atendido primeiro. Feiticeiros de escola não são bem-vindos.',['comércio','ilegal']),restrito:{cacadas:3},programado:true},
   {...subArea('roppongi','arena','Arena Clandestina','闘','arena|luta clandestina|apost','Arena Clandestina no subsolo de uma boate fechada de Roppongi: um ringue de concreto cercado de grades, apostadores ricos nos camarotes, lutas entre feiticeiros de aluguel e maldições capturadas. Quem vence ganha dinheiro e nome entre os caçadores.',['luta','apostas']),restrito:{cacadas:6}}
 );
 /* posições no mapa (viewBox 1000 x 640) */
@@ -1733,6 +1750,7 @@ async function irPara(id,anterior){
   if(location.hash==='#local-'+id)setTimeout(route,0);else location.hash='local-'+id;
   const de0=meu.__de;
   if(mudou&&emboscadaElmos(id,de0)){await atualizarMeu({ultimaEmboscada:Date.now()});setTimeout(()=>narrar(id,{tipo:'emboscada',primeira,anterior:anterior||''}),500);return;}
+  if(mudou&&locById(id)?.programado){if(carreg&&carreg.id===id)carreg.narrou=true;setTimeout(()=>abrirMercado(),700);return;}
   if(mudou){if(primeira)setTimeout(()=>narrar(id,{tipo:'chegada',anterior:anterior||''}),500);else chegadaRecente={local:id,anterior:anterior||'',t:Date.now()};}
   if(mudou&&meu.cacada?.destino===id)setTimeout(()=>toastChat('O alvo do seu contrato está por aqui. Abra o app Caçadores e toque em "Começar a caçada".'),1800);
 }
@@ -2116,6 +2134,85 @@ async function aplicarDescanso(final,motivo){
 setInterval(()=>{atualizarRelogio();if(meu?.descanso){aplicarDescanso(false);if(celApp==='descanso'||canalAtual===meu.descanso.local)renderDescanso();}},20000);
 setTimeout(atualizarRelogio,0);
 
+/* ---------- Mercado Negro: loja programada (sem IA) + conversa entre freelancers ---------- */
+const MERCADO_ARMAS=[
+  {nome:'Faca Amaldiçoada de Segunda Mão',dano:'1d6 + Velocidade',tipo:'Cortante',dur:60,peso:1,ienes:60000,grupo:'corpo'},
+  {nome:'Soco-Inglês Selado',dano:'+2',tipo:'Contusão',dur:80,peso:1,ienes:45000,grupo:'corpo'},
+  {nome:'Corrente Amaldiçoada',dano:'1d8 + Força',tipo:'Contusão',dur:90,peso:3,ienes:90000,grupo:'corpo'}];
+MERCADO_ARMAS.forEach(a=>{if(!DATA.armas.some(x=>x.nome===a.nome))DATA.armas.push(a);});
+const MERCADO_CONSUMIVEIS=[
+  {nome:'Ampola de Energia Residual',ienes:8000,desc:'Recupera 1d6 PA. Uso único.',usar:{pa:'1d6'}},
+  {nome:'Bandagens Tratadas',ienes:3000,desc:'Recupera 1d4 PV fora de combate. Uso único.',usar:{pv:'1d4',foraCombate:true}},
+  {nome:'Talismã de Selamento',ienes:15000,desc:'Sela uma maldição de grau 4 enfraquecida. Declare o uso ao mestre.'},
+  {nome:'Óculos de Lente Amaldiçoada',ienes:20000,desc:'Deixa enxergar maldições comuns, mesmo sem energia amaldiçoada.'},
+  {nome:'Flechas',ienes:2000,qtd:10,desc:'Pacote com 10 flechas.'},
+  {nome:'Munição',ienes:3000,qtd:12,desc:'Caixa com 12 cartuchos.'}];
+const TANUKI={nome:'Velho Tanuki',
+  oi:['Hm. Mais um caçador. Olhe à vontade, mas não toque no que não vai levar.','Dinheiro vivo, sem perguntas. Do jeito que eu gosto.','Chegou na hora certa: acabou de entrar mercadoria fresca.','Se o pessoal da escola perguntar, você nunca me viu.'],
+  compra:['Boa escolha. Isso já salvou a vida de gente pior que você.','Negócio fechado. Não me devolva com sangue em cima.','Leve, leve. E diga aos outros freelancers onde encontrou.','Hm. Você tem bom olho para coisa amaldiçoada.'],
+  pobre:['Sem dinheiro, sem conversa. Volte quando tiver ienes.','Isso aqui não é caridade, garoto.','Faça mais umas caçadas e volte.']};
+const sortear=l=>l[Math.floor(Math.random()*l.length)];
+let mercadoAba='loja',mercadoFala='';
+function abrirMercado(){
+  if(!locById(canalAtual)?.programado)return;fecharCel(true);
+  let el=$('#mercado');if(!el){el=document.createElement('div');el.id='mercado';el.className='mercado';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');el.setAttribute('aria-label','Mercado Negro');document.body.appendChild(el);}
+  mercadoFala=sortear(TANUKI.oi);el.hidden=false;renderMercado();setTimeout(()=>{const b=el.querySelector('.merc-fechar');b&&b.focus();},50);
+}
+function fecharMercado(){const el=$('#mercado');if(el)el.hidden=true;}
+function renderMercado(){
+  const el=$('#mercado');if(!el||el.hidden)return;const ien=+meu?.ienes||0;
+  const ae=document.activeElement;const dig=ae&&ae.id==='merc-texto'?{v:ae.value,s:ae.selectionStart}:null;
+  const item=(nome,preco,desc,k,extra)=>`<div class="merc-item"><div><b>${esc(nome)}</b><small>${esc(desc)}</small></div><div class="merc-preco"><span>¥ ${preco.toLocaleString('pt-BR')}</span><button class="btn small" data-mcomprar="${esc(k)}" ${ien<preco?'aria-disabled="true"':''}>Comprar</button>${extra||''}</div></div>`;
+  const armas=[...MERCADO_ARMAS,...DATA.armas.filter(a=>!MERCADO_ARMAS.includes(a))];
+  const tenho=MERCADO_CONSUMIVEIS.filter(c=>c.usar&&(meu?.inventario||[]).some(i=>normNome(i.nome)===normNome(c.nome)&&i.qtd>0));
+  const conversa=msgs.filter(m=>m.tipo!=='sistema'||/comprou/.test(m.texto||'')).slice(-40);
+  el.innerHTML=`<div class="merc-caixa">
+    <div class="merc-topo"><div><small>Shinjuku · subsolo</small><h2>闇市 Mercado Negro</h2></div><span class="merc-dinheiro">¥ ${ien.toLocaleString('pt-BR')}</span><button type="button" class="cel-bt merc-fechar" data-mfechar="1" aria-label="Fechar o Mercado Negro">✕</button></div>
+    <div class="merc-npc"><span class="tok" style="background:${corNpc(TANUKI.nome)};color:#141216">狸</span><p><b>${TANUKI.nome}:</b> ${esc(mercadoFala)}</p></div>
+    <div class="merc-abas" role="tablist"><button role="tab" aria-selected="${mercadoAba==='loja'}" class="${mercadoAba==='loja'?'on':''}" data-maba="loja">Loja</button><button role="tab" aria-selected="${mercadoAba==='conversa'}" class="${mercadoAba==='conversa'?'on':''}" data-maba="conversa">Conversa dos freelancers</button></div>
+    ${mercadoAba==='loja'?`<div class="merc-corpo">
+      ${tenho.length?`<h3>Seus consumíveis</h3>${tenho.map(c=>{const q=(meu.inventario||[]).find(i=>normNome(i.nome)===normNome(c.nome)).qtd;return `<div class="merc-item"><div><b>${esc(c.nome)} ×${q}</b><small>${esc(c.desc)}</small></div><div class="merc-preco"><button class="btn small primary" data-musar="${esc(c.nome)}">Usar</button></div></div>`;}).join('')}`:''}
+      <h3>Consumíveis e artefatos</h3>${MERCADO_CONSUMIVEIS.map(c=>item(c.nome+(c.qtd?` (${c.qtd})`:''),c.ienes,c.desc,'c:'+c.nome)).join('')}
+      <h3>Armas e ferramentas amaldiçoadas</h3>${armas.map(a=>item(a.nome,a.ienes,`${a.dano} · ${a.tipo}${a.grupo==='distancia'?' · distância':''}${MERCADO_ARMAS.includes(a)?' · amaldiçoada':''}`,'a:'+a.nome)).join('')}
+      </div>`
+    :`<div class="merc-corpo merc-chat" id="merc-log">${conversa.length?conversa.map(m=>m.tipo==='npc'?`<p class="merc-msg npc"><b>${esc(m.npcNome)}:</b> ${esc(m.texto)}</p>`:m.tipo==='sistema'?`<p class="merc-msg sis">${esc(m.texto)}</p>`:`<p class="merc-msg${m.autorId===myId()?' eu':''}"><b>${esc(m.autorNome||'Alguém')}:</b> ${esc(m.texto)}</p>`).join(''):'<p class="note">Ninguém falou nada ainda. Os freelancers que estiverem no Mercado Negro leem aqui.</p>'}</div>
+      <form class="dm-form" id="merc-form"><label class="sr" for="merc-texto">Mensagem para os freelancers</label><textarea id="merc-texto" rows="2" maxlength="600" placeholder="Fale com os outros freelancers..."></textarea><button class="btn primary" type="submit">Enviar</button></form>`}
+  </div>`;
+  const log=$('#merc-log');if(log)log.scrollTop=log.scrollHeight;
+  const ta=$('#merc-texto');if(ta&&dig){ta.value=dig.v;ta.focus();try{ta.setSelectionRange(dig.s,dig.s);}catch{}}
+}
+let comprando=false;
+async function comprarMercado(k){
+  if(comprando||!meu)return;const [t,nome]=[k.slice(0,1),k.slice(2)];
+  const it=t==='c'?MERCADO_CONSUMIVEIS.find(c=>c.nome===nome):[...MERCADO_ARMAS,...DATA.armas].find(a=>a.nome===nome);if(!it)return;
+  if((+meu.ienes||0)<it.ienes){mercadoFala=sortear(TANUKI.pobre);renderMercado();return;}
+  comprando=true;
+  try{const inv=aplicarItens(meu.inventario||[],[{nome:it.nome,qtd:it.qtd||1,nota:t==='c'?it.desc:`${it.dano}, ${it.tipo}${MERCADO_ARMAS.includes(it)?', amaldiçoada':''}`}]);
+    const c={...(meu.cont||{})};const set=new Set(Array.isArray(c.itens)?c.itens:[]);set.add(normNome(it.nome));c.itens=[...set].slice(-200);if(MERCADO_ARMAS.includes(it)||/amaldi|talism/i.test(it.nome))c.artefatos=(+c.artefatos||0)+1;
+    await atualizarMeu({ienes:(+meu.ienes||0)-it.ienes,inventario:inv,cont:c});
+    mercadoFala=sortear(TANUKI.compra);
+    await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} comprou ${it.nome}${it.qtd?` (${it.qtd})`:''} no Mercado Negro por ¥ ${it.ienes.toLocaleString('pt-BR')}.`});}
+  finally{comprando=false;renderMercado();}
+}
+async function usarConsumivel(nome){
+  const c=MERCADO_CONSUMIVEIS.find(x=>x.nome===nome);if(!c?.usar||!meu)return;
+  if(c.usar.foraCombate&&combate&&combate.ativo&&souParticipante()){mercadoFala='Bandagem no meio da briga? Termine a luta primeiro.';renderMercado();return;}
+  const e={...meu.estado};const ganhos=[];['pv','pa'].forEach(k=>{if(!c.usar[k])return;const r=rolarExpr(c.usar[k]);const novo=Math.min(meu.max[k],e[k]+(r?.total||0));ganhos.push(`+${novo-e[k]} ${k.toUpperCase()} (${r.expr}=${r.total})`);e[k]=novo;});
+  await atualizarMeu({estado:e,inventario:aplicarItens(meu.inventario||[],[{nome:c.nome,qtd:-1}])});
+  await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} usou ${c.nome}: ${ganhos.join(', ')}.`});renderMercado();
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-mfechar],[data-maba],[data-mcomprar],[data-musar],[data-mabrir]');if(!b)return;
+  if(b.dataset.mabrir){abrirMercado();return;}
+  if(b.dataset.mfechar){fecharMercado();return;}
+  if(b.dataset.maba){mercadoAba=b.dataset.maba;renderMercado();return;}
+  if(b.dataset.mcomprar){comprarMercado(b.dataset.mcomprar);return;}
+  if(b.dataset.musar){usarConsumivel(b.dataset.musar);return;}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#mercado')&&!$('#mercado').hidden)fecharMercado();
+  if(e.target.id==='merc-texto'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarMercado();}});
+document.addEventListener('submit',e=>{if(e.target.id!=='merc-form')return;e.preventDefault();enviarMercado();});
+async function enviarMercado(){const ta=$('#merc-texto');const t=(ta?.value||'').trim();if(!t||!canalAtual)return;ta.value='';
+  await postMsg(canalAtual,{tipo:'jogador',autorNome:F.nome||'Sem nome',texto:t.slice(0,600),para:'jogadores'});renderMercado();}
+
 /* App Caçadores (só freelancers): contratos rápidos de eliminar 1 a 5 criaturas, sem investigação nem relatório.
    Os contratos mudam a cada dia do jogo e são gerados aqui, sem gastar IA. */
 const CRIATURAS=[
@@ -2375,6 +2472,7 @@ async function postMsg(id,obj){
 function toastChat(t){const el=document.createElement('div');el.className='msg sistema';el.textContent=t;$('#chat-log').appendChild(el);el.scrollIntoView({block:'end'});}
 const paras=t=>String(t||'').split(/\n{2,}|\n/).filter(x=>x.trim()).map(p=>`<p>${esc(p)}</p>`).join('');
 function renderChat(){
+  if($('#mercado')&&!$('#mercado').hidden&&mercadoAba==='conversa')setTimeout(renderMercado,0);
   const log=$('#chat-log');if(!log)return;
   const atBottom=log.scrollHeight-log.scrollTop-log.clientHeight<80;
   if(!msgs.length){log.innerHTML=`<p class="empty-chat">Ninguém falou nada aqui ainda. Descreva o que seu personagem faz e o mestre responde.</p>`;return;}
@@ -2436,7 +2534,8 @@ function renderAreas(){
   bar.hidden=false;const cont=a=>[...jogadores.values()].filter(j=>j.local===a).length;
   const quartos=[quartoId(myId()),...[...jogadores.keys()].map(k=>quartoId(k)),...(ehQuarto(id)?[id]:[])].filter(q=>raiz(q)===rz);
   const lista=[...LOCAIS.filter(l=>(l.id===rz||l.pai===rz)&&areaVisivel(l)),...[...new Set(quartos)].filter(q=>ehEscola(rz)||q===quartoId(myId())||q===id).map(locById)];
-  bar.innerHTML=lista.map(l=>!areaLiberada(l)?`<button type="button" class="trancada" disabled title="Libera com ${l.restrito.cacadas} caçadas concluídas"><span class="k">${l.kanji}</span>${esc(l.area)} · ${+meu?.cacadasFeitas||0}/${l.restrito.cacadas}</button>`:`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
+  const mercBtn=locById(id)?.programado?'<button type="button" class="merc-abrir" data-mabrir="1">闇 Abrir o Mercado Negro</button>':'';
+  bar.innerHTML=mercBtn+lista.map(l=>!areaLiberada(l)?`<button type="button" class="trancada" disabled title="Libera com ${l.restrito.cacadas} caçadas concluídas"><span class="k">${l.kanji}</span>${esc(l.area)} · ${+meu?.cacadasFeitas||0}/${l.restrito.cacadas}</button>`:`<button type="button" data-area="${l.id}" class="${l.id===id?'on':''}" ${l.id===id?'aria-current="true"':''}><span class="k">${l.kanji}</span>${esc(l.area)}${cont(l.id)?`<span class="n">${cont(l.id)}</span>`:''}</button>`).join('');
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
@@ -2466,6 +2565,7 @@ function agendarObservacao(id,t,r){
 async function enviar(){
   const ta=$('#chat-input');const t=ta.value.trim();if(!t||!canalAtual)return;
   if(narrando&&paraQuem==='mestre'){toastChat('Espere o mestre terminar de narrar.');return;}
+  if(locById(canalAtual)?.programado&&paraQuem==='mestre'){toastChat('No Mercado Negro não tem mestre: aqui você fala com os outros freelancers. Use "Para os jogadores" ou abra a loja.');return;}
   if(meu?.descanso&&paraQuem==='mestre'){toastChat('Você está descansando. Levante (app Descanso) para agir com o mestre. Falar com os outros jogadores pode.');return;}
   let sobre=paraQuem==='mestre'&&(calc().hasTec||(F.especiais||[]).length)?Math.max(0,parseInt($('#chat-sobre').value)||0):0;
   if(sobre){const C=calc();
@@ -2476,7 +2576,7 @@ async function enviar(){
   $('#chat-sobre').value='0';
   const dd=paraQuem==='mestre'?dadosNaMensagem(t):[];
   ta.value='';await postMsg(canalAtual,{tipo:'jogador',autorNome:F.nome||'Sem nome',texto:t,para:paraQuem,...(r?{rolagem:r}:{}),...(sobre?{sobrecarga:sobre,sobreRolagem:so}:{}),...(dd.length?{dadosDeclarados:dd}:{})});
-  if(paraQuem==='jogadores')agendarObservacao(canalAtual,t,r);
+  if(paraQuem==='jogadores'){if(!locById(canalAtual)?.programado)agendarObservacao(canalAtual,t,r);}
   else if(ehDuelo()&&combateLocal===canalAtual&&!/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t))narrar(canalAtual,{tipo:'duelo',texto:t,rolagem:r,sobrecarga:sobre,sobreRolagem:so,dados:dd});
   else narrar(canalAtual,{tipo:'acao',texto:t,rolagem:r,sobrecarga:sobre,sobreRolagem:so,dados:dd,foraHint:/(^|[\s,.!?¿¡"'(])mestre([\s,.!?:;)"']|$)/i.test(t)});
 }
