@@ -89,7 +89,9 @@ export async function portaoListaEspera({ fs, user, liberar, sair }) {
   let fila = null;
   try { const f = await getDoc(doc(fs, "waitlist", user.uid)); if (f.exists()) fila = f.data(); }
   catch (e) {
-    tela.innerHTML = `<div class="fila-wrap"><div class="fila-geral">Não consegui conferir sua vaga. Recarregue a página. Se continuar, avise o mestre (as regras do banco podem estar desatualizadas).</div>${rodapeHtml()}</div>`;
+    console.error("Lista de espera (leitura):", e);
+    tela.innerHTML = `<div class="fila-wrap"><div class="fila-geral">Não consegui conferir sua vaga. Recarregue a página. Se continuar, avise o mestre: as regras do banco (firestore.rules) provavelmente ainda não foram publicadas.<br><code style="font-weight:400;font-size:12px">${esc((e && e.code) || "")} ${esc((e && e.message) || "")}</code></div>${botaoSair()}${rodapeHtml()}</div>`;
+    tela.querySelector("[data-fila-sair]")?.addEventListener("click", sair);
     return;
   }
   if (fila) mostrarFinal(fila.position); else mostrarFormulario();

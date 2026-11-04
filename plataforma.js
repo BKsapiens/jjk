@@ -78,8 +78,28 @@ if (!configOk) {
       // Depois do login: mestre entra direto; os outros passam pela lista de espera
       // (beta liberado → jogo; já na fila → tela final; senão → formulário).
       if (ADMINS.includes(String(u.email || "").toLowerCase())) { liberar(u); return; }
-      const { portaoListaEspera } = await import("./listaespera.js");
-      portaoListaEspera({ fs, user: u, liberar: () => liberar(u), sair });
+      // cobre o jogo na hora, antes de carregar a lista de espera (o jogo nunca aparece por trás)
+      let capa = document.getElementById("tela-fila");
+      if (!capa) { capa = document.createElement("div"); capa.id = "tela-fila"; document.body.appendChild(capa); }
+      capa.hidden = false;
+      capa.setAttribute("style", "position:fixed;inset:0;z-index:110;background:#0b0a0c;color:#f3ede6;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;font-family:system-ui,sans-serif");
+      capa.textContent = "Conferindo seu acesso…";
+      try {
+        const { portaoListaEspera } = await import("./listaespera.js?v=2");
+        capa.removeAttribute("style");
+        await portaoListaEspera({ fs, user: u, liberar: () => liberar(u), sair });
+      } catch (e) {
+        console.error("Lista de espera:", e);
+        capa.innerHTML = "";
+        const box = document.createElement("div");
+        box.style.cssText = "max-width:440px;border:3px solid #d3121c;padding:18px;background:#151216";
+        box.innerHTML = "<p style='margin:0 0 8px;font-weight:800'>Não consegui abrir a lista de espera.</p><p style='margin:0 0 12px;color:#b9b0a6;font-size:14px'>Recarregue a página. Se continuar, mande esta mensagem para o mestre:</p>";
+        const det = document.createElement("code"); det.style.cssText = "display:block;word-break:break-word;color:#ff6b72;font-size:13px;margin-bottom:12px";
+        det.textContent = String((e && (e.code || e.name)) || "erro") + ": " + String((e && e.message) || e);
+        const b = document.createElement("button"); b.type = "button"; b.textContent = "Sair"; b.style.cssText = "padding:8px 16px;font-weight:800";
+        b.addEventListener("click", sair);
+        box.append(det, b); capa.appendChild(box);
+      }
     } else {
       tela.classList.add("show");
     }
