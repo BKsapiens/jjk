@@ -65,6 +65,10 @@ service cloud.firestore {
     match /notas/{uid} {
       allow read, write: if logado() && request.auth.uid == uid;
     }
+    // Estado dos NPCs com agenda (para onde foram, quem acompanham, memória e relação com cada jogador).
+    match /npcEstado/{id} {
+      allow read, write: if logado();
+    }
     // Estado da campanha (fase, semana dos olhos, direção do mestre): só o mestre escreve.
     match /config/{id} {
       allow read: if logado();

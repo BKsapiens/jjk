@@ -269,6 +269,8 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .post-bt{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:800;font-size:13px;padding:3px 10px;cursor:pointer;transform:skew(-6deg)}
 .post-bt.on{background:#d3121c;color:#fff}.post-bt:hover,.post-bt:focus-visible{background:#0b0a0c;color:#fff;outline:none}
 .post-form{margin-bottom:4px}
+.seg-npc{margin-left:6px}.seg-npc button{border-color:#8a7a5a!important}.seg-npc button.on{background:#8a7a5a!important;color:#fff!important}
+.npc-lista{margin-bottom:8px;padding-bottom:8px;border-bottom:1px dashed var(--line)}
 .titulo-conq{font-size:.78em;font-weight:800;color:#f6d32b;white-space:nowrap}
 .post .titulo-conq,.rank .titulo-conq,.conq .titulo-conq{color:#b4141c}
 .conq-tit{align-self:flex-start;margin-top:4px;font-size:12px}
@@ -793,7 +795,7 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
         <div class="chat-thinking" id="chat-thinking" hidden>O mestre está narrando<span class="dots"><i>.</i><i>.</i><i>.</i></span></div>
         <form class="chat-form" id="chat-form">
           <div class="chat-opts">
-            <div class="seg" role="group" aria-label="Para quem é a mensagem"><button type="button" data-para="mestre" class="on">Para o mestre</button><button type="button" data-para="jogadores">Para os jogadores</button></div>
+            <div class="seg" role="group" aria-label="Para quem é a mensagem"><button type="button" data-para="mestre" class="on">Para o mestre</button><button type="button" data-para="jogadores">Para os jogadores</button></div><div class="seg seg-npc" id="npc-alvos" role="group" aria-label="Falar com um NPC presente" hidden></div>
             <button type="button" class="btn small so-mob" id="btn-rolar-m" aria-controls="roll-panel">🎲 Rolar teste</button>
             <button type="button" class="btn small" id="btn-anexar">Anexar rolagem</button>
             <div id="anexo-box" class="anexo"></div>
@@ -2154,6 +2156,138 @@ async function aplicarDescanso(final,motivo){
 setInterval(()=>{atualizarRelogio();if(meu?.descanso){aplicarDescanso(false);if(celApp==='descanso'||canalAtual===meu.descanso.local)renderDescanso();}},20000);
 setTimeout(atualizarRelogio,0);
 
+/* ---------- NPCs com vida própria ----------
+   A agenda é programada (sem IA): cada NPC tem uma rotina por hora do jogo e dia da semana, gasta um tempo
+   "a caminho" entre um lugar e outro e só existe no lugar onde está. A IA só entra quando alguém fala com ele,
+   e aí ele responde como ele mesmo (fala, gesto, ir embora, acompanhar alguém). O mestre não fala por eles. */
+const DIAS_SEMANA=['segunda','terça','quarta','quinta','sexta','sábado','domingo'];
+const NPCS_SIS=[
+  {id:'shoko',nome:'Shoko Ieiri',papel:'médica da Escola de Tóquio',
+   jeito:'calma, irônica, cansada, fala pouco e direto; fuma escondido; trata ferimento grave como rotina; pergunta sempre como o aluno se feriu e dá bronca seca quando foi imprudência',
+   sabe:'medicina, Energia Reversa, os alunos e professores de Tóquio, ferimentos estranhos que tem visto ultimamente (cheiro de água parada em alguns)',
+   rotina:[{de:7,ate:20,local:'escola-enfermaria',faz:'atendendo na enfermaria'},{de:20,ate:23,local:'shinjuku-goldengai',faz:'bebendo sozinha num bar minúsculo'},
+     {dias:[6],de:10,ate:16,local:'odaiba-praia',faz:'de folga, olhando o mar'},{dias:[6],de:7,ate:10,local:null},{dias:[6],de:16,ate:20,local:null}]},
+  {id:'yaga',nome:'Masamichi Yaga',papel:'diretor da Escola de Tóquio',
+   jeito:'sério, grave, poucas palavras, protetor à maneira dele; costura bonecos amaldiçoados enquanto conversa; testa a motivação dos alunos com perguntas duras',
+   sabe:'a escola, o Alto Escalão, rachaduras recentes nas barreiras da escola (não conta tudo), desconfiança de um aluno do 2º ano',
+   rotina:[{de:8,ate:18,local:'escola-professores',faz:'despachando papéis e costurando um boneco'},{de:18,ate:21,local:'escola',faz:'andando pelo pátio, conferindo as barreiras'}]},
+  {id:'utahime',nome:'Utahime Iori',papel:'professora da Escola de Kyoto',
+   jeito:'exigente, formal, se irrita fácil com deboche, mas protege os alunos de perto; odeia atraso e relatório mal feito',
+   sabe:'Kyoto, os clãs, os alunos de Kyoto, regras de missão, a rivalidade com Tóquio',
+   rotina:[{de:7,ate:17,local:'kyoto-professores',faz:'corrigindo relatórios'},{de:17,ate:19,local:'kyoto-missoes',faz:'atualizando o quadro de missões'},{de:19,ate:21,local:'gion-casadecha',faz:'tomando chá para esfriar a cabeça'}]},
+  {id:'gakuganji',nome:'Gakuganji Yoshinobu',papel:'diretor da Escola de Kyoto',
+   jeito:'velho, rígido, tradicionalista, desconfia de Tóquio e de freelancers, fala com desprezo educado; respeita força e disciplina',
+   sabe:'história das famílias, registros antigos, política do Alto Escalão; insinua coisas sobre a lenda de Sōgen sem confirmar',
+   rotina:[{dias:[0,1,2,3,4],de:9,ate:16,local:'kyoto-professores',faz:'recebendo relatórios'},{dias:[0,1,2,3,4],de:16,ate:18,local:'kyoto-biblioteca',faz:'lendo pergaminhos antigos'},{dias:[5,6],de:10,ate:12,local:'fushimi',faz:'rezando no santuário'}]},
+  {id:'kuroda',nome:'Detetive Kuroda',papel:'policial cético de Shibuya',
+   jeito:'cético, cansado, sarcástico, anota tudo num caderno; não acredita em maldições mas coleciona casos que não fecham; desconfia de jovens andando de noite',
+   sabe:'desaparecimentos perto de bueiros em Shibuya, boatos da rua, a lei',
+   rotina:[{dias:[0,1,2,3,4,5],de:9,ate:13,local:'shibuya',faz:'de olho no cruzamento'},{dias:[0,1,2,3,4,5],de:13,ate:17,local:'shibuya-estacao',faz:'interrogando funcionários da estação'},{dias:[0,1,2,3,4,5],de:19,ate:22,local:'avenida-izakaya',faz:'jantando e relendo o caderno'}]},
+  {id:'hana',nome:'Hana Morita',papel:'atendente do konbini da Avenida Sakuragawa',
+   jeito:'tímida, gentil, fala rápido quando fica nervosa; vê maldições sem saber o que são e acha que está ficando doida; agradece demais',
+   sabe:'quem passa na avenida de madrugada, coisas estranhas que viu (um vulto no viaduto, uma flor de cinza no chão)',
+   rotina:[{de:18,ate:24,local:'avenida-konbini',faz:'no caixa do turno da noite'},{de:0,ate:6,local:'avenida-konbini',faz:'repondo prateleiras de madrugada'}]},
+  {id:'joen',nome:'Monge Jōen',papel:'monge que coleciona amuletos em Asakusa',
+   jeito:'velho, risonho, fala por parábolas e piadas ruins; troca amuletos por histórias; leva energia amaldiçoada a sério',
+   sabe:'amuletos, selos, lendas de Tóquio, um rumor sobre um lótus de cinza aparecendo em templos',
+   rotina:[{de:5,ate:12,local:'asakusa-templo',faz:'varrendo o pátio do templo'},{de:12,ate:17,local:'asakusa',faz:'negociando amuletos com turistas'},{de:17,ate:19,local:'asakusa-rio',faz:'meditando na margem do rio'}]},
+  {id:'ren',nome:'Ren Kagura',papel:'feiticeiro freelancer endividado',
+   jeito:'charmoso, malandro, sempre devendo dinheiro a alguém; ajuda se tiver vantagem; respeita freelancers, debocha de alunos de escola',
+   sabe:'contratos de caça, quem paga e quem não paga, o Mercado Negro, a Cidade Fantasma (só fala dela com freelancers)',
+   rotina:[{de:10,ate:15,local:'shinjuku-kabukicho',faz:'fugindo de um cobrador'},{de:15,ate:20,local:'fantasma-pensao',faz:'jogando cartas na pensão'},{de:21,ate:24,local:'roppongi-boate',faz:'tentando convencer alguém a pagar uma bebida'},{de:0,ate:3,local:'roppongi-boate',faz:'ainda na boate'}]},
+  {id:'fumiko',nome:'Dona Fumiko',papel:'dona da Pensão dos Caçadores, na Cidade Fantasma',
+   jeito:'idosa, calada, responde com uma ou duas palavras; não aceita briga dentro da pensão; sabe mais do que diz',
+   sabe:'quem entra e sai da Cidade Fantasma, a história do incidente de 40 anos atrás (quase nunca conta), o Templo Partido',
+   rotina:[{de:6,ate:24,local:'fantasma-pensao',faz:'cuidando do fogareiro da pensão'}]},
+];
+const npcEstados=new Map();
+function assinarNpcEstados(){if(!db)return;db.collection('npcEstado').onSnapshot(s=>{npcEstados.clear();s.docs.forEach(d=>npcEstados.set(d.id,d.data()||{}));atualizarNpcsCena();},()=>{});}
+const diaSemana=(t=Date.now())=>((diaJogo(t)%7)+7)%7;
+const TRANSITO=0.4; /* horas do jogo "a caminho" ao trocar de lugar */
+function slotRotina(n,t){const h=horaJogo(t),d=diaSemana(t);
+  const cand=n.rotina.filter(r=>(!r.dias||r.dias.includes(d))&&h>=r.de&&h<r.ate);
+  return cand.find(r=>r.dias)||cand[0]||null;}
+function trocaLocal(loc){if(!loc)return loc;if(typeof faseEfetiva==='function'&&faseEfetiva()==='kyoto'&&/^escola(-|$)/.test(loc))return loc.replace(/^escola/,'kyoto');return loc;}
+/* onde o NPC está agora: {local, faz, status:'aqui'|'caminho'|'casa'} */
+function npcOnde(n,t=Date.now()){
+  const e=npcEstados.get(n.id)||{};
+  if(+e.ate>t){
+    if(e.seguindo){const j=e.seguindo===myId()?meu:jogadores.get(e.seguindo);if(j&&j.local)return {local:j.local,faz:`acompanhando ${j.nome||'alguém'}`,status:'aqui'};}
+    else if(e.local){const chega=+e.chega||0;return t<chega?{local:null,status:'caminho',para:e.local}:{local:e.local,faz:e.faz||'ali, por conta própria',status:'aqui'};}
+  }
+  const r=slotRotina(n,t);if(!r||!r.local)return {local:null,status:'casa'};
+  const ini=(()=>{let x=t;for(let k=0;k<96;k++){const y=x-HORA_JOGO_MS/4;const r2=slotRotina(n,y);if(!r2||r2.local!==r.local)return x;x=y;}return x;})();
+  if(t-ini<TRANSITO*HORA_JOGO_MS&&ini>t-HORA_JOGO_MS*23){const ant=slotRotina(n,ini-HORA_JOGO_MS/4);if(ant&&ant.local&&ant.local!==r.local)return {local:null,status:'caminho',para:trocaLocal(r.local)};}
+  return {local:trocaLocal(r.local),faz:r.faz,status:'aqui'};
+}
+const npcsAqui=(loc=canalAtual)=>loc?NPCS_SIS.filter(n=>npcOnde(n).local===loc):[];
+let npcsCenaAntes=new Set(),npcsCenaCanal=null;
+function atualizarNpcsCena(){
+  const ids=new Set(npcsAqui().map(n=>n.id));
+  if(npcsCenaCanal===canalAtual){
+    NPCS_SIS.filter(n=>ids.has(n.id)&&!npcsCenaAntes.has(n.id)).forEach(n=>toastChat(`${n.nome} chegou (${npcOnde(n).faz}).`));
+    NPCS_SIS.filter(n=>!ids.has(n.id)&&npcsCenaAntes.has(n.id)).forEach(n=>{const o=npcOnde(n);toastChat(`${n.nome} foi embora${o.status==='caminho'&&o.para?` em direção a ${nomeDestino(o.para)}`:''}.`);if(paraQuem==='npc:'+n.id)escolherPara('mestre');});}
+  npcsCenaAntes=ids;npcsCenaCanal=canalAtual;renderNpcAlvos();if(celApp==='cena'&&canalAtual)renderPresentes();
+}
+setInterval(atualizarNpcsCena,15000);
+function renderNpcAlvos(){
+  const box=$('#npc-alvos');if(!box)return;const l=npcsAqui();
+  box.innerHTML=l.map(n=>`<button type="button" data-para="npc:${n.id}" class="${paraQuem==='npc:'+n.id?'on':''}" title="${esc(n.papel)} · ${esc(npcOnde(n).faz||'')}">Falar com ${esc(n.nome.split(' ')[0])}</button>`).join('');
+  box.hidden=!l.length;
+}
+function escolherPara(v){paraQuem=v;document.querySelectorAll('[data-para]').forEach(x=>x.classList.toggle('on',x.dataset.para===v));
+  const n=v.startsWith('npc:')&&NPCS_SIS.find(x=>'npc:'+x.id===v);
+  $('#chat-input').placeholder=n?`Fale com ${n.nome}. Só ele(a) responde, o mestre fica de fora.`:v==='jogadores'?'Fale com os outros jogadores. O mestre só entra se precisar.':'Descreva o que seu personagem faz ou fala... (Enter envia, Shift+Enter quebra linha)';}
+const npcLembrancas=(n,quem)=>((npcEstados.get(n.id)||{}).memoria||[]).filter(m=>!quem||m.uid===quem).slice(-8).map(m=>`- (${m.nome||'alguém'}) ${m.texto}`).join('\n');
+let npcFalando=false;
+async function falarComNpc(n,texto){
+  if(npcFalando)return;const loc=canalAtual;if(npcOnde(n).local!==loc){toastChat(`${n.nome} não está mais aqui.`);return;}
+  npcFalando=true;const el=$('#chat-thinking');if(el){el.hidden=false;el.firstChild.textContent=`${n.nome} está respondendo`;}
+  try{
+    const e=npcEstados.get(n.id)||{};const rel=+(e.relacoes||{})[myId()]||0;const o=npcOnde(n);
+    const prox=[1,2,3,4,6].map(h=>{const r=slotRotina(n,Date.now()+h*HORA_JOGO_MS);return r?`${Math.floor((horaJogo()+h)%24)}h: ${r.local?nomeDestino(trocaLocal(r.local)):'em casa'}`:'';}).filter(Boolean).join('; ');
+    const prompt=`Você interpreta UM personagem de uma campanha de RPG de Jujutsu Kaisen, e só ele. Não é o mestre: não narre o ambiente, não fale por outras pessoas, não decida nada pelos jogadores.
+PERSONAGEM: ${n.nome}, ${n.papel}.
+JEITO: ${n.jeito}.
+O QUE SABE: ${n.sabe}. Não revele segredos da campanha que não estão aqui; se não sabe, diga que não sabe ou desconverse do seu jeito.
+AGORA: ${relogioTxt()} (${periodoDia()}, ${DIAS_SEMANA[diaSemana()]}), em ${locById(loc)?.nome||loc}, ${o.faz||''}.
+AGENDA DAS PRÓXIMAS HORAS (siga, a menos que tenha um bom motivo): ${prox||'livre'}.
+QUEM FALA COM VOCÊ: ${F.nome} (${ehFree(myId())?'feiticeiro freelancer, sem escola':'aluno da '+ESCOLAS[raizDaEscola(escolaDe(myId()))]?.nome}, ${grauEscola(meu?.pg)}). Relação com ${F.nome}: ${rel>=3?'muito boa':rel>=1?'boa':rel<=-3?'péssima':rel<=-1?'ruim':'neutra'}.
+O QUE VOCÊ LEMBRA DE ${F.nome}:
+${npcLembrancas(n,myId())||'(nunca conversaram)'}
+OUTRAS LEMBRANÇAS RECENTES:
+${npcLembrancas(n)||'(nenhuma)'}
+CONVERSA E CENA RECENTES NESTE LUGAR:
+${historico().split('\n').slice(-14).join('\n')||'(vazio)'}
+
+${F.nome} diz/faz agora: "${texto}"
+
+Responda como ${n.nome}, em português do Brasil, curto (1 a 3 frases de fala), no seu jeito. Se ${F.nome} chamar você para ir a algum lugar ou acompanhar, decida pela sua personalidade, relação e agenda (pode recusar). Se você mesmo decidir sair agora para outro lugar, diga e use "vaiPara".
+Lugares válidos (ids): ${LOCAIS.filter(x=>!x.programado).map(x=>x.id).join(', ')}.
+Responda SOMENTE com JSON:
+{"fala":"o que você diz","acao":"gesto curto em terceira pessoa ou vazio","vaiPara":null ou {"local":"id","horas":1,"motivo":"curto"},"acompanhar":null ou {"horas":2},"lembrar":"frase curta do que você vai lembrar desta conversa ou vazio","relacao":0}
+"acompanhar" = você aceitou ir junto com ${F.nome} por algumas horas (você vai para onde ele for). "relacao" entre -2 e 2: o quanto essa conversa mudou o que você acha dele.`;
+    const res=await chamarIA(prompt,'default',avisoEspera);
+    let j;try{j=lerJSON(res.text||'');}catch{j={fala:String(res.text||'').slice(0,400)};}
+    const fala=String(j.fala||'').trim().slice(0,900),acao=String(j.acao||'').trim().slice(0,240);
+    if(acao||fala)await postMsg(loc,{tipo:'npc',npcNome:n.nome,npcSis:n.id,texto:`${acao?`*${acao}*${fala?'\n\n':''}`:''}${fala}`});
+    const patch={};const now=Date.now();
+    const lem=String(j.lembrar||'').trim().slice(0,200);
+    if(lem)patch.memoria=[...(e.memoria||[]),{uid:myId(),nome:F.nome,texto:lem,t:now}].slice(-30);
+    const dr=Math.max(-2,Math.min(2,Math.round(+j.relacao||0)));if(dr)patch.relacoes={...(e.relacoes||{}),[myId()]:Math.max(-5,Math.min(5,rel+dr))};
+    const vp=j.vaiPara;if(vp&&locById(vp.local)&&vp.local!==loc&&!locById(vp.local).programado){const h=Math.max(0.5,Math.min(12,+vp.horas||1));
+      Object.assign(patch,{local:vp.local,seguindo:null,faz:String(vp.motivo||'').slice(0,80),chega:now+TRANSITO*HORA_JOGO_MS,ate:now+(TRANSITO+h)*HORA_JOGO_MS});
+      await postMsg(loc,{tipo:'sistema',texto:`${n.nome} sai em direção a ${nomeDestino(vp.local)}.`});}
+    else if(j.acompanhar){const h=Math.max(0.5,Math.min(8,+j.acompanhar.horas||2));Object.assign(patch,{seguindo:myId(),local:null,ate:now+h*HORA_JOGO_MS,faz:''});
+      await postMsg(loc,{tipo:'sistema',texto:`${n.nome} vai acompanhar ${F.nome} por um tempo.`});}
+    if(Object.keys(patch).length){const novo={...e,...patch};npcEstados.set(n.id,novo);if(db){try{await db.doc('npcEstado/'+n.id).set(novo);}catch{}}}
+    registrarNpcs([{nome:n.nome,descricao:n.papel}],loc);
+    if(typeof registrarConjunto==='function')registrarConjunto('npcs',[n.nome]);
+    atualizarNpcsCena();
+  }catch(err){toastChat(`${n.nome} não respondeu: ${err?.message||'erro'}.`);}
+  finally{npcFalando=false;avisoNormal();if(el)el.hidden=true;}
+}
+
 /* ---------- Mercado Negro: loja programada (sem IA) + conversa entre freelancers ---------- */
 const MERCADO_ARMAS=[
   {nome:'Faca Amaldiçoada de Segunda Mão',dano:'1d6 + Velocidade',tipo:'Cortante',dur:60,peso:1,ienes:60000,grupo:'corpo'},
@@ -2512,7 +2646,7 @@ function renderChat(){
     const so=m.sobreRolagem;const chipsJ=[];
     if(m.sobrecarga)chipsJ.push(`<span class="chip test">+${m.sobrecarga} PA extra na técnica${so?`: ${so.q}${esc(so.dado)} = ${so.dados.join('+')} = <b>+${so.total}</b> de dano`:` (+${Math.floor(m.sobrecarga/2)} dado(s))`}</span>`);
     (m.dadosDeclarados||[]).forEach(d=>chipsJ.push(`<span class="chip test">${esc(d.expr)} = ${esc(d.detalhe)} = <b>${d.total}</b></span>`));
-    return `<div class="msg jogador${mine?' mine':''}${aos?' aos':''}"><div class="meta">${nomeCor(m.autorId,m.autorNome)} · ${hora}${aos?'<span class="para">aos jogadores</span>':''}</div><div class="body">${paras(m.texto)}</div>${chipsJ.length?`<div class="chips">${chipsJ.join('')}</div>`:''}${r?`<div><span class="att"><span class="d20">${r.escolhido}</span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}${r.cd!=null?` <span class="res ${r.total>=r.cd?'ok':'fail'}" style="color:var(--${r.total>=r.cd?'ok':'seal'})">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</span></div>`:''}</div>`;}).join('');
+    return `<div class="msg jogador${mine?' mine':''}${aos?' aos':''}"><div class="meta">${nomeCor(m.autorId,m.autorNome)} · ${hora}${aos?'<span class="para">aos jogadores</span>':m.npcAlvo?`<span class="para">para ${esc(m.npcAlvo)}</span>`:''}</div><div class="body">${paras(m.texto)}</div>${chipsJ.length?`<div class="chips">${chipsJ.join('')}</div>`:''}${r?`<div><span class="att"><span class="d20">${r.escolhido}</span>${esc(r.pericia)} ${r.bonus>=0?'+':''}${r.bonus} = <b>${r.total}</b>${r.modo?` <span class="note">(${r.modo}: ${r.dados.join(' e ')})</span>`:''}${r.cd!=null?` <span class="res ${r.total>=r.cd?'ok':'fail'}" style="color:var(--${r.total>=r.cd?'ok':'seal'})">${r.total>=r.cd?'sucesso':'falha'}</span>`:''}</span></div>`:''}</div>`;}).join('');
   if(atBottom||msgs[msgs.length-1]?.autorId===(uid||'eu')||msgs[msgs.length-1]?.tipo==='mestre')log.scrollTop=log.scrollHeight;
 }
 function pedidoPendente(){
@@ -2559,7 +2693,8 @@ function renderAreas(){
 }
 function renderPresentes(){
   const id=canalAtual;if(!id)return;const ps=[...jogadores.entries()].filter(([k,j])=>j.local===id);
-  $('#presentes').innerHTML=`<h2>Na cena</h2><div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${tagTitulo(k)}${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${k!==(uid||'eu')&&ehFree(k)&&!ehFree(myId())&&ehEscola(casaDe(myId()))?(conviteValido(k,casaDe(myId()))?'<span class="note">Convidado à escola</span>':`<button class="btn small" data-convidar="${esc(k)}">Convidar à escola</button>`):''}${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}">Desafiar</button>`:''}</span></div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
+  const nps=npcsAqui(id);
+  $('#presentes').innerHTML=`<h2>Na cena</h2>${nps.length?`<div class="who-list npc-lista">${nps.map(n=>`<div><span class="tok other" style="background:${corNpc(n.nome)};color:#141216">${esc(iniciais(n.nome))}</span><span><b style="color:${corNpc(n.nome)}">${esc(n.nome)}</b> <span class="pill">NPC</span><br><span class="note">${esc(n.papel)} · ${esc(npcOnde(n).faz||'')}</span></span><span style="margin-left:auto"><button class="btn small" data-falarnpc="npc:${n.id}">Falar</button></span></div>`).join('')}</div>`:''}<div class="who-list">${ps.length?ps.map(([k,j])=>`<div><span class="tok${k===(uid||'eu')?'':' other'}" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span><b style="color:${corDe(k)}">${esc(j.nome)}</b>${tagTitulo(k)}${k===(uid||'eu')?' (você)':''}<br><span class="note">${esc(identDe(k))} · PV ${j.estado?.pv??'-'} / ${j.max?.pv??'-'}</span></span><span style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">${k!==(uid||'eu')&&ehFree(k)&&!ehFree(myId())&&ehEscola(casaDe(myId()))?(conviteValido(k,casaDe(myId()))?'<span class="note">Convidado à escola</span>':`<button class="btn small" data-convidar="${esc(k)}">Convidar à escola</button>`):''}${k!==(uid||'eu')&&!(combate&&combate.ativo&&combateLocal===id)?`<button class="btn small" data-desafiar="${esc(k)}">Desafiar</button>`:''}</span></div>`).join(''):'<div class="note">Só você.</div>'}</div>`;
   const l=locById(id);
   $('#loc-info').innerHTML=`<h2>${esc(l.nome)}</h2><div class="tags">${l.tags.map(t=>`<span>${esc(t)}</span>`).join('')}</div><p class="note" style="margin:0;font-size:13px">${esc(l.desc)}</p><a class="btn small" href="#mapa">Voltar ao mapa</a>`;
 }
@@ -2584,6 +2719,10 @@ function agendarObservacao(id,t,r){
 }
 async function enviar(){
   const ta=$('#chat-input');const t=ta.value.trim();if(!t||!canalAtual)return;
+  if(paraQuem.startsWith('npc:')){const n=NPCS_SIS.find(x=>'npc:'+x.id===paraQuem);
+    if(!n||npcOnde(n).local!==canalAtual){toastChat('Essa pessoa não está aqui.');escolherPara('mestre');return;}
+    if(npcFalando){toastChat(`Espere ${n.nome} terminar de responder.`);return;}
+    ta.value='';await postMsg(canalAtual,{tipo:'jogador',autorNome:F.nome||'Sem nome',texto:t,para:paraQuem,npcAlvo:n.nome});await falarComNpc(n,t);return;}
   if(narrando&&paraQuem==='mestre'){toastChat('Espere o mestre terminar de narrar.');return;}
   if(locById(canalAtual)?.programado&&paraQuem==='mestre'){toastChat('No Mercado Negro não tem mestre: aqui você fala com os outros freelancers. Use "Para os jogadores" ou abra a loja.');return;}
   if(meu?.descanso&&paraQuem==='mestre'){toastChat('Você está descansando. Levante (app Descanso) para agir com o mestre. Falar com os outros jogadores pode.');return;}
@@ -2646,7 +2785,7 @@ function historico(){
     if(m.tipo==='sistema')return `[Sistema]: ${m.texto}`;
     if(m.tipo==='npc')return `[NPC ${m.npcNome}]: ${m.texto}`;
     if(m.tipo==='combate')return `[Combate]: ${m.texto}`;
-    const r=m.rolagem;return `[${m.autorNome}${m.para==='jogadores'?' → para os jogadores':''}]: ${m.texto}${r?` (rolou ${r.pericia}: total ${r.total})`:''}${m.sobrecarga?` (investiu +${m.sobrecarga} PA extra na técnica${m.sobreRolagem?`, dano extra rolado ${m.sobreRolagem.total}`:''})`:''}${(m.dadosDeclarados||[]).length?` (dados rolados pelo sistema: ${m.dadosDeclarados.map(d=>`${d.expr}=${d.total}`).join(', ')})`:''}`;}).join('\n');
+    const r=m.rolagem;return `[${m.autorNome}${m.para==='jogadores'?' → para os jogadores':m.npcAlvo?` → falando com ${m.npcAlvo}`:''}]: ${m.texto}${r?` (rolou ${r.pericia}: total ${r.total})`:''}${m.sobrecarga?` (investiu +${m.sobrecarga} PA extra na técnica${m.sobreRolagem?`, dano extra rolado ${m.sobreRolagem.total}`:''})`:''}${(m.dadosDeclarados||[]).length?` (dados rolados pelo sistema: ${m.dadosDeclarados.map(d=>`${d.expr}=${d.total}`).join(', ')})`:''}`;}).join('\n');
 }
 function memoriaCampanha(){
   const meus=(meu?.diario||[]).slice(-30).map(d=>`- (${locById(d.local)?.curto||d.local}) ${d.texto}`).join('\n');
@@ -2743,7 +2882,9 @@ ${(()=>{const mm=minhaMissao();return mm?`MISSÃO ATIVA DE ${F.nome}: "${mm.titu
 ${missaoPessoal()?`MISSÃO PESSOAL DE ${F.nome} (dê espaço para ela com pistas e cenas, sem resolver de uma vez): ${missaoPessoal()}`:''}
 
 ${resumoCombate()}${dominioAtivo()&&combateLocal===id?`
-EXPANSÃO DE DOMÍNIO ATIVA: "${dominioAtivo().nome}" de ${dominioAtivo().donoNome} (até a rodada ${dominioAtivo().ate})${dominioAtivo().desc?`: ${dominioAtivo().desc}`:''}. Dentro da barreira, aplique o efeito do domínio e cobre o PA em "efeitos".`:''}${ehFree(myId())?`
+EXPANSÃO DE DOMÍNIO ATIVA: "${dominioAtivo().nome}" de ${dominioAtivo().donoNome} (até a rodada ${dominioAtivo().ate})${dominioAtivo().desc?`: ${dominioAtivo().desc}`:''}. Dentro da barreira, aplique o efeito do domínio e cobre o PA em "efeitos".`:''}${npcsAqui(id).length?`
+PERSONAGENS PRESENTES AQUI (controlados pelo sistema, com vontade própria): ${npcsAqui(id).map(n=>`${n.nome} (${n.papel}, ${npcOnde(n).faz})`).join('; ')}. Você pode citar que estão ali, mas NUNCA fale por eles, não descreva o que dizem, decidem ou fazem, e não os mova. Se o jogador falar com um deles, apenas narre o ambiente: eles respondem sozinhos.`:''}
+PERSONAGENS DO SISTEMA QUE NÃO ESTÃO AQUI (${NPCS_SIS.filter(n=>npcOnde(n).local!==id).map(n=>n.nome).join(', ')}): não aparecem nesta cena de jeito nenhum, nem se o jogador chamar.${ehFree(myId())?`
 Áreas exclusivas de freelancer liberadas para ele: ${LOCAIS.filter(x=>x.restrito&&areaLiberada(x)).map(x=>`${x.id} (${x.nome})`).join(', ')||'nenhuma'}. Ele mora no apartamento ${quartoId(myId())}.`:''}
 
 MEMÓRIA DA CAMPANHA
@@ -2782,7 +2923,8 @@ Responda SOMENTE com um objeto JSON, sem texto fora dele:
     let teste=null;if(j.teste&&j.teste.pericia&&SKILLS.some(s=>s[0]===j.teste.pericia))teste={pericia:j.teste.pericia,cd:+j.teste.cd||15,motivo:String(j.teste.motivo||'').slice(0,140)};
     const itens=(Array.isArray(j.itens)?j.itens:[]).filter(x=>x&&x.nome&&Math.round(+x.qtd)).slice(0,10).map(x=>({nome:String(x.nome).slice(0,60),qtd:Math.round(+x.qtd)}));
     const ienes=Math.round(+j.ienes||0);
-    const falas=(Array.isArray(j.falas)?j.falas:[]).filter(f=>f&&f.npc&&String(f.texto||'').trim()).slice(0,6);
+    const ehSis=nm=>NPCS_SIS.some(n=>normNome(n.nome)===normNome(nm)||normNome(nm).includes(normNome(n.nome.split(' ')[0])));
+    const falas=(Array.isArray(j.falas)?j.falas:[]).filter(f=>f&&f.npc&&String(f.texto||'').trim()&&!ehSis(f.npc)).slice(0,6);
     const narr=String(j.narracao||'').trim().slice(0,4000);
     if(narr||!falas.length||teste||Object.keys(ef).length||itens.length||ienes)await postMsg(id,{tipo:'mestre',texto:narr,teste,efeitos:ef,itens,ienes,alvoId:uid||'eu',alvoNome:F.nome});
     for(const f of falas)await postMsg(id,{tipo:'npc',npcNome:String(f.npc).slice(0,60),texto:String(f.texto).slice(0,1500)});
@@ -3590,7 +3732,7 @@ async function route(){
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
   $('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
-  abrirCanal(id);assinarCombate(id);renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();if(celApp)renderCelApp();
+  abrirCanal(id);assinarCombate(id);atualizarNpcsCena();renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();if(celApp)renderCelApp();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{
@@ -3617,8 +3759,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.invq!==undefined){const i=+b.dataset.invq,d=+b.dataset.d;const it=(meu.inventario||[])[i];if(!it)return;
     atualizarMeu({inventario:aplicarItens(meu.inventario,[{nome:it.nome,qtd:d}])}).then(renderInv);renderInv();return;}
   if(b.id==='btn-mundo'){entrarMundo();return;}
-  if(b.dataset.para){paraQuem=b.dataset.para;b.parentElement.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
-    $('#chat-input').placeholder=paraQuem==='jogadores'?'Fale com os outros jogadores. O mestre só entra se precisar.':'Descreva o que seu personagem faz ou fala... (Enter envia, Shift+Enter quebra linha)';return;}
+  if(b.dataset.para){escolherPara(b.dataset.para);return;}
   if(b.id==='btn-anexar'){anexo={pericia:pedidoPendente()?.pericia||rollSkill,modo:0};renderAnexo();return;}
   if(b.id==='anexo-rem'){anexo=null;renderAnexo();return;}
   if(b.dataset.anexomodo!==undefined){anexo.modo=+b.dataset.anexomodo;renderAnexo();return;}
@@ -3632,6 +3773,7 @@ document.addEventListener('click',e=>{
   if(b.dataset.defesa){const [pid,t]=b.dataset.defesa.split('|');resolverDefesa(pid,t);return;}
   if(b.dataset.defauto){resolverDefesa(b.dataset.defauto,null);return;}
   if(b.dataset.cac){const a=b.dataset.cac;if(a==='aceitar')aceitarCacada(+b.dataset.i);else if(a==='desistir')desistirCacada();else if(a==='comecar')comecarCacada();else if(a==='ir'&&meu?.cacada){fecharCel(true);irPara(meu.cacada.destino);}return;}
+  if(b.dataset.falarnpc){fecharCel(true);escolherPara(b.dataset.falarnpc);const t=$('#chat-input');t&&t.focus();return;}
   if(b.dataset.convidar){convidarEscola(b.dataset.convidar);return;}
   if(b.dataset.desafiar){const j=jogadores.get(b.dataset.desafiar);openModal(`Desafiar ${j?.nome||'jogador'} para um duelo?`,'O duelo começa na hora: iniciativa, turnos, ataques e defesas pelo sistema, sem narração do mestre.','','Começar duelo',async()=>{closeModal();await desafiar(b.dataset.desafiar);});return;}
   if(b.id==='btn-passar'){passarVez(true);return;}
@@ -3921,7 +4063,7 @@ async function boot(){
     assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();
