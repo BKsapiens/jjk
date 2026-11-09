@@ -35,11 +35,26 @@ header.top{grid-column:1/-1;display:flex;align-items:center;gap:16px;border-bott
 header.top h1{font-size:26px;letter-spacing:.02em}
 header.top p{margin:2px 0 0;color:var(--ash);font-size:13px}
 .top-actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
-nav.steps{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;position:sticky;top:0;z-index:5;background:var(--ink);padding:10px 0;border-bottom:1px solid var(--line)}
-nav.steps a{color:var(--ash);text-decoration:none;font-size:13px;padding:5px 10px;border:1px solid var(--line);border-radius:999px;display:flex;gap:6px;align-items:center}
-nav.steps a b{color:var(--bone);font-family:var(--display)}
-nav.steps a.done{border-color:#4a5c3c}
-nav.steps a.done::after{content:"✓";color:var(--ok);font-size:11px}
+nav.steps{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;position:sticky;top:0;z-index:5;background:var(--ink);padding:12px 0 14px;border-bottom:1px solid var(--line)}
+/* cada parte da ficha é um "balão": clica e só aquela parte aparece */
+nav.steps a{position:relative;color:var(--bone);text-decoration:none;font-size:14px;font-weight:700;padding:8px 14px;border:2px solid var(--line);border-radius:14px;background:var(--ink-2);display:flex;gap:7px;align-items:center;white-space:nowrap;transition:transform .12s,border-color .12s,background .12s}
+nav.steps a b{color:var(--ash);font-family:var(--display);font-size:13px}
+nav.steps a:hover{border-color:var(--ash);transform:translateY(-1px)}
+nav.steps a:focus-visible{outline:2px solid var(--seal);outline-offset:2px}
+nav.steps a.on{background:var(--seal);border-color:var(--seal);color:#fff;box-shadow:3px 3px 0 #000}
+nav.steps a.on b{color:#fff}
+nav.steps a.on::before{content:"";position:absolute;left:22px;bottom:-9px;border:8px solid transparent;border-top-color:var(--seal);border-bottom:0}
+nav.steps a.done{border-color:#4a7c3c}
+nav.steps a.done::after{content:"✓";color:var(--ok);font-size:12px}
+nav.steps a.on.done::after{color:#fff}
+nav.steps a.pend::after{content:"!";display:inline-grid;place-items:center;width:16px;height:16px;border-radius:50%;background:#c9a227;color:#000;font-size:11px;font-weight:900}
+main>.step.fora{display:none}
+.etapa-nav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px;padding-top:14px;border-top:1px dashed var(--line)}
+.etapa-nav .btn{min-height:44px}
+.etapa-nav .btn.primary{margin-left:auto}
+.etapa-cont{font-size:13px;color:var(--ash);align-self:center}
+.issues [data-irstep]{cursor:pointer;border:0;font:inherit}
+@media (max-width:760px){nav.steps{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-left:2px;padding-right:2px;-webkit-overflow-scrolling:touch}nav.steps::-webkit-scrollbar{display:none}nav.steps a{flex:none}}
 main{display:flex;flex-direction:column;gap:22px;min-width:0}
 section.step{border:1px solid var(--line);background:var(--ink-2);border-radius:10px;padding:20px;scroll-margin-top:64px}
 section.step > h2{font-size:21px;display:flex;align-items:baseline;gap:10px;margin-bottom:4px}
@@ -662,7 +677,7 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
     </div>
   </header>
 
-  <nav class="steps" id="steps" aria-label="Etapas">
+  <nav class="steps" id="steps" aria-label="Partes da ficha">
     <a href="#s-identidade" data-step="identidade"><b>1</b> Identidade</a>
     <a href="#s-raca" data-step="raca"><b>2</b> Raça</a>
     <a href="#s-atributos" data-step="atributos"><b>3</b> Atributos</a>
@@ -1267,10 +1282,34 @@ function renderSheet(C){
      <dt>Dinheiro inicial</dt><dd>¥ ${C.dinheiro.toLocaleString('pt-BR')}</dd>
    </dl>
    <div><h3 style="font-size:15px;margin-bottom:6px">${iss.length?`Pendências (${iss.length})`:'Ficha completa'}</h3>
-   <ul class="issues">${iss.length?iss.slice(0,8).map(i=>`<li><span class="pill warn">${stepName(i.s)}</span><span>${esc(i.t)}</span></li>`).join('')+(iss.length>8?`<li class="note">+${iss.length-8} outras</li>`:''):'<li><span class="pill ok">pronta</span><span>Tudo dentro das regras. Salve para o grupo ver.</span></li>'}</ul></div>`;
+   <ul class="issues">${iss.length?iss.slice(0,8).map(i=>`<li><button type="button" class="pill warn" data-irstep="${i.s}" title="Ir para ${esc(NOMES_ETAPA[i.s]||'')}">${stepName(i.s)}</button><span>${esc(i.t)}</span></li>`).join('')+(iss.length>8?`<li class="note">+${iss.length-8} outras</li>`:''):'<li><span class="pill ok">pronta</span><span>Tudo dentro das regras. Salve para o grupo ver.</span></li>'}</ul></div>`;
   const bad=new Set(iss.map(i=>i.s));
-  document.querySelectorAll('#steps a').forEach(a=>a.classList.toggle('done',!bad.has(a.dataset.step)&&touched(a.dataset.step)));
+  document.querySelectorAll('#steps a').forEach(a=>{a.classList.toggle('done',!bad.has(a.dataset.step)&&touched(a.dataset.step));a.classList.toggle('pend',bad.has(a.dataset.step)&&touched(a.dataset.step));});
 }
+/* ---------- Ficha por partes: um balão por parte, só a parte escolhida aparece ---------- */
+const ETAPAS=['identidade','raca','atributos','classe','antecedente','traits','pericias','tecnica','equip'];
+const NOMES_ETAPA={identidade:'Identidade',raca:'Raça',atributos:'Atributos',classe:'Classe',antecedente:'Antecedente',traits:'Vantagens',pericias:'Perícias',tecnica:'Técnica',equip:'Equipamento'};
+let etapaAtual=(()=>{try{const e=localStorage.getItem('jjk-etapa');return ETAPAS.includes(e)?e:'identidade';}catch{return 'identidade';}})();
+function irEtapa(e,rolar){
+  if(!ETAPAS.includes(e))return;etapaAtual=e;try{localStorage.setItem('jjk-etapa',e);}catch{}
+  ETAPAS.forEach(k=>{const sec=document.getElementById('s-'+k);if(sec)sec.classList.toggle('fora',k!==e);});
+  document.querySelectorAll('#steps a').forEach(a=>{const on=a.dataset.step===e;a.classList.toggle('on',on);if(on)a.setAttribute('aria-current','step');else a.removeAttribute('aria-current');});
+  const atv=document.querySelector('#steps a.on');if(atv&&atv.scrollIntoView)atv.scrollIntoView({block:'nearest',inline:'center'});
+  if(rolar){const nav=$('#steps');const y=nav?nav.getBoundingClientRect().top+window.scrollY-4:0;if(window.scrollY>y)window.scrollTo({top:y});
+    const h=document.querySelector('#s-'+e+' h2');if(h){h.setAttribute('tabindex','-1');h.focus({preventScroll:true});}}
+}
+function montarEtapas(){
+  ETAPAS.forEach((k,i)=>{const sec=document.getElementById('s-'+k);if(!sec||sec.querySelector('.etapa-nav'))return;
+    const ant=ETAPAS[i-1],prox=ETAPAS[i+1];
+    sec.insertAdjacentHTML('beforeend',`<div class="etapa-nav">${ant?`<button type="button" class="btn" data-irstep="${ant}">‹ ${NOMES_ETAPA[ant]}</button>`:''}<span class="etapa-cont">Parte ${i+1} de ${ETAPAS.length}</span>${prox?`<button type="button" class="btn primary" data-irstep="${prox}">${NOMES_ETAPA[prox]} ›</button>`:`<button type="button" class="btn primary" data-irsalvar="1">Salvar ficha</button>`}</div>`);});
+  irEtapa(etapaAtual,false);
+}
+document.addEventListener('click',e=>{
+  const a=e.target.closest('#steps a[data-step]');if(a){e.preventDefault();irEtapa(a.dataset.step,true);return;}
+  const b=e.target.closest('[data-irstep]');if(b){e.preventDefault();irEtapa(b.dataset.irstep,true);return;}
+  const sv=e.target.closest('[data-irsalvar]');if(sv){const bt=$('#btn-save');bt&&bt.click();}
+});
+montarEtapas();
 const stepName=s=>({identidade:'1',raca:'2',atributos:'3',classe:'4',antecedente:'5',traits:'6',pericias:'7',tecnica:'8',equip:'9'}[s]);
 function touched(s){return {identidade:!!F.nome,raca:!!F.raca,atributos:true,classe:!!F.classe,antecedente:!!F.antecedente,traits:true,pericias:true,tecnica:true,equip:!!F.arma}[s];}
 
