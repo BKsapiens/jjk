@@ -1387,7 +1387,10 @@ document.addEventListener('click',e=>{
   if(b.dataset.delitem!==undefined){F.itens.splice(+b.dataset.delitem,1);renderItens();refreshLight();return;}
   if(b.id==='btn-aplicar'){const s=F.tecnica.validacao?.sugestao;if(!s)return;
     if(s.descricao)F.tecnica.descricao=s.descricao; if(s.habilidadeUnica!==undefined)F.tecnica.habilidadeUnica=s.habilidadeUnica;
-    $('#t-desc').value=F.tecnica.descricao;$('#t-hu').value=F.tecnica.habilidadeUnica;F.tecnica.validacao=null;refreshLight();return;}
+    $('#t-desc').value=F.tecnica.descricao;$('#t-hu').value=F.tecnica.habilidadeUnica;
+    /* a versão sugerida foi escrita pela própria validação: entra aprovada, sem pedir outra avaliação da IA */
+    F.tecnica.validacao={veredito:'aprovada',motivos:['Versão escrita pela própria validação da IA: já vem aprovada.'],sugestao:null,assinatura:tecSig(),quando:Date.now(),viaSugestao:true};
+    saveDraft();refreshLight();renderAll();return;}
   if(b.id==='btn-new'){openModal('Começar uma ficha nova?','A ficha atual some desta tela. Se você já salvou, ela continua guardada.','','Começar do zero',()=>{loadFicha(blank());closeModal();});return;}
   if(b.id==='btn-export'){openModal('Exportar ficha','Copie o texto abaixo para guardar ou mandar para alguém.',JSON.stringify(F,null,1),'Copiar',async()=>{try{await navigator.clipboard.writeText($('#modal-text').value);$('#modal-note').textContent='Copiado.';}catch{$('#modal-note').textContent='Não deu para copiar automaticamente: selecione o texto e copie.';$('#modal-text').select();}});return;}
   if(b.id==='btn-import'){openModal('Importar ficha','Cole aqui o texto de uma ficha exportada.','','Importar',()=>{try{const o=JSON.parse($('#modal-text').value);loadFicha(Object.assign(blank(),o));closeModal();}catch{$('#modal-note').textContent='Esse texto não é uma ficha válida. Confira se copiou tudo.';}});return;}
@@ -1453,6 +1456,7 @@ A variação deve seguir o custo e o efeito desse modificador.`:'Variação tem�
 TÉCNICA BASE: ${t.nome} — ${t.descricao}${t.habilidadeUnica?` | Habilidade Única: ${t.habilidadeUnica}`:''}
 VARIAÇÕES JÁ EXISTENTES: ${variacoes().filter((y,j)=>j!==i&&y&&y.nome).map(y=>`${y.nome} (${y.custo||'?'}): ${y.descricao}`).join(' || ')||'nenhuma'}
 VARIAÇÃO AVALIADA: ${x.nome} · ${x.tipo||'Instantânea'} · custo ${x.custo||'não informado'} — ${x.descricao}
+Variações abertas (só o efeito em linhas gerais, sem custo ou números) são permitidas: nesse caso o custo segue o modificador escolhido ou o mestre decide na hora. Não reprove só por falta de números. Use "ajustar" apenas quando algo concreto quebra uma regra. Se escrever uma sugestão, ela será aprovada automaticamente quando o jogador usar: só sugira algo que você mesmo aprovaria, mantendo a ideia do jogador.
 Responda SOMENTE com JSON: {"veredito":"aprovada"|"ajustar"|"rejeitada","motivos":["frases curtas"],"sugestao":{"descricao":"versão ajustada, se não aprovada","custo":"custo ajustado"}}`;
   try{const res=await chamarIA(prompt,'default');const j=lerJSON(res.text);
     x.validacao={veredito:j.veredito,motivos:j.motivos||[],sugestao:j.sugestao||null,quando:Date.now()};saveDraft();st.textContent='';renderVariacoes(calc());renderTecResumo(calc());}
@@ -1464,7 +1468,7 @@ document.addEventListener('input',e=>{const el=e.target;if(!el.dataset||!el.data
   const b=document.querySelector(`[data-vvalidar="${i}"]`);if(b)b.disabled=!vs[+i].nome||!vs[+i].descricao;});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-vvalidar],[data-vsugestao],[data-vapagar],#btn-tec-salvar');if(!b)return;
   if(b.dataset.vvalidar!==undefined){validarVariacao(+b.dataset.vvalidar);return;}
-  if(b.dataset.vsugestao!==undefined){const x=variacoes()[+b.dataset.vsugestao];if(x&&x.validacao?.sugestao){x.descricao=x.validacao.sugestao.descricao||x.descricao;if(x.validacao.sugestao.custo)x.custo=x.validacao.sugestao.custo;delete x.validacao;saveDraft();renderVariacoes(calc());}return;}
+  if(b.dataset.vsugestao!==undefined){const x=variacoes()[+b.dataset.vsugestao];if(x&&x.validacao?.sugestao){x.descricao=x.validacao.sugestao.descricao||x.descricao;if(x.validacao.sugestao.custo)x.custo=x.validacao.sugestao.custo;x.validacao={veredito:'aprovada',motivos:['Versão escrita pela própria validação da IA: já vem aprovada.'],sugestao:null,quando:Date.now(),viaSugestao:true};saveDraft();renderVariacoes(calc());renderTecResumo(calc());}return;}
   if(b.dataset.vapagar!==undefined){variacoes().splice(+b.dataset.vapagar,1);saveDraft();renderVariacoes(calc());renderTecResumo(calc());return;}
   if(b.id==='btn-tec-salvar'){salvar().then(()=>{$('#tec-status').textContent=$('#save-status').textContent;});return;}});
 async function validarTecnica(){
@@ -1483,6 +1487,9 @@ REGRAS DO LIVRO (capítulo 6):
 - Exemplo de base aceitável no livro: "Boneco de Palha" (com um pedaço do corpo do alvo preso ao boneco, o alvo testa Jujutsu contra a CD; se falhar, o usuário recebe acerto garantido em ataques de feitiçaria contra ele enquanto o elo durar, que quebra se o alvo sair do alcance).
 - Escala de dano de referência: 1d4, 1d6, 1d8, 1d10, 1d12, 2d8 (teto).
 - Rejeite técnicas que vencem a luta sozinhas no nível atual (morte instantânea, controle total sem teste, imunidades amplas, alcance ilimitado), salvo se tiverem custo e limitação proporcionais.
+- TÉCNICAS ABERTAS SÃO PERMITIDAS: muitos jogadores não sabem escrever regras e preferem descrever só o tema e o que a técnica faz em linhas gerais (ex.: "manipula sombras", "controla o som ao redor"). Nesse caso o mestre decide dano, custo e testes na hora, usando as medidas acima. NÃO reprove nem peça ajuste só porque faltam números, custo, dado, alcance ou detalhes. Aprove a base aberta se o tema for coerente e não prometer vitória automática.
+- Só use "ajustar" quando algo concreto quebra uma regra acima; diga exatamente o quê.
+- SEJA CONSISTENTE: se você escrever uma "sugestao", ela será aprovada automaticamente quando o jogador usar. Então só sugira um texto que você mesmo aprovaria, e mantenha a ideia e o tom do jogador. Sugestão pode ser aberta também; não acrescente números que o jogador não pediu.
 
 PERSONAGEM: raça ${C.raca?.n||'-'}, classe ${C.classe?.nome||'-'}, Espírito ${C.a.esp}, PA ${C.pa}, nível ${C.n}${F.restricao==='fraco'?', Restrição Celestial Corpo Fraco (alcance ×10, +1 dado de dano nas técnicas)':''}.
 
@@ -1493,7 +1500,7 @@ Habilidade Única: ${t.habilidadeUnica||'(nenhuma)'}
 
 Responda SOMENTE com um objeto JSON, em português, neste formato:
 {"veredito":"aprovada"|"ajustar"|"rejeitada","motivos":["frases curtas explicando o que está bom ou o que quebra regra"],"sugestao":{"descricao":"versão reescrita para a forma básica permitida, se não aprovada","habilidadeUnica":"versão permitida ou string vazia"}}
-Se a técnica for forte demais mas a ideia for boa, use "ajustar" e reescreva para a forma básica. Use "rejeitada" só quando a ideia em si não cabe no sistema.`;
+Se a técnica for forte demais mas a ideia for boa, use "ajustar" e reescreva para a forma básica. Use "rejeitada" só quando a ideia em si não cabe no sistema. Uma técnica aberta e coerente deve ser "aprovada".`;
   try{
     const res=await chamarIA(prompt,'default');
     const m=(res.text||'').match(/\{[\s\S]*\}/);if(!m)throw {message:'resposta sem JSON'};
