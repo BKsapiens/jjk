@@ -292,9 +292,17 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .post.me-marcou{box-shadow:4px 4px 0 #d3121c;border-color:#d3121c}
 .post-marcar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px;color:#fff;text-shadow:1px 1px 0 #000;font-weight:800;font-size:13px}
 .marca-toast{cursor:pointer;font:inherit;text-align:left}
+.tok-foto{object-fit:cover;padding:0;border:2px solid #000;background:#000}
+.perfil-bio{margin:10px 0 0;font-style:italic;font-weight:600}
+.perfil-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.perfil-cartao{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0}.perfil-cartao dt{color:#555;font-weight:700}.perfil-cartao dd{margin:0;font-weight:800}
+.perfil-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.perfil-stats div{border:2px solid #000;padding:6px;display:flex;flex-direction:column;align-items:center;text-align:center;background:#f6f2ee}
+.perfil-stats span{font-family:var(--display);color:#d3121c;font-size:18px}.perfil-stats b{font-size:18px}.perfil-stats small{font-size:11px;color:#555;line-height:1.2}
+.perfil-editar .f{color:#0b0a0c}.perfil-editar textarea{width:100%;font:inherit;border:2px solid #000;padding:8px;background:#fff!important;color:#0b0a0c!important;margin-top:4px}
+.perfil-foto-edit{display:flex;gap:12px;align-items:center;margin:8px 0 12px}.perfil-foto-edit .perfil-tok{width:96px;height:96px;font-size:30px}
 .perfil{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #d3121c;padding:12px;margin-top:8px}
 .perfil-topo{display:flex;gap:12px;align-items:center}.perfil-topo h3{margin:0;font-size:20px}.perfil-topo small{display:block;color:#555}
-.perfil-tok{width:48px;height:48px;font-size:18px}
+.perfil-tok{width:72px;height:72px;font-size:24px}
 .perfil h4{margin:12px 0 6px}.perfil-rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.perfil-rank li{display:flex;gap:8px;align-items:center}
 .titulo-conq{font-size:.78em;font-weight:800;color:#f6d32b;white-space:nowrap}
 .post .titulo-conq,.rank .titulo-conq,.conq .titulo-conq{color:#b4141c}
@@ -3521,7 +3529,7 @@ function abrirCel(app){
   celIr(app||celApp||'home');setTimeout(()=>{const b=$('#cel-voltar');b&&b.focus();},50);
 }
 function fecharCel(semFoco){const c=$('#cel');if(c.hidden)return;c.classList.remove('show');celApp=null;setTimeout(()=>{if(!c.classList.contains('show'))c.hidden=true;},document.body.classList.contains('sem-animacao')?0:430);if(!semFoco){const b=$('#btn-cel');b&&b.focus();}}
-function celIr(app){if(app==='config')celCreditos=false;if(app==='notas'&&celApp!=='notas')notaAberta=null;if(app==='social'&&celApp!=='social'){postThread=null;perfilAberto=null;}
+function celIr(app){if(app==='config')celCreditos=false;if(app==='notas'&&celApp!=='notas')notaAberta=null;if(app==='social'&&celApp!=='social'){postThread=null;perfilAberto=null;perfilEditando=false;fotoNova=null;}
   if(app==='mapa'){abrirMapa();return;}
   if(app!=='mensagens')dmAberto=null;
   celApp=app;document.querySelectorAll('#cel .cel-app').forEach(sec=>sec.hidden=sec.dataset.app!==app);
@@ -3677,22 +3685,95 @@ function avisarMarcacao(pp){
   document.body.appendChild(el);setTimeout(()=>el.classList.add('sai'),6000);setTimeout(()=>el.remove(),6600);
   if(canalAtual)toastChat(`${pp.autorNome||'Alguém'} marcou você no Social Jujutsu.`);
 }
+/* ---------- Perfil do Social Jujutsu: foto do personagem, bio, cartão, estatísticas ----------
+   A foto fica em fotos/{uid} como imagem JPEG pequena (mini 96 px para posts e listas, grande 320 px para o perfil),
+   recortada e comprimida no navegador antes de enviar. */
+const fotos=new Map();let fotosUnsub=null,perfilEditando=false,fotoNova=null,perfilSalvando=false;
+function assinarFotos(){if(!db||fotosUnsub)return;fotosUnsub=db.collection('fotos').onSnapshot(s=>{fotos.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.mini)fotos.set(d.id,x);});
+  if(celApp==='social')renderSocial();if(canalAtual&&celApp==='cena')renderPresentes();},()=>{});}
+const fotoDe=(k,tam)=>{const f=fotos.get(k);return f?(tam==='grande'?(f.grande||f.mini):f.mini):'';};
+function avatarHtml(k,nome,cls){const f=fotoDe(k,cls==='perfil-tok'?'grande':'mini');
+  return f?`<img class="tok tok-foto ${cls||''}" src="${f}" alt="Foto de ${esc(nome||'')}">`:`<span class="tok ${cls||''}" style="background:${corDe(k)};color:#141216">${esc(iniciais(nome))}</span>`;}
+function reduzirImagem(arquivo){return new Promise((ok,erro)=>{
+  if(!arquivo||!/^image\//.test(arquivo.type)){erro(new Error('Escolha um arquivo de imagem (JPG, PNG ou WEBP).'));return;}
+  if(arquivo.size>15*1024*1024){erro(new Error('A imagem é grande demais (máximo 15 MB).'));return;}
+  const url=URL.createObjectURL(arquivo);const img=new Image();
+  img.onload=()=>{try{const lado=Math.min(img.naturalWidth,img.naturalHeight);const sx=(img.naturalWidth-lado)/2,sy=(img.naturalHeight-lado)/2;
+    const gerar=(px,q)=>{const c=document.createElement('canvas');c.width=c.height=px;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,px,px);g.drawImage(img,sx,sy,lado,lado,0,0,px,px);return c.toDataURL('image/jpeg',q);};
+    let grande=gerar(320,.82);if(grande.length>150000)grande=gerar(320,.6);const mini=gerar(96,.78);URL.revokeObjectURL(url);ok({mini,grande});}catch(e){erro(e);}};
+  img.onerror=()=>{URL.revokeObjectURL(url);erro(new Error('Não consegui abrir essa imagem.'));};img.src=url;});}
+const LIMITE_BIO=160;
+function cartaoPersonagem(k,j){
+  const fc=party.get(k);const f=fc?.ficha||{};const r=fc?.resumo||{};const esconde=j.perfilOcultaTec===true&&k!==myId();
+  const tec=f.tecnica&&f.tecnica.nome?(esconde?'<i>em segredo</i>':esc(f.tecnica.nome)):'';
+  const linhas=[['Raça',esc(r.raca||'-')],['Classe',esc(r.classe||f.classe||'-')],['Nível',esc(r.nivel||f.nivel||1)],['Escola',esc(escolaCurta(escolaDe(k)))],['Grau',esc(grauEscola(j.pg))],...(f.antecedente?[['Antecedente',esc(f.antecedente)]]:[]),...(tec?[['Técnica',tec]]:[])];
+  return `<h4>Personagem</h4><dl class="perfil-cartao">${linhas.map(([a,b])=>`<dt>${a}</dt><dd>${b}</dd>`).join('')}</dl>`;
+}
+function estatisticas(j){
+  const m=j.cont?.mortes||{};const tot=Object.values(m).reduce((a,v)=>a+(+v||0),0);
+  const itens=[['祓',tot,'maldições derrotadas'],['任',(j.missoesPagas||[]).length,'missões da escola'],['狩',+j.cacadasFeitas||0,'caçadas'],['決',+j.cont?.duelos||0,'duelos vencidos'],['旅',(j.visitados||[]).length,'lugares visitados'],['誉',Object.keys(j.conquistas||{}).length,'conquistas']];
+  const graus=[4,3,2,1,0].filter(g=>+m[g]>0).map(g=>`${g===0?'especial':'grau '+g}: ${m[g]}`).join(' · ');
+  return `<h4>Estatísticas</h4><div class="perfil-stats">${itens.map(([kj,v,t])=>`<div><span>${kj}</span><b>${(+v).toLocaleString('pt-BR')}</b><small>${t}</small></div>`).join('')}</div>${graus?`<p class="note" style="margin:6px 0 0">Maldições por grau: ${esc(graus)}</p>`:''}`;
+}
+function htmlEditarPerfil(j){
+  const prev=fotoNova?fotoNova.grande:fotoDe(myId(),'grande');
+  return `<section class="perfil perfil-editar"><h3>Editar perfil</h3>
+    <div class="perfil-foto-edit">${prev?`<img src="${prev}" alt="Prévia da foto" class="perfil-tok tok tok-foto">`:`<span class="tok perfil-tok" style="background:${corDe(myId())};color:#141216">${esc(iniciais(F.nome))}</span>`}
+      <div><label class="btn small" for="perfil-foto-arq">Escolher foto do personagem</label><input type="file" id="perfil-foto-arq" accept="image/*" class="sr">
+      ${prev?'<button type="button" class="btn small" data-pfoto="tirar">Tirar foto</button>':''}
+      <p class="note" style="margin:6px 0 0">A imagem é recortada em quadrado. Use uma arte do seu personagem, nada de foto pessoal ou conteúdo impróprio.</p></div></div>
+    <label class="f" for="perfil-bio">Bio <span class="note" id="perfil-bio-conta">${String(j.bio||'').length}/${LIMITE_BIO}</span><textarea id="perfil-bio" maxlength="${LIMITE_BIO}" rows="3" placeholder="Uma frase sobre o seu personagem">${esc(j.bio||'')}</textarea></label>
+    <label class="chk-kok"><input type="checkbox" id="perfil-ocultatec" ${j.perfilOcultaTec?'checked':''}> Esconder o nome da minha técnica no perfil</label>
+    <p class="note" id="perfil-status" aria-live="polite"></p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" data-pperfil="salvar" ${perfilSalvando?'disabled':''}>${perfilSalvando?'Salvando…':'Salvar perfil'}</button><button type="button" class="btn" data-pperfil="cancelar">Cancelar</button></div></section>`;
+}
 function htmlPerfil(k){
   const eu=k===myId();const j=eu?{...(jogadores.get(k)||{}),...meu}:jogadores.get(k);if(!j)return '<p class="note dm-vazio">Jogador não encontrado.</p>';
+  if(eu&&perfilEditando)return `<button type="button" class="btn small dm-voltar" data-pperfil="cancelar">‹ Voltar</button>${htmlEditarPerfil(j)}`;
   const todos=[...jogadores.entries()].filter(([x,y])=>y&&y.nome).map(([x,y])=>[x,x===myId()?{...y,...meu}:y]);
   const linhas=RANKINGS.map(([t,f,kj])=>{const ord=todos.map(([x,y])=>({x,v:f(y)})).sort((a,b)=>b.v-a.v);const pos=ord.findIndex(o=>o.x===k)+1;const v=f(j);
     return `<li><span class="rk-pos">${pos}º</span><span class="rk-nome"><b>${kj} ${esc(t)}</b><small>de ${ord.length} jogador${ord.length>1?'es':''}</small></span><b class="rk-v">${t.startsWith('Ienes')?'¥ ':''}${v.toLocaleString('pt-BR')}</b></li>`;}).join('');
   const meus=[...posts.values()].filter(p=>p.autor===k&&!p.pai).sort((a,b)=>b.ts-a.ts).slice(0,5);
   const nConq=Object.keys(j.conquistas||{}).length;
+  const acoes=eu?`<button type="button" class="btn small primary" data-pperfil="editar">Editar perfil</button>`
+    :`<button type="button" class="btn small primary" data-perfil-dm="${esc(k)}">Mandar mensagem</button>`;
   return `<button type="button" class="btn small dm-voltar" data-pvoltar="1">‹ Voltar</button>
-    <section class="perfil"><div class="perfil-topo"><span class="tok perfil-tok" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span>
+    <section class="perfil"><div class="perfil-topo">${avatarHtml(k,j.nome,'perfil-tok')}
       <div><h3>${esc(j.nome)}</h3>${tagTitulo(k)}<small>${esc(identDe(k))} · ${nConq} conquista${nConq===1?'':'s'}</small></div></div>
+      ${j.bio?`<p class="perfil-bio">“${esc(j.bio)}”</p>`:eu?'<p class="note">Você ainda não escreveu uma bio.</p>':''}
+      <div class="perfil-acoes">${acoes}${souDono&&!eu&&fotos.has(k)?`<button type="button" class="btn small" data-pfoto-mestre="${esc(k)}">Remover foto (mestre)</button>`:''}</div>
+      ${cartaoPersonagem(k,j)}
+      ${estatisticas(j)}
       <h4>Ranking</h4><ol class="perfil-rank">${linhas}</ol></section>
     <h4 class="dm-vazio" style="margin:12px 0 6px">Últimos posts</h4>${meus.length?meus.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ainda não postou nada.</p>'}`;
 }
+async function salvarPerfil(){
+  if(perfilSalvando||!meu)return;const bio=String($('#perfil-bio')?.value||'').replace(/\s+/g,' ').trim().slice(0,LIMITE_BIO);const oculta=!!$('#perfil-ocultatec')?.checked;
+  perfilSalvando=true;renderSocial();
+  try{await atualizarMeu({bio,perfilOcultaTec:oculta});
+    if(fotoNova==='tirar'){fotos.delete(myId());if(db)await db.doc('fotos/'+myId()).delete();}
+    else if(fotoNova){const d={mini:fotoNova.mini,grande:fotoNova.grande,t:Date.now()};fotos.set(myId(),d);if(db)await db.doc('fotos/'+myId()).set(d);}
+    fotoNova=null;perfilEditando=false;}
+  catch(e){perfilSalvando=false;renderSocial();const st=$('#perfil-status');if(st)st.textContent='Não consegui salvar. Confira se as regras do Firestore foram publicadas.';return;}
+  perfilSalvando=false;renderSocial();
+}
+document.addEventListener('change',async e=>{if(e.target.id!=='perfil-foto-arq')return;const arq=e.target.files&&e.target.files[0];if(!arq)return;
+  const st=$('#perfil-status');if(st)st.textContent='Preparando a imagem…';
+  try{fotoNova=await reduzirImagem(arq);renderSocial();const s2=$('#perfil-status');if(s2)s2.textContent='Foto pronta. Toque em "Salvar perfil" para publicar.';}
+  catch(err){if(st)st.textContent=err.message||'Não consegui usar essa imagem.';}});
+document.addEventListener('input',e=>{if(e.target.id!=='perfil-bio')return;const c=$('#perfil-bio-conta');if(c)c.textContent=`${e.target.value.length}/${LIMITE_BIO}`;});
+document.addEventListener('click',async e=>{
+  const b=e.target.closest('[data-pperfil],[data-pfoto],[data-perfil-dm],[data-pfoto-mestre]');if(!b)return;
+  if(b.dataset.pperfil==='editar'){perfilEditando=true;fotoNova=null;renderSocial();$('#cel-corpo').scrollTop=0;return;}
+  if(b.dataset.pperfil==='cancelar'){perfilEditando=false;fotoNova=null;renderSocial();return;}
+  if(b.dataset.pperfil==='salvar'){salvarPerfil();return;}
+  if(b.dataset.pfoto==='tirar'){fotoNova='tirar';renderSocial();const st=$('#perfil-status');if(st)st.textContent='A foto sai quando você salvar.';return;}
+  if(b.dataset.perfilDm){const k=b.dataset.perfilDm;abrirCel('mensagens');dmAberto=k;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
+  if(b.dataset.pfotoMestre){const k=b.dataset.pfotoMestre;openModal('Remover a foto deste jogador?','Use quando a imagem for imprópria. O jogador pode mandar outra.','','Remover foto',async()=>{closeModal();fotos.delete(k);if(db){try{await db.doc('fotos/'+k).delete();}catch{}}renderSocial();});}
+});
 function htmlPost(pp,emThread){
   const curt=Array.isArray(pp.curtidas)?pp.curtidas:[];const eu=curt.includes(myId());const nResp=[...posts.values()].filter(x=>x.pai===pp.id).length;
-  return `<article class="post${(pp.marcados||[]).includes(myId())?' me-marcou':''}"><div class="post-topo"><button type="button" class="post-autor" data-perfil="${esc(pp.autor)}" title="Ver perfil de ${esc(pp.autorNome||'')}"><span class="tok" style="background:${corDe(pp.autor)};color:#141216">${esc(iniciais(pp.autorNome))}</span>
+  return `<article class="post${(pp.marcados||[]).includes(myId())?' me-marcou':''}"><div class="post-topo"><button type="button" class="post-autor" data-perfil="${esc(pp.autor)}" title="Ver perfil de ${esc(pp.autorNome||'')}">${avatarHtml(pp.autor,pp.autorNome)}
     <span class="post-quem"><b>${esc(pp.autorNome||'Alguém')}</b>${tagTitulo(pp.autor)}<small>${esc(identDe(pp.autor))} · ${tempoAtras(+pp.ts)}</small></span></button></div>
     <p class="post-txt">${textoComMarcas(pp)}</p>
     <div class="post-acoes"><button type="button" class="post-bt${eu?' on':''}" data-pcurtir="${pp.id}" aria-pressed="${eu}">♥ ${curt.length||''}</button>
@@ -3711,7 +3792,7 @@ function htmlRanking(){
   return `<p class="note dm-vazio" style="margin:6px 0 10px">Ranking de todos os jogadores. Atualiza sozinho.</p>`+RANKINGS.map(([t,f,kj])=>{
     const ord=todos.map(([k,j])=>({k,j,v:f(j)})).sort((a,b)=>b.v-a.v||String(a.j.nome).localeCompare(String(b.j.nome)));
     const top=ord.slice(0,5);const eu=ord.findIndex(x=>x.k===myId());
-    const linha=(x,i)=>`<li class="${x.k===myId()?'eu':''}"><span class="rk-pos">${i+1}º</span><span class="tok" style="background:${corDe(x.k)};color:#141216">${esc(iniciais(x.j.nome))}</span><span class="rk-nome"><button type="button" class="marca" data-perfil="${esc(x.k)}">${esc(x.j.nome)}</button>${tagTitulo(x.k)}<small>${esc(identDe(x.k))}</small></span><b class="rk-v">${t.startsWith('Ienes')?'¥ ':''}${x.v.toLocaleString('pt-BR')}</b></li>`;
+    const linha=(x,i)=>`<li class="${x.k===myId()?'eu':''}"><span class="rk-pos">${i+1}º</span>${avatarHtml(x.k,x.j.nome)}<span class="rk-nome"><button type="button" class="marca" data-perfil="${esc(x.k)}">${esc(x.j.nome)}</button>${tagTitulo(x.k)}<small>${esc(identDe(x.k))}</small></span><b class="rk-v">${t.startsWith('Ienes')?'¥ ':''}${x.v.toLocaleString('pt-BR')}</b></li>`;
     return `<section class="rank"><h3><span>${kj}</span> ${esc(t)}</h3><ol>${top.map(linha).join('')}${eu>=5?`<li class="rk-sep">…</li>${linha(ord[eu],eu)}`:''}</ol></section>`;}).join('');
 }
 function renderSocial(){
@@ -3720,7 +3801,7 @@ function renderSocial(){
   const topo=[...posts.values()].filter(p=>!p.pai).sort((a,b)=>b.ts-a.ts);
   const marcar=`<div class="post-marcar"><span>Marcar:</span>${outrosJogadores().map(([k,j])=>`<button type="button" class="post-bt${postMarcados.has(k)?' on':''}" data-pmarcar="${esc(k)}" aria-pressed="${postMarcados.has(k)}">@${esc(j.nome)}</button>`).join('')||'<small>ninguém por enquanto</small>'}</div>`;
   const form=(ph)=>marcar+`<form class="dm-form post-form" id="post-form"><label class="sr" for="post-texto">${ph}</label><textarea id="post-texto" rows="2" maxlength="280" placeholder="${ph}"></textarea><button class="btn primary" type="submit" ${postEnviando?'disabled':''}>${postThread?'Responder':'Postar'}</button></form>`;
-  const abas=`<div class="soc-abas" role="tablist"><button role="tab" aria-selected="${socialAba==='feed'}" class="${socialAba==='feed'?'on':''}" data-sociaba="feed">Feed</button><button role="tab" aria-selected="${socialAba==='ranking'}" class="${socialAba==='ranking'?'on':''}" data-sociaba="ranking">Ranking</button></div>`;
+  const abas=`<div class="soc-abas" role="tablist"><button role="tab" aria-selected="${socialAba==='feed'}" class="${socialAba==='feed'?'on':''}" data-sociaba="feed">Feed</button><button role="tab" aria-selected="${socialAba==='ranking'}" class="${socialAba==='ranking'?'on':''}" data-sociaba="ranking">Ranking</button><button role="tab" aria-selected="false" data-perfil="${esc(myId())}">Meu perfil</button></div>`;
   if(perfilAberto){box.innerHTML=htmlPerfil(perfilAberto);return;}
   if(socialAba==='ranking'){box.innerHTML=abas+htmlRanking();return;}
   if(postThread&&posts.has(postThread)){const pai=posts.get(postThread);const resp=[...posts.values()].filter(p=>p.pai===postThread).sort((a,b)=>a.ts-b.ts);
@@ -4234,7 +4315,7 @@ async function boot(){
     assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();

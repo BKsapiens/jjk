@@ -75,6 +75,17 @@ service cloud.firestore {
     match /npcEstado/{id} {
       allow read, write: if liberado();
     }
+    // Foto do personagem no Social Jujutsu (JPEG pequeno em texto base64, feito no navegador).
+    match /fotos/{uid} {
+      allow read: if liberado();
+      allow create, update: if liberado() && request.auth.uid == uid
+        && request.resource.data.mini is string && request.resource.data.mini.size() < 40000
+        && request.resource.data.mini.matches('^data:image/jpeg;base64,.*')
+        && request.resource.data.grande is string && request.resource.data.grande.size() < 200000
+        && request.resource.data.grande.matches('^data:image/jpeg;base64,.*');
+      allow delete: if mestre() || (liberado() && request.auth.uid == uid);
+    }
+
     // ---------- Lista de espera e beta ----------
     // Ninguém (nem o mestre) grava por aqui: quem grava é o servidor (/api/waitlist/*, com firebase-admin).
     // Cada pessoa lê só o próprio documento; o mestre lê todos.
