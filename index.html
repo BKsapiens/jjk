@@ -214,7 +214,7 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .p5-cel-txt{display:flex;flex-direction:column;text-shadow:2px 2px 0 #000}.p5-cel-txt b{font-size:13px;letter-spacing:3px;color:#000;text-shadow:none;background:#fff;padding:1px 5px;align-self:flex-start;transform:rotate(-3deg)}
 .p5-cel-dot{position:absolute;top:-8px;right:-8px;width:18px;height:18px;border-radius:50%;background:#fff;border:3px solid #000}
 /* o celular */
-.cel{position:fixed;inset:0;z-index:40;overflow:hidden}
+.cel{position:fixed;inset:0;z-index:40;overflow:hidden;overflow:clip}
 .cel-fundo{position:absolute;inset:0;background:repeating-linear-gradient(-35deg,rgba(0,0,0,.78) 0 22px,rgba(160,8,16,.55) 22px 26px);opacity:0;transition:opacity .25s}
 .cel.show .cel-fundo{opacity:1}
 .cel-mao{position:absolute;left:50%;bottom:0;width:min(98vw,calc(100vh * 1.414));aspect-ratio:2480/1754;transform:translate(-50%,105%) rotate(-14deg);transform-origin:50% 100%;transition:transform .42s cubic-bezier(.2,.9,.25,1.12)}
@@ -309,9 +309,9 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .perfil-destaques{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.dest-chip{display:inline-flex;gap:6px;align-items:center;background:#0b0a0c;color:#f6d32b;font-weight:800;font-size:13px;padding:4px 10px;transform:skew(-6deg);border:2px solid #000}.dest-chip b{color:#fff;font-family:var(--display)}
 .btn.seguindo{background:#0b0a0c;color:#fff}
 .perfil-campo{border:2px solid #000;padding:8px;margin:10px 0}.perfil-campo legend{font-weight:900;padding:0 4px}
-.capa-opcoes{display:flex;gap:8px;flex-wrap:wrap}.capa-op{cursor:pointer}.capa-op input{position:absolute;opacity:0;width:1px;height:1px}.capa-op span{display:block;width:34px;height:34px;border:2px solid #000}
+.capa-opcoes{display:flex;gap:8px;flex-wrap:wrap}.capa-op{cursor:pointer;position:relative}.capa-op input{position:absolute;left:0;top:0;margin:0;opacity:0;width:1px;height:1px}.capa-op span{display:block;width:34px;height:34px;border:2px solid #000}
 .capa-op input:checked+span{outline:3px solid #000;outline-offset:2px;box-shadow:inset 0 0 0 3px #fff}.capa-op input:focus-visible+span{outline:3px solid #1f4fd1;outline-offset:2px}
-.dest-opcoes{display:flex;flex-wrap:wrap;gap:6px}.dest-op{cursor:pointer}.dest-op input{position:absolute;opacity:0;width:1px;height:1px}.dest-op span{display:inline-block;border:2px solid #000;padding:4px 8px;font-size:13px;font-weight:700;background:#fff;color:#0b0a0c}
+.dest-opcoes{display:flex;flex-wrap:wrap;gap:6px}.dest-op{cursor:pointer;position:relative}.dest-op input{position:absolute;left:0;top:0;margin:0;opacity:0;width:1px;height:1px}.dest-op span{display:inline-block;border:2px solid #000;padding:4px 8px;font-size:13px;font-weight:700;background:#fff;color:#0b0a0c}
 .dest-op input:checked+span{background:#0b0a0c;color:#f6d32b}.dest-op input:focus-visible+span{outline:3px solid #1f4fd1}
 #mural-form textarea{background:#fff;color:#0b0a0c}
 .perfil h4{margin:12px 0 6px}.perfil-rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.perfil-rank li{display:flex;gap:8px;align-items:center}
@@ -3860,6 +3860,7 @@ function htmlPost(pp,emThread){
       ${pp.autor===myId()||souDono||pp.mural===myId()?`<button type="button" class="post-bt" data-papagar="${pp.id}">Apagar</button>`:''}</div></article>`;
 }
 let socialAba='feed';
+{const c=document.getElementById('cel');if(c)c.addEventListener('scroll',()=>{if(c.scrollTop||c.scrollLeft){c.scrollTop=0;c.scrollLeft=0;}});}
 const RANKINGS=[
   ['Caçadas concluídas',j=>+j.cacadasFeitas||0,'狩'],
   ['Maldições derrotadas',j=>Object.values(j.cont?.mortes||{}).reduce((a,v)=>a+(+v||0),0),'祓'],
