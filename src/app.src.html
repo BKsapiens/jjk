@@ -303,11 +303,22 @@ a.btn{text-decoration:none;color:var(--bone);display:inline-block;text-align:cen
 .perfil{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #d3121c;padding:12px;margin-top:8px}
 .perfil-topo{display:flex;gap:12px;align-items:center}.perfil-topo h3{margin:0;font-size:20px}.perfil-topo small{display:block;color:#555}
 .perfil-tok{width:72px;height:72px;font-size:24px}
+.perfil-capa{height:58px;margin:-12px -12px 0;border-bottom:3px solid #000;background-image:repeating-linear-gradient(-45deg,rgba(0,0,0,.18) 0 6px,transparent 6px 14px)}
+.perfil-capa+.perfil-topo{align-items:flex-start;margin-top:-30px}.perfil-capa+.perfil-topo>div{padding-top:34px;min-width:0}.perfil-capa+.perfil-topo .perfil-tok{border:3px solid #fff;outline:2px solid #000;flex:none}
+.visto{color:#555}.visto.on{color:#127a3a;font-weight:800}
+.perfil-destaques{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.dest-chip{display:inline-flex;gap:6px;align-items:center;background:#0b0a0c;color:#f6d32b;font-weight:800;font-size:13px;padding:4px 10px;transform:skew(-6deg);border:2px solid #000}.dest-chip b{color:#fff;font-family:var(--display)}
+.btn.seguindo{background:#0b0a0c;color:#fff}
+.perfil-campo{border:2px solid #000;padding:8px;margin:10px 0}.perfil-campo legend{font-weight:900;padding:0 4px}
+.capa-opcoes{display:flex;gap:8px;flex-wrap:wrap}.capa-op{cursor:pointer}.capa-op input{position:absolute;opacity:0;width:1px;height:1px}.capa-op span{display:block;width:34px;height:34px;border:2px solid #000}
+.capa-op input:checked+span{outline:3px solid #000;outline-offset:2px;box-shadow:inset 0 0 0 3px #fff}.capa-op input:focus-visible+span{outline:3px solid #1f4fd1;outline-offset:2px}
+.dest-opcoes{display:flex;flex-wrap:wrap;gap:6px}.dest-op{cursor:pointer}.dest-op input{position:absolute;opacity:0;width:1px;height:1px}.dest-op span{display:inline-block;border:2px solid #000;padding:4px 8px;font-size:13px;font-weight:700;background:#fff;color:#0b0a0c}
+.dest-op input:checked+span{background:#0b0a0c;color:#f6d32b}.dest-op input:focus-visible+span{outline:3px solid #1f4fd1}
+#mural-form textarea{background:#fff;color:#0b0a0c}
 .perfil h4{margin:12px 0 6px}.perfil-rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}.perfil-rank li{display:flex;gap:8px;align-items:center}
 .titulo-conq{font-size:.78em;font-weight:800;color:#f6d32b;white-space:nowrap}
 .post .titulo-conq,.rank .titulo-conq,.conq .titulo-conq{color:#b4141c}
 .conq-tit{align-self:flex-start;margin-top:4px;font-size:12px}
-.soc-abas{display:flex;gap:6px;margin-bottom:8px}.soc-abas button{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:900;padding:5px 14px;cursor:pointer;transform:skew(-6deg)}.soc-abas button.on{background:#0b0a0c;color:#fff}
+.soc-abas{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.soc-abas button{background:#fff;border:2px solid #000;color:#0b0a0c;font-weight:900;padding:5px 10px;cursor:pointer;transform:skew(-6deg)}.soc-abas button.on{background:#0b0a0c;color:#fff}
 .rank{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:4px 4px 0 #000;padding:8px 12px;margin-bottom:10px}
 .rank h3{margin:0 0 6px;font-size:15px}.rank h3 span{color:#d3121c;font-family:var(--display)}
 .rank ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
@@ -1752,6 +1763,7 @@ async function atualizarMeu(patch){
   renderHud();if(canalAtual)renderPresentes();if(mapaAberto)renderMapa();if(celApp==='inventario')renderInv();if(celApp==='ficha')renderCelFicha();
   if(patch.estado&&typeof sincronizarPvCombate==='function')sincronizarPvCombate();
   if(!patch.conquistas&&typeof agendarConquistas==='function')agendarConquistas();
+  if(!patch.vistoEm)marcarVisto();
 }
 
 /* HUD */
@@ -3654,16 +3666,17 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-nnova],[da
 const posts=new Map();let postsUnsub=null,postThread=null,postEnviando=false;
 function postsLidoTs(){try{return +localStorage.getItem('jjk-posts-lido-'+myId())||0;}catch{return 0;}}
 function postsMarcarLido(){const ult=Math.max(0,...[...posts.values()].map(p=>+p.ts||0));try{localStorage.setItem('jjk-posts-lido-'+myId(),String(Math.max(ult,postsLidoTs())));}catch{}}
-const postsNaoLidos=()=>{const l=postsLidoTs();return [...posts.values()].filter(p=>p.autor!==myId()&&+p.ts>l).length;};
+const postsNaoLidos=()=>{const l=postsLidoTs();return [...posts.values()].filter(p=>p.autor!==myId()&&+p.ts>l&&(!p.mural||p.mural===myId())).length;};
 function assinarPosts(){
   if(!db||postsUnsub)return;
   postsUnsub=db.collection('posts').orderBy('ts','desc').limit(150).onSnapshot(s=>{posts.clear();s.docs.forEach(d=>{const x=d.data();if(x&&x.texto!=null)posts.set(d.id,{id:d.id,...x});});
     [...posts.values()].filter(p=>p.autor!==myId()&&(p.marcados||[]).includes(myId())&&+p.ts>postsInicio).forEach(avisarMarcacao);
+    [...posts.values()].filter(p=>p.autor!==myId()&&p.mural===myId()&&+p.ts>postsInicio).forEach(avisarMural);
     if(celApp==='social'){postsMarcarLido();renderSocial();}else if(celApp==='home')renderCelApp();atualizarAlertaDM();},()=>{});
 }
 const tempoAtras=ts=>{const m=Math.round((Date.now()-ts)/60000);return m<1?'agora':m<60?`${m} min`:m<1440?`${Math.round(m/60)} h`:new Date(ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});};
 /* Marcações: @Nome no texto ou pelos botões de marcar. Quem é marcado recebe um aviso na tela na hora. */
-let postMarcados=new Set(),perfilAberto=null,postsInicio=Date.now();
+let postMarcados=new Set(),perfilAberto=null,postsInicio=Date.now(),seguidoresAntes=null;
 const avisadosPosts=new Set();
 const outrosJogadores=()=>[...jogadores.entries()].filter(([k,j])=>k!==myId()&&j&&j.nome);
 function acharMarcados(texto){
@@ -3678,6 +3691,20 @@ function textoComMarcas(pp){
     const link=`<button type="button" class="marca" data-perfil="${esc(k)}">@${esc(nm)}</button>`;
     if(re.test(h))h=h.replace(new RegExp('@'+escRe(esc(nm)),'gi'),link);else h+=` ${link}`;});
   return h;}
+function avisarMural(pp){
+  if(avisadosPosts.has(pp.id))return;avisadosPosts.add(pp.id);
+  const el=document.createElement('button');el.type='button';el.className='conq-toast marca-toast';el.dataset.perfil=myId();
+  el.innerHTML=`<span class="k">壁</span><span><small>Social Jujutsu · escreveram no seu mural</small><b>${esc(pp.autorNome||'Alguém')}</b><small>${esc(String(pp.texto||'').slice(0,90))}</small></span>`;
+  el.addEventListener('click',()=>el.remove());
+  document.body.appendChild(el);setTimeout(()=>el.classList.add('sai'),6000);setTimeout(()=>el.remove(),6600);
+  if(canalAtual)toastChat(`${pp.autorNome||'Alguém'} escreveu no seu mural do Social Jujutsu.`);
+}
+function avisarSeguidor(k,nome){
+  const el=document.createElement('button');el.type='button';el.className='conq-toast marca-toast';el.dataset.perfil=k;
+  el.innerHTML=`<span class="k">従</span><span><small>Social Jujutsu · novo seguidor</small><b>${esc(nome||'Alguém')}</b><small>começou a seguir você</small></span>`;
+  el.addEventListener('click',()=>el.remove());
+  document.body.appendChild(el);setTimeout(()=>el.classList.add('sai'),6000);setTimeout(()=>el.remove(),6600);
+}
 function avisarMarcacao(pp){
   if(avisadosPosts.has(pp.id))return;avisadosPosts.add(pp.id);
   const el=document.createElement('button');el.type='button';el.className='conq-toast marca-toast';el.dataset.abrirpost=pp.pai||pp.id;
@@ -3702,7 +3729,39 @@ function reduzirImagem(arquivo){return new Promise((ok,erro)=>{
     const gerar=(px,q)=>{const c=document.createElement('canvas');c.width=c.height=px;const g=c.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,px,px);g.drawImage(img,sx,sy,lado,lado,0,0,px,px);return c.toDataURL('image/jpeg',q);};
     let grande=gerar(320,.82);if(grande.length>150000)grande=gerar(320,.6);const mini=gerar(96,.78);URL.revokeObjectURL(url);ok({mini,grande});}catch(e){erro(e);}};
   img.onerror=()=>{URL.revokeObjectURL(url);erro(new Error('Não consegui abrir essa imagem.'));};img.src=url;});}
-const LIMITE_BIO=160;
+const LIMITE_BIO=160,LIMITE_MURAL=200,MAX_DESTAQUES=3;
+const CAPAS=[['vermelho','Vermelho','#d3121c'],['preto','Preto','#141216'],['azul','Azul','#1f4fd1'],['roxo','Roxo','#6b2bd1'],['verde','Verde','#127a3a'],['dourado','Dourado','#d9a514'],['rosa','Rosa','#e0457b'],['ciano','Ciano','#0f9bb0']];
+const corCapa=j=>(CAPAS.find(c=>c[0]===j?.capa)||CAPAS[0])[2];
+const seguindoDe=j=>(Array.isArray(j?.seguindo)?j.seguindo:[]).filter(x=>jogadores.has(x));
+const seguidoresDe=k=>[...jogadores.entries()].filter(([x,y])=>x!==k&&Array.isArray((x===myId()?meu:y)?.seguindo)&&(x===myId()?meu:y).seguindo.includes(k)).map(([x])=>x);
+const euSigo=k=>(meu?.seguindo||[]).includes(k);
+const ONLINE_MS=5*60000;
+function vistoTxt(k,j){
+  if(k===myId())return '<span class="visto on">● online agora</span>';
+  if(j.perfilOcultaVisto||!+j.vistoEm)return '';const d=Date.now()-(+j.vistoEm);
+  if(d<ONLINE_MS)return '<span class="visto on">● online agora</span>';
+  const t=tempoAtras(+j.vistoEm);return `<span class="visto">visto ${/\//.test(t)?'em '+t:'há '+t}</span>`;}
+/* "Visto por último": cada aba aberta e visível marca o horário a cada poucos minutos. */
+function marcarVisto(forcar){
+  if(!db||!uid||!meu||document.visibilityState!=='visible')return;const t=Date.now();
+  if(!forcar&&t-(+meu.vistoEm||0)<4*60000)return;meu.vistoEm=t;const j=jogadores.get(uid);if(j)j.vistoEm=t;
+  db.doc('jogadores/'+uid).update({vistoEm:t}).catch(()=>{});}
+setInterval(()=>marcarVisto(),60000);
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')marcarVisto();});
+function destaquesDe(j){const c=j.conquistas||{};return (Array.isArray(j.destaques)?j.destaques:[]).filter(id=>c[id]).map(id=>CONQUISTAS.find(x=>x.id===id)).filter(Boolean).slice(0,MAX_DESTAQUES);}
+let perfilRasc=null;
+function lerRascunhoPerfil(){if(!$('#perfil-bio'))return;
+  perfilRasc={bio:$('#perfil-bio').value,perfilOcultaTec:!!$('#perfil-ocultatec')?.checked,perfilOcultaVisto:!!$('#perfil-ocultavisto')?.checked,
+    capa:document.querySelector('input[name="perfil-capa"]:checked')?.value||'vermelho',destaques:[...document.querySelectorAll('input[name="perfil-destaque"]:checked')].map(x=>x.value)};}
+async function alternarSeguir(k){if(!meu||k===myId()||!jogadores.has(k))return;
+  const s=new Set(meu.seguindo||[]);s.has(k)?s.delete(k):s.add(k);await atualizarMeu({seguindo:[...s].slice(0,200)});renderSocial();}
+async function enviarMural(k){
+  const ta=$('#mural-texto');const t=String(ta?.value||'').trim();if(!t||postEnviando||!jogadores.has(k))return;
+  const pp={autor:myId(),autorNome:F.nome||'Sem nome',texto:t.slice(0,LIMITE_MURAL),ts:Date.now(),curtidas:[],mural:k};
+  postEnviando=true;ta.value='';
+  try{if(db)await db.collection('posts').add(pp);else{const id='l'+pp.ts;posts.set(id,{id,...pp});}}
+  catch{toastChat('Recado não enviado. Confira se as regras do Firestore foram publicadas.');postEnviando=false;renderSocial();const t2=$('#mural-texto');if(t2)t2.value=t;return;}
+  postEnviando=false;renderSocial();}
 function cartaoPersonagem(k,j){
   const fc=party.get(k);const f=fc?.ficha||{};const r=fc?.resumo||{};const esconde=j.perfilOcultaTec===true&&k!==myId();
   const tec=f.tecnica&&f.tecnica.nome?(esconde?'<i>em segredo</i>':esc(f.tecnica.nome)):'';
@@ -3715,7 +3774,8 @@ function estatisticas(j){
   const graus=[4,3,2,1,0].filter(g=>+m[g]>0).map(g=>`${g===0?'especial':'grau '+g}: ${m[g]}`).join(' · ');
   return `<h4>Estatísticas</h4><div class="perfil-stats">${itens.map(([kj,v,t])=>`<div><span>${kj}</span><b>${(+v).toLocaleString('pt-BR')}</b><small>${t}</small></div>`).join('')}</div>${graus?`<p class="note" style="margin:6px 0 0">Maldições por grau: ${esc(graus)}</p>`:''}`;
 }
-function htmlEditarPerfil(j){
+function htmlEditarPerfil(j0){
+  const j=perfilRasc?{...j0,...perfilRasc}:j0;
   const prev=fotoNova?fotoNova.grande:fotoDe(myId(),'grande');
   return `<section class="perfil perfil-editar"><h3>Editar perfil</h3>
     <div class="perfil-foto-edit">${prev?`<img src="${prev}" alt="Prévia da foto" class="perfil-tok tok tok-foto">`:`<span class="tok perfil-tok" style="background:${corDe(myId())};color:#141216">${esc(iniciais(F.nome))}</span>`}
@@ -3723,7 +3783,11 @@ function htmlEditarPerfil(j){
       ${prev?'<button type="button" class="btn small" data-pfoto="tirar">Tirar foto</button>':''}
       <p class="note" style="margin:6px 0 0">A imagem é recortada em quadrado. Use uma arte do seu personagem, nada de foto pessoal ou conteúdo impróprio.</p></div></div>
     <label class="f" for="perfil-bio">Bio <span class="note" id="perfil-bio-conta">${String(j.bio||'').length}/${LIMITE_BIO}</span><textarea id="perfil-bio" maxlength="${LIMITE_BIO}" rows="3" placeholder="Uma frase sobre o seu personagem">${esc(j.bio||'')}</textarea></label>
+    <fieldset class="perfil-campo"><legend>Cor da capa</legend><div class="capa-opcoes">${CAPAS.map(([id,n,c])=>`<label class="capa-op" title="${n}"><input type="radio" name="perfil-capa" value="${id}" ${(j.capa||'vermelho')===id?'checked':''}><span style="background:${c}"></span><i class="sr">${n}</i></label>`).join('')}</div></fieldset>
+    <fieldset class="perfil-campo"><legend>Conquistas em destaque <span class="note" id="perfil-dest-conta">(até ${MAX_DESTAQUES})</span></legend>${(()=>{const minhas=CONQUISTAS.filter(c=>(j.conquistas||{})[c.id]);const sel=new Set(Array.isArray(j.destaques)?j.destaques:[]);
+      return minhas.length?`<div class="dest-opcoes">${minhas.map(c=>`<label class="dest-op"><input type="checkbox" name="perfil-destaque" value="${c.id}" ${sel.has(c.id)?'checked':''}><span><b>${c.k}</b> ${esc(c.nome)}</span></label>`).join('')}</div>`:'<p class="note" style="margin:0">Você ainda não tem conquistas. Elas aparecem aqui quando você desbloquear.</p>';})()}</fieldset>
     <label class="chk-kok"><input type="checkbox" id="perfil-ocultatec" ${j.perfilOcultaTec?'checked':''}> Esconder o nome da minha técnica no perfil</label>
+    <label class="chk-kok"><input type="checkbox" id="perfil-ocultavisto" ${j.perfilOcultaVisto?'checked':''}> Não mostrar quando estive online</label>
     <p class="note" id="perfil-status" aria-live="polite"></p>
     <div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn primary" data-pperfil="salvar" ${perfilSalvando?'disabled':''}>${perfilSalvando?'Salvando…':'Salvar perfil'}</button><button type="button" class="btn" data-pperfil="cancelar">Cancelar</button></div></section>`;
 }
@@ -3733,27 +3797,36 @@ function htmlPerfil(k){
   const todos=[...jogadores.entries()].filter(([x,y])=>y&&y.nome).map(([x,y])=>[x,x===myId()?{...y,...meu}:y]);
   const linhas=RANKINGS.map(([t,f,kj])=>{const ord=todos.map(([x,y])=>({x,v:f(y)})).sort((a,b)=>b.v-a.v);const pos=ord.findIndex(o=>o.x===k)+1;const v=f(j);
     return `<li><span class="rk-pos">${pos}º</span><span class="rk-nome"><b>${kj} ${esc(t)}</b><small>de ${ord.length} jogador${ord.length>1?'es':''}</small></span><b class="rk-v">${t.startsWith('Ienes')?'¥ ':''}${v.toLocaleString('pt-BR')}</b></li>`;}).join('');
-  const meus=[...posts.values()].filter(p=>p.autor===k&&!p.pai).sort((a,b)=>b.ts-a.ts).slice(0,5);
+  const meus=[...posts.values()].filter(p=>p.autor===k&&!p.pai&&!p.mural).sort((a,b)=>b.ts-a.ts).slice(0,5);
+  const mural=[...posts.values()].filter(p=>p.mural===k).sort((a,b)=>b.ts-a.ts).slice(0,20);
+  const nSeg=seguidoresDe(k).length,nSigo=seguindoDe(j).length;const dest=destaquesDe(j);
   const nConq=Object.keys(j.conquistas||{}).length;
   const acoes=eu?`<button type="button" class="btn small primary" data-pperfil="editar">Editar perfil</button>`
-    :`<button type="button" class="btn small primary" data-perfil-dm="${esc(k)}">Mandar mensagem</button>`;
+    :`<button type="button" class="btn small primary" data-perfil-dm="${esc(k)}">Mandar mensagem</button><button type="button" class="btn small${euSigo(k)?' seguindo':''}" data-pseguir="${esc(k)}" aria-pressed="${euSigo(k)}">${euSigo(k)?'Seguindo ✓':'Seguir'}</button>`;
   return `<button type="button" class="btn small dm-voltar" data-pvoltar="1">‹ Voltar</button>
-    <section class="perfil"><div class="perfil-topo">${avatarHtml(k,j.nome,'perfil-tok')}
-      <div><h3>${esc(j.nome)}</h3>${tagTitulo(k)}<small>${esc(identDe(k))} · ${nConq} conquista${nConq===1?'':'s'}</small></div></div>
+    <section class="perfil"><div class="perfil-capa" style="background-color:${corCapa(j)}"></div><div class="perfil-topo">${avatarHtml(k,j.nome,'perfil-tok')}
+      <div><h3>${esc(j.nome)}</h3>${tagTitulo(k)}<small>${esc(identDe(k))} · ${nConq} conquista${nConq===1?'':'s'}</small>
+      <small><b>${nSeg}</b> seguidor${nSeg===1?'':'es'} · seguindo <b>${nSigo}</b>${vistoTxt(k,j)?' · '+vistoTxt(k,j):''}</small></div></div>
       ${j.bio?`<p class="perfil-bio">“${esc(j.bio)}”</p>`:eu?'<p class="note">Você ainda não escreveu uma bio.</p>':''}
+      ${dest.length?`<div class="perfil-destaques">${dest.map(c=>`<span class="dest-chip" title="${esc(c.desc)}"><b>${c.k}</b>${esc(c.nome)}</span>`).join('')}</div>`:''}
       <div class="perfil-acoes">${acoes}${souDono&&!eu&&fotos.has(k)?`<button type="button" class="btn small" data-pfoto-mestre="${esc(k)}">Remover foto (mestre)</button>`:''}</div>
       ${cartaoPersonagem(k,j)}
       ${estatisticas(j)}
       <h4>Ranking</h4><ol class="perfil-rank">${linhas}</ol></section>
+    <h4 class="dm-vazio" style="margin:12px 0 6px">Mural${mural.length?` (${mural.length})`:''}</h4>
+    <form class="dm-form post-form" id="mural-form" data-mural="${esc(k)}"><label class="sr" for="mural-texto">Deixe um recado</label><textarea id="mural-texto" rows="2" maxlength="${LIMITE_MURAL}" placeholder="${eu?'Escreva algo no seu mural...':'Deixe um recado para '+esc(j.nome)+'...'}"></textarea><button class="btn primary" type="submit" ${postEnviando?'disabled':''}>Deixar recado</button></form>
+    ${mural.length?mural.map(p=>htmlPost(p,true)).join(''):`<p class="note dm-vazio">${eu?'Ninguém deixou recado no seu mural ainda.':'Ninguém deixou recado ainda. Seja o primeiro.'}</p>`}
     <h4 class="dm-vazio" style="margin:12px 0 6px">Últimos posts</h4>${meus.length?meus.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ainda não postou nada.</p>'}`;
 }
 async function salvarPerfil(){
   if(perfilSalvando||!meu)return;const bio=String($('#perfil-bio')?.value||'').replace(/\s+/g,' ').trim().slice(0,LIMITE_BIO);const oculta=!!$('#perfil-ocultatec')?.checked;
   perfilSalvando=true;renderSocial();
-  try{await atualizarMeu({bio,perfilOcultaTec:oculta});
+  const capa=document.querySelector('input[name="perfil-capa"]:checked')?.value||'vermelho';const ocultaVisto=!!$('#perfil-ocultavisto')?.checked;
+  const destaques=[...document.querySelectorAll('input[name="perfil-destaque"]:checked')].map(x=>x.value).filter(id=>(meu.conquistas||{})[id]).slice(0,MAX_DESTAQUES);
+  try{await atualizarMeu({bio,perfilOcultaTec:oculta,perfilOcultaVisto:ocultaVisto,capa,destaques});
     if(fotoNova==='tirar'){fotos.delete(myId());if(db)await db.doc('fotos/'+myId()).delete();}
     else if(fotoNova){const d={mini:fotoNova.mini,grande:fotoNova.grande,t:Date.now()};fotos.set(myId(),d);if(db)await db.doc('fotos/'+myId()).set(d);}
-    fotoNova=null;perfilEditando=false;}
+    fotoNova=null;perfilEditando=false;perfilRasc=null;}
   catch(e){perfilSalvando=false;renderSocial();const st=$('#perfil-status');if(st)st.textContent='Não consegui salvar. Confira se as regras do Firestore foram publicadas.';return;}
   perfilSalvando=false;renderSocial();
 }
@@ -3761,11 +3834,15 @@ document.addEventListener('change',async e=>{if(e.target.id!=='perfil-foto-arq')
   const st=$('#perfil-status');if(st)st.textContent='Preparando a imagem…';
   try{fotoNova=await reduzirImagem(arq);renderSocial();const s2=$('#perfil-status');if(s2)s2.textContent='Foto pronta. Toque em "Salvar perfil" para publicar.';}
   catch(err){if(st)st.textContent=err.message||'Não consegui usar essa imagem.';}});
+document.addEventListener('change',e=>{if(e.target.name!=='perfil-destaque')return;const marc=[...document.querySelectorAll('input[name="perfil-destaque"]:checked')];
+  if(marc.length>MAX_DESTAQUES){e.target.checked=false;const c=$('#perfil-dest-conta');if(c)c.textContent=`(no máximo ${MAX_DESTAQUES})`;}});
+document.addEventListener('submit',e=>{if(e.target.id!=='mural-form')return;e.preventDefault();enviarMural(e.target.dataset.mural);});
 document.addEventListener('input',e=>{if(e.target.id!=='perfil-bio')return;const c=$('#perfil-bio-conta');if(c)c.textContent=`${e.target.value.length}/${LIMITE_BIO}`;});
 document.addEventListener('click',async e=>{
-  const b=e.target.closest('[data-pperfil],[data-pfoto],[data-perfil-dm],[data-pfoto-mestre]');if(!b)return;
-  if(b.dataset.pperfil==='editar'){perfilEditando=true;fotoNova=null;renderSocial();$('#cel-corpo').scrollTop=0;return;}
-  if(b.dataset.pperfil==='cancelar'){perfilEditando=false;fotoNova=null;renderSocial();return;}
+  const b=e.target.closest('[data-pperfil],[data-pfoto],[data-perfil-dm],[data-pfoto-mestre],[data-pseguir]');if(!b)return;
+  if(b.dataset.pseguir){alternarSeguir(b.dataset.pseguir);return;}
+  if(b.dataset.pperfil==='editar'){perfilEditando=true;fotoNova=null;perfilRasc=null;renderSocial();$('#cel-corpo').scrollTop=0;return;}
+  if(b.dataset.pperfil==='cancelar'){perfilEditando=false;fotoNova=null;perfilRasc=null;renderSocial();return;}
   if(b.dataset.pperfil==='salvar'){salvarPerfil();return;}
   if(b.dataset.pfoto==='tirar'){fotoNova='tirar';renderSocial();const st=$('#perfil-status');if(st)st.textContent='A foto sai quando você salvar.';return;}
   if(b.dataset.perfilDm){const k=b.dataset.perfilDm;abrirCel('mensagens');dmAberto=k;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
@@ -3778,7 +3855,7 @@ function htmlPost(pp,emThread){
     <p class="post-txt">${textoComMarcas(pp)}</p>
     <div class="post-acoes"><button type="button" class="post-bt${eu?' on':''}" data-pcurtir="${pp.id}" aria-pressed="${eu}">♥ ${curt.length||''}</button>
       ${pp.pai||emThread?'':`<button type="button" class="post-bt" data-pthread="${pp.id}">↩ ${nResp?`${nResp} ${nResp>1?'respostas':'resposta'}`:'Responder'}</button>`}
-      ${pp.autor===myId()||souDono?`<button type="button" class="post-bt" data-papagar="${pp.id}">Apagar</button>`:''}</div></article>`;
+      ${pp.autor===myId()||souDono||pp.mural===myId()?`<button type="button" class="post-bt" data-papagar="${pp.id}">Apagar</button>`:''}</div></article>`;
 }
 let socialAba='feed';
 const RANKINGS=[
@@ -3797,18 +3874,21 @@ function htmlRanking(){
 }
 function renderSocial(){
   const box=$('#cel-social');if(!box)return;
-  const ae=document.activeElement;const dig=ae&&ae.id==='post-texto'?{v:ae.value,s:ae.selectionStart}:null;
-  const topo=[...posts.values()].filter(p=>!p.pai).sort((a,b)=>b.ts-a.ts);
+  const ae=document.activeElement;const dig=ae&&(ae.id==='post-texto'||ae.id==='mural-texto')?{id:ae.id,v:ae.value,s:ae.selectionStart}:null;
+  const muralAntes=$('#mural-texto')?.value||'';
+  if(perfilEditando)lerRascunhoPerfil();
+  const sigo=new Set([...(meu?.seguindo||[]),myId()]);
+  const topo=[...posts.values()].filter(p=>!p.pai&&!p.mural&&(socialAba!=='seguindo'||sigo.has(p.autor))).sort((a,b)=>b.ts-a.ts);
   const marcar=`<div class="post-marcar"><span>Marcar:</span>${outrosJogadores().map(([k,j])=>`<button type="button" class="post-bt${postMarcados.has(k)?' on':''}" data-pmarcar="${esc(k)}" aria-pressed="${postMarcados.has(k)}">@${esc(j.nome)}</button>`).join('')||'<small>ninguém por enquanto</small>'}</div>`;
   const form=(ph)=>marcar+`<form class="dm-form post-form" id="post-form"><label class="sr" for="post-texto">${ph}</label><textarea id="post-texto" rows="2" maxlength="280" placeholder="${ph}"></textarea><button class="btn primary" type="submit" ${postEnviando?'disabled':''}>${postThread?'Responder':'Postar'}</button></form>`;
-  const abas=`<div class="soc-abas" role="tablist"><button role="tab" aria-selected="${socialAba==='feed'}" class="${socialAba==='feed'?'on':''}" data-sociaba="feed">Feed</button><button role="tab" aria-selected="${socialAba==='ranking'}" class="${socialAba==='ranking'?'on':''}" data-sociaba="ranking">Ranking</button><button role="tab" aria-selected="false" data-perfil="${esc(myId())}">Meu perfil</button></div>`;
-  if(perfilAberto){box.innerHTML=htmlPerfil(perfilAberto);return;}
+  const abas=`<div class="soc-abas" role="tablist"><button role="tab" aria-selected="${socialAba==='feed'}" class="${socialAba==='feed'?'on':''}" data-sociaba="feed">Feed</button><button role="tab" aria-selected="${socialAba==='seguindo'}" class="${socialAba==='seguindo'?'on':''}" data-sociaba="seguindo">Seguindo</button><button role="tab" aria-selected="${socialAba==='ranking'}" class="${socialAba==='ranking'?'on':''}" data-sociaba="ranking">Ranking</button><button role="tab" aria-selected="false" data-perfil="${esc(myId())}">Meu perfil</button></div>`;
+  if(perfilAberto){box.innerHTML=htmlPerfil(perfilAberto);const mt=$('#mural-texto');if(mt){mt.value=dig&&dig.id==='mural-texto'?dig.v:muralAntes;if(dig&&dig.id==='mural-texto'){mt.focus();try{mt.setSelectionRange(dig.s,dig.s);}catch{}}}return;}
   if(socialAba==='ranking'){box.innerHTML=abas+htmlRanking();return;}
   if(postThread&&posts.has(postThread)){const pai=posts.get(postThread);const resp=[...posts.values()].filter(p=>p.pai===postThread).sort((a,b)=>a.ts-b.ts);
     box.innerHTML=`<button type="button" class="btn small dm-voltar" data-pvoltar="1">‹ Feed</button>${htmlPost(pai,true)}<div class="post-resps">${resp.map(r=>htmlPost(r,true)).join('')||'<p class="note dm-vazio" style="margin:6px 0">Nenhuma resposta ainda.</p>'}</div>${form('Escreva uma resposta...')}`;}
   else{postThread=null;
-    box.innerHTML=`${abas}${form('O que está acontecendo?')}<p class="note dm-vazio" style="margin:6px 0 10px">Tudo que você posta aqui todos os jogadores veem. O mestre de IA não lê.</p>${topo.length?topo.map(p=>htmlPost(p)).join(''):'<p class="note dm-vazio">Ninguém postou nada ainda. Seja o primeiro.</p>'}`;}
-  const ta=$('#post-texto');if(ta&&dig){ta.value=dig.v;ta.focus();try{ta.setSelectionRange(dig.s,dig.s);}catch{}}
+    box.innerHTML=`${abas}${form('O que está acontecendo?')}<p class="note dm-vazio" style="margin:6px 0 10px">Tudo que você posta aqui todos os jogadores veem. O mestre de IA não lê.</p>${topo.length?topo.map(p=>htmlPost(p)).join(''):socialAba==='seguindo'?`<p class="note dm-vazio">${seguindoDe(meu).length?'Quem você segue ainda não postou nada.':'Você ainda não segue ninguém. Abra o perfil de um jogador e toque em Seguir.'}</p>`:'<p class="note dm-vazio">Ninguém postou nada ainda. Seja o primeiro.</p>'}`;}
+  const ta=$('#post-texto');if(ta&&dig&&dig.id==='post-texto'){ta.value=dig.v;ta.focus();try{ta.setSelectionRange(dig.s,dig.s);}catch{}}
 }
 async function enviarPost(){
   const ta=$('#post-texto');const t=(ta?.value||'').trim();if(!t||postEnviando)return;
@@ -3823,7 +3903,7 @@ async function enviarPost(){
 }
 async function curtirPost(id){const pp=posts.get(id);if(!pp)return;const c=new Set(Array.isArray(pp.curtidas)?pp.curtidas:[]);c.has(myId())?c.delete(myId()):c.add(myId());
   pp.curtidas=[...c];renderSocial();if(db){try{await db.doc('posts/'+id).update({curtidas:pp.curtidas});}catch{}}}
-async function apagarPost(id){const pp=posts.get(id);if(!pp||(pp.autor!==myId()&&!souDono))return;
+async function apagarPost(id){const pp=posts.get(id);if(!pp||(pp.autor!==myId()&&!souDono&&pp.mural!==myId()))return;
   posts.delete(id);if(postThread===id)postThread=null;renderSocial();
   if(db){try{await db.doc('posts/'+id).delete();for(const r of [...posts.values()].filter(x=>x.pai===id)){try{await db.doc('posts/'+r.id).delete();}catch{}}}catch{}}}
 document.addEventListener('submit',e=>{if(e.target.id!=='post-form')return;e.preventDefault();enviarPost();});
@@ -3836,7 +3916,7 @@ document.addEventListener('click',e=>{const b=e.target.closest('[data-pcurtir],[
   if(b.dataset.pcurtir){curtirPost(b.dataset.pcurtir);return;}
   if(b.dataset.pthread){postThread=b.dataset.pthread;renderSocial();$('#cel-corpo').scrollTop=0;return;}
   if(b.dataset.pvoltar){if(perfilAberto){perfilAberto=null;}else postThread=null;renderSocial();return;}
-  if(b.dataset.papagar){const id=b.dataset.papagar;openModal('Apagar este post?','As respostas dele também somem.','','Apagar',async()=>{closeModal();await apagarPost(id);});}
+  if(b.dataset.papagar){const id=b.dataset.papagar;const m=posts.get(id)?.mural;openModal(m?'Apagar este recado?':'Apagar este post?',m?'Ele some do mural.':'As respostas dele também somem.','','Apagar',async()=>{closeModal();await apagarPost(id);});}
 });
 document.addEventListener('keydown',e=>{if(e.target.id==='dm-texto'&&e.key==='Enter'&&!e.shiftKey){e.preventDefault();enviarDM();}});
 function renderCelFicha(){
@@ -4314,8 +4394,10 @@ async function boot(){
       if(d.id===uid)aplicarAdminNoJogador(x);});
     assinarDMs();
     if(meu)jogadores.set(uid,{...meu});
+    {const agora=new Set(seguidoresDe(myId()));if(seguidoresAntes)agora.forEach(k=>{if(!seguidoresAntes.has(k))avisarSeguidor(k,jogadores.get(k)?.nome);});seguidoresAntes=agora;}
+    if(celApp==='social'&&!perfilEditando&&document.activeElement?.tagName!=='TEXTAREA')renderSocial();
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();marcarVisto(true);
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();

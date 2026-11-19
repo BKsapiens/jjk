@@ -65,7 +65,7 @@ service cloud.firestore {
       allow read: if liberado();
       allow create: if liberado() && request.resource.data.autor == request.auth.uid && request.resource.data.texto is string && request.resource.data.texto.size() <= 280;
       allow update: if liberado() && (resource.data.autor == request.auth.uid || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['curtidas']));
-      allow delete: if mestre() || (liberado() && resource.data.autor == request.auth.uid);
+      allow delete: if mestre() || (liberado() && (resource.data.autor == request.auth.uid || resource.data.get('mural', '') == request.auth.uid));
     }
     // Bloco de notas pessoal: só o dono lê e escreve.
     match /notas/{uid} {
