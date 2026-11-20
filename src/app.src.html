@@ -2182,7 +2182,7 @@ async function irPara(id,anterior){
     await postMsg(id,{tipo:'sistema',texto:`${F.nome||'Alguém'} chegou${de?` vindo de ${nl(de)}`:''}.`});}
   if(location.hash==='#local-'+id)setTimeout(route,0);else location.hash='local-'+id;
   const de0=meu.__de;
-  if(mudou&&id==='shibuya'&&ehIno()&&eventosCarregados&&!eventos.has(EV_MUNAE)&&!(combate&&combate.ativo&&combateLocal===id)){setTimeout(()=>dispararMunae(id,false),600);return;}
+  if(mudou&&id==='shibuya'&&ehIno()&&eventosCarregados&&!eventos.has(EV_MUNAE)){setTimeout(()=>dispararMunae(id,false),600);return;}
   if(mudou&&emboscadaElmos(id,de0)){await atualizarMeu({ultimaEmboscada:Date.now()});setTimeout(()=>narrar(id,{tipo:'emboscada',primeira,anterior:anterior||''}),500);return;}
   if(mudou&&locById(id)?.programado){if(carreg&&carreg.id===id)carreg.narrou=true;setTimeout(()=>abrirMercado(),700);return;}
   if(mudou){if(primeira)setTimeout(()=>narrar(id,{tipo:'chegada',anterior:anterior||''}),500);else chegadaRecente={local:id,anterior:anterior||'',t:Date.now()};}
@@ -2218,6 +2218,11 @@ const ehIno=()=>F.antecedente===ANT_ELMOS;
 /* o herdeiro do Clã Elmos: só pode existir um jogador com esse antecedente */
 const uidHerdeiro=()=>{if(ehIno())return myId();let r=null;party.forEach((d,k)=>{if(!r&&k!==myId()&&d?.ficha?.antecedente===ANT_ELMOS)r=k;});return r;};
 const nomeHerdeiro=()=>{const k=uidHerdeiro();return k===myId()?(F.nome||'o herdeiro'):k?(jogadores.get(k)?.nome||party.get(k)?.resumo?.nome||'o herdeiro'):'o herdeiro do clã';};
+/* também dispara se o herdeiro já estiver no cruzamento (página recarregada, versão nova etc.) */
+let munaeChecando=false;
+function checarGatilhoMunae(){
+  if(munaeChecando||!ehIno()||!eventosCarregados||eventos.has(EV_MUNAE)||!meu||meu.local!=='shibuya'||canalAtual!=='shibuya')return;
+  munaeChecando=true;setTimeout(()=>dispararMunae('shibuya',false).finally(()=>{munaeChecando=false;}),1200);}
 const munaeAtivo=()=>eventos.has(EV_MUNAE)&&!eventos.has(EV_SHIB);
 const shibuyaDestruida=()=>eventos.has(EV_SHIB);
 const MUNAE_DESC='Munae Yakita, caçador do Clã Elmos e portador da primeira cabeça de Cérberus. Alto, sobretudo cinza, corrente selada na mão e máscara de cão de ferro pendurada no pescoço. Veio capturar o herdeiro do clã que fugiu levando a segunda cabeça de Cérberus e levá-lo de volta.';
@@ -2232,7 +2237,7 @@ async function dispararMunae(local,forcado){
   if(!await marcarEvento(EV_MUNAE,'Munae Yakita aparece em Shibuya'))return false;
   if(carreg&&carreg.id===local)carreg.narrou=true;
   try{registrarNpcs([{nome:'Munae Yakita',descricao:MUNAE_DESC}],local);}catch{}
-  const nome=F.nome||'herdeiro';
+  const nome=forcado&&!ehIno()?nomeHerdeiro():(F.nome||nomeHerdeiro());
   await postMsg(local,{tipo:'mestre',alvoId:'',alvoNome:'',texto:`O semáforo do cruzamento fecha e, por um segundo, a multidão inteira para. No meio da faixa, um homem alto de sobretudo cinza continua andando contra o fluxo, sem pressa. Ninguém esbarra nele: as pessoas desviam sem perceber, como água em volta de uma pedra. Na mão esquerda ele carrega uma corrente selada; no pescoço, pendurada, uma máscara de cão de ferro, igual às dos caçadores do Clã Elmos.
 
 Quando ele para na sua frente, o ar fica pesado e quente, e você sente na hora: a energia que vibra nele é parente da que dorme dentro de você. A primeira cabeça de Cérberus.
@@ -3159,7 +3164,7 @@ function assinarCampanha(){if(!db)return;
     if(t){let loc=null;try{loc=localStorage.getItem('jjk-temporada');}catch{}
       if(loc!==t){try{localStorage.setItem('jjk-temporada',t);const tinha=localStorage.getItem('jjk-ficha-rascunho')||localStorage.getItem('jjk-jogador');localStorage.removeItem('jjk-ficha-rascunho');localStorage.removeItem('jjk-jogador');if(tinha||loc!==null){location.reload();return;}}catch{}}}
     atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{});
-  db.collection('eventos').onSnapshot(s=>{const evAntes=new Set(eventos.keys()),jaCarregado=eventosCarregados;eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;if(jaCarregado&&eventos.has(EV_LUTA)&&!evAntes.has(EV_LUTA)&&!estrondoVisto)mostrarEstrondo();atualizarFase();aplicarEstadoMundo();if(typeof renderElmos==='function')renderElmos();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
+  db.collection('eventos').onSnapshot(s=>{const evAntes=new Set(eventos.keys()),jaCarregado=eventosCarregados;eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;if(jaCarregado&&eventos.has(EV_LUTA)&&!evAntes.has(EV_LUTA)&&!estrondoVisto)mostrarEstrondo();atualizarFase();aplicarEstadoMundo();checarGatilhoMunae();if(typeof renderElmos==='function')renderElmos();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
   setInterval(checarLinhaDoTempo,5*60000);}
 /* ---------- Linha do tempo automática da campanha ----------
    Cada acontecimento dispara sozinho quando passa o número de dias desde o lançamento E o grupo já concluiu
@@ -4720,7 +4725,7 @@ async function route(){
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
   $('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
-  abrirCanal(id);assinarCombate(id);atualizarNpcsCena();renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();renderElmos();if(celApp)renderCelApp();
+  abrirCanal(id);assinarCombate(id);atualizarNpcsCena();renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();renderElmos();if(celApp)renderCelApp();checarGatilhoMunae();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{
@@ -4871,7 +4876,9 @@ function renderAdmCampanha(){
       return `<div class="treino-row"><span><b>${esc(e.titulo)}</b><br><span class="note">${st.feito?`aconteceu em ${new Date(+ev.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${ev.manual?' (manual)':''}`:st.pronto?'pronto: dispara na próxima checagem':'espera: '+esc(st.falta.join(' · '))}</span></span>${st.feito?'<span class="pill ok">feito</span>':`<button class="btn small" data-admevento="${e.k}">Disparar agora</button>`}</div>`;}).join('')}
       <div class="adm-acts"><button class="btn small" data-adm="pausar">${campanha.autoPausado?'Retomar automação':'Pausar automação'}</button>
       <label class="sr" for="cp-fase">Fase manual</label><select id="cp-fase" style="width:auto"><option value="">Fase automática (linha do tempo)</option>${[['ato1','Forçar Ato 1'],['queda','Forçar A Queda'],['kyoto','Forçar Kyoto']].map(([v,t])=>`<option value="${v}" ${campanha.faseManual===v?'selected':''}>${t}</option>`).join('')}</select></div></div>
-    <div class="f"><span>Roteiro: Munae Yakita</span><div class="treino-row"><span><b>Munae em Shibuya</b><br><span class="note">${shibuyaDestruida()?'Shibuya foi destruída; Munae fugiu.':munaeAtivo()?`Munae está no Cruzamento de Shibuya esperando por ${esc(nomeHerdeiro())}.`:`Espera o jogador do Clã Elmos${uidHerdeiro()?' ('+esc(nomeHerdeiro())+')':''} entrar no Cruzamento de Shibuya.`}</span></span>${eventos.has(EV_MUNAE)||shibuyaDestruida()?'<button class="btn small" data-adm="munae-reset">Desfazer (Shibuya volta ao normal)</button>':'<span class="pill info">aguardando</span>'}</div></div>
+    <div class="f"><span>Roteiro: Munae Yakita</span><div class="treino-row"><span><b>Munae em Shibuya</b><br><span class="note">${shibuyaDestruida()?'Shibuya foi destruída; Munae fugiu.':munaeAtivo()?`Munae está no Cruzamento de Shibuya esperando por ${esc(nomeHerdeiro())}.`:`Espera o jogador do Clã Elmos${uidHerdeiro()?' ('+esc(nomeHerdeiro())+')':''} entrar no Cruzamento de Shibuya.`}</span></span>${eventos.has(EV_MUNAE)||shibuyaDestruida()?'<button class="btn small" data-adm="munae-reset">Desfazer (Shibuya volta ao normal)</button>':'<button class="btn primary small" data-adm="munae-lancar">Lançar agora</button>'}</div>
+      <p class="note" style="margin:4px 0 0">${(()=>{const k=uidHerdeiro();if(!k)return 'Nenhum jogador com antecedente Clã Elmos encontrado nas fichas.';const j=k===myId()?meu:jogadores.get(k);
+        return `Herdeiro do Clã Elmos: <b>${esc(nomeHerdeiro())}</b> · agora em ${j?.local?esc(nomeLocal(j.local)):'lugar nenhum'}.`;})()}</p></div>
     <div class="f"><span>Missões em andamento</span>${[...missoes.values()].filter(m=>m.status==='andamento').map(m=>`<div class="npc-item"><b>${esc(m.titulo)}</b><span class="note">Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')} · ${m.objetivoCumprido?'objetivo cumprido':'em aberto'+(m.falta?` (falta: ${esc(m.falta)})`:'')} · ${m.historia?'missão de história':'missão comum'} · criaturas ${+m.criaturas||0}/${maxCriaturasDe(m)}</span>
       <div class="adm-acts"><button class="btn small" data-admconcluir="${esc(m.id)}">Concluir e pagar agora</button></div></div>`).join('')||'<span class="note">Nenhuma.</span>'}</div>
     <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
@@ -4964,6 +4971,8 @@ async function admAcao(a){
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
+  if(a==='munae-lancar'){openModal('Lançar o Munae agora?',`Munae Yakita aparece no Cruzamento de Shibuya na hora, com a narração de abertura para ${nomeHerdeiro()}. Quem estiver no cruzamento vê; o mestre de IA passa a seguir o roteiro.`,'','Lançar',async()=>{closeModal();
+    const ok=await dispararMunae('shibuya',true);renderAdmCampanha();admStatus(ok?'Munae lançado no Cruzamento de Shibuya.':'Não consegui lançar (talvez já tenha sido lançado).');});return;}
   if(a==='munae-reset'){openModal('Desfazer o roteiro do Munae?','Shibuya volta ao normal no mapa e o Munae aparece de novo na próxima vez que o jogador do Clã Elmos entrar no cruzamento.','','Desfazer',async()=>{closeModal();
     try{for(const k of [EV_SHIB,EV_MUNAE,EV_LUTA]){await db.doc('eventos/'+k).delete();eventos.delete(k);}estrondoVisto=false;aplicarEstadoMundo();renderAdmCampanha();admStatus('Roteiro do Munae desfeito.');}catch{admStatus('Não consegui desfazer.');}});return;}
   if(a==='pausar'){try{await db.doc('config/campanha').set({...campanha,autoPausado:!campanha.autoPausado});admStatus(campanha.autoPausado?'Automação retomada.':'Automação pausada.');}catch{admStatus('Não consegui salvar.',true);}return;}
