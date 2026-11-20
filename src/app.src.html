@@ -877,6 +877,13 @@ body.sem-animacao .conq-toast{animation:none;transform:translate(-50%,0)}
 :is(#view-ficha,#view-tecnica) .pill:not(.warn):not(.ok):not(.info){background:#0b0a0c;color:#fff}
 
 @media (max-width:760px){#view-ficha section.step,#view-ficha .sheet,#view-tecnica .panel{box-shadow:4px 4px 0 #d3121c}#view-ficha header.top h1{font-size:23px}}
+.tok-npc{background:#0b0a0c!important;color:#fff!important;border:2px solid #d3121c}
+.dm-npc-topo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.dm-npc-info{display:flex;flex-direction:column;background:#fff;color:#0b0a0c;border:2px solid #000;padding:3px 10px;transform:skew(-6deg);box-shadow:3px 3px 0 #000}.dm-npc-info small{color:#444;font-size:12px}.dm-npc-info .dm-tel{white-space:nowrap;font-weight:800;color:#0b0a0c}
+.dm-digitando p span{animation:digita 1.2s infinite both}.dm-digitando p span:nth-child(2){animation-delay:.2s}.dm-digitando p span:nth-child(3){animation-delay:.4s}
+@keyframes digita{0%,80%,100%{opacity:.2}40%{opacity:1}}
+@media (prefers-reduced-motion:reduce){.dm-digitando p span{animation:none}}
+.dm-visto{align-self:flex-end;margin:0;font-size:12px;font-weight:800;color:#fff;text-shadow:1px 1px 0 #000}
+.dm-apagar{align-self:center;background:none;border:0;color:#fff;text-decoration:underline;font-size:13px;cursor:pointer;text-shadow:1px 1px 0 #000;padding:6px}
 </style>
 </head>
 <body>
@@ -2526,6 +2533,7 @@ async function falarComNpc(n,texto){
   npcFalando=true;const el=$('#chat-thinking');if(el){el.hidden=false;el.firstChild.textContent=`${n.nome} está respondendo`;}
   try{
     const e=npcEstados.get(n.id)||{};const rel=+(e.relacoes||{})[myId()]||0;const o=npcOnde(n);
+    const jaTemNum=temNumeroNpc(n.id),podeNum=rel>=numMinNpc(n);
     const prox=[1,2,3,4,6].map(h=>{const r=slotRotina(n,Date.now()+h*HORA_JOGO_MS);return r?`${Math.floor((horaJogo()+h)%24)}h: ${r.local?nomeDestino(trocaLocal(r.local)):'em casa'}`:'';}).filter(Boolean).join('; ');
     const prompt=`Você interpreta UM personagem de uma campanha de RPG de Jujutsu Kaisen, e só ele. Não é o mestre: não narre o ambiente, não fale por outras pessoas, não decida nada pelos jogadores.
 PERSONAGEM: ${n.nome}, ${n.papel}.
@@ -2538,6 +2546,7 @@ O QUE VOCÊ LEMBRA DE ${F.nome}:
 ${npcLembrancas(n,myId())||'(nunca conversaram)'}
 OUTRAS LEMBRANÇAS RECENTES:
 ${npcLembrancas(n)||'(nenhuma)'}
+SEU NÚMERO DE CELULAR: ${telNpc(n)}. ${jaTemNum?`${F.nome} já tem o seu número.`:podeNum?`Se ${F.nome} pedir o seu número ou contato, você PODE passar, se fizer sentido para o seu jeito: diga isso na fala e use "passarNumero":true.`:`Se ${F.nome} pedir o seu número ou contato, RECUSE do seu jeito: vocês ainda não são próximos o bastante para isso. Nunca diga o número.`}
 CONVERSA E CENA RECENTES NESTE LUGAR:
 ${historico().split('\n').slice(-14).join('\n')||'(vazio)'}
 
@@ -2546,7 +2555,7 @@ ${F.nome} diz/faz agora: "${texto}"
 Responda como ${n.nome}, em português do Brasil, curto (1 a 3 frases de fala), no seu jeito. Se ${F.nome} chamar você para ir a algum lugar ou acompanhar, decida pela sua personalidade, relação e agenda (pode recusar). Se você mesmo decidir sair agora para outro lugar, diga e use "vaiPara".
 Lugares válidos (ids): ${LOCAIS.filter(x=>!x.programado).map(x=>x.id).join(', ')}.
 Responda SOMENTE com JSON:
-{"fala":"o que você diz","acao":"gesto curto em terceira pessoa ou vazio","vaiPara":null ou {"local":"id","horas":1,"motivo":"curto"},"acompanhar":null ou {"horas":2},"lembrar":"frase curta do que você vai lembrar desta conversa ou vazio","relacao":0}
+{"fala":"o que você diz","acao":"gesto curto em terceira pessoa ou vazio","vaiPara":null ou {"local":"id","horas":1,"motivo":"curto"},"acompanhar":null ou {"horas":2},"lembrar":"frase curta do que você vai lembrar desta conversa ou vazio","relacao":0,"passarNumero":false}
 "acompanhar" = você aceitou ir junto com ${F.nome} por algumas horas (você vai para onde ele for). "relacao" entre -2 e 2: o quanto essa conversa mudou o que você acha dele.`;
     const res=await chamarIA(prompt,'default',avisoEspera);
     let j;try{j=lerJSON(res.text||'');}catch{j={fala:String(res.text||'').slice(0,400)};}
@@ -2562,11 +2571,102 @@ Responda SOMENTE com JSON:
     else if(j.acompanhar){const h=Math.max(0.5,Math.min(8,+j.acompanhar.horas||2));Object.assign(patch,{seguindo:myId(),local:null,ate:now+h*HORA_JOGO_MS,faz:''});
       await postMsg(loc,{tipo:'sistema',texto:`${n.nome} vai acompanhar ${F.nome} por um tempo.`});}
     if(Object.keys(patch).length){const novo={...e,...patch};npcEstados.set(n.id,novo);if(db){try{await db.doc('npcEstado/'+n.id).set(novo);}catch{}}}
+    if(j.passarNumero===true&&!jaTemNum&&podeNum)await darNumeroNpc(n,loc);
     registrarNpcs([{nome:n.nome,descricao:n.papel}],loc);
     if(typeof registrarConjunto==='function')registrarConjunto('npcs',[n.nome]);
     atualizarNpcsCena();
   }catch(err){toastChat(`${n.nome} não respondeu: ${err?.message||'erro'}.`);}
   finally{npcFalando=false;avisoNormal();if(el)el.hidden=true;}
+}
+
+
+/* ---------- Celular dos NPCs ----------
+   Todo NPC tem um número. Ele só passa o número pessoalmente (no modo "Falar com") e só se a relação com
+   você for boa o bastante para o jeito dele. Com o número salvo, a conversa continua no app Mensagens:
+   só você e o NPC leem (doc npcConversas/{uid}__{npc}). */
+const NUM_MIN_NPC={shoko:2,yaga:3,utahime:2,gakuganji:4,kuroda:2,hana:1,joen:1,ren:1,fumiko:3};
+const numMinNpc=n=>NUM_MIN_NPC[n.id]??2;
+function telNpc(n){let h=7;for(const c of String(n.id))h=(h*31+c.charCodeAt(0))>>>0;const a=String(1000+h%9000),b=String(1000+(Math.floor(h/9000))%9000);return `090-${a}-${b}`;}
+const temNumeroNpc=id=>!!(meu?.contatosNpc||{})[id];
+const npcPorId=id=>NPCS_SIS.find(x=>x.id===id);
+const relNpc=id=>+((npcEstados.get(id)||{}).relacoes||{})[myId()]||0;
+const NIVEL_REL=r=>r>=3?'muito boa':r>=1?'boa':r<=-3?'péssima':r<=-1?'ruim':'neutra';
+async function darNumeroNpc(n,loc){
+  await atualizarMeu({contatosNpc:{...(meu.contatosNpc||{}),[n.id]:Date.now()}});
+  if(loc)await postMsg(loc,{tipo:'sistema',texto:`📱 ${n.nome} passou o número para ${F.nome}. Dá para mandar mensagem pelo app Mensagens do celular.`});
+  if(!dmMsgs.has('npc:'+n.id))dmMsgs.set('npc:'+n.id,[]);
+  if(celApp==='mensagens')renderDM();
+}
+const npcConvs=new Map();let npcConvUnsub=null,npcDigitando=null;
+const npcConvId=id=>`${uid}__${id}`;
+function npcConvParaDm(id,c){const k='npc:'+id;dmMsgs.set(k,(c?.msgs||[]).map(m=>({id:m.ts+'-'+m.de,de:m.de==='npc'?k:myId(),texto:m.texto,ts:m.ts})));}
+function assinarNpcConversas(){
+  Object.keys(meu?.contatosNpc||{}).forEach(id=>{if(!dmMsgs.has('npc:'+id))dmMsgs.set('npc:'+id,[]);});
+  if(!db||!uid){try{const l=JSON.parse(localStorage.getItem('jjk-npcconv-'+myId())||'{}');Object.entries(l).forEach(([id,c])=>{npcConvs.set(id,c);npcConvParaDm(id,c);});}catch{}return;}
+  if(npcConvUnsub)return;
+  npcConvUnsub=db.collection('npcConversas').where('uid','==',uid).onSnapshot(sn=>{
+    sn.docs.forEach(d=>{const c=d.data()||{};if(c.uid!==uid||!c.npc)return;npcConvs.set(c.npc,c);npcConvParaDm(c.npc,c);});
+    atualizarAlertaDM();if(celApp==='mensagens')renderDM();},()=>{});
+}
+async function salvarNpcConv(id,c){
+  npcConvs.set(id,c);npcConvParaDm(id,c);
+  if(db&&uid){await db.doc('npcConversas/'+npcConvId(id)).set(c);}
+  else{try{const l=JSON.parse(localStorage.getItem('jjk-npcconv-'+myId())||'{}');l[id]=c;localStorage.setItem('jjk-npcconv-'+myId(),JSON.stringify(l));}catch{}}
+}
+function ondeNpcTxt(n){const o=npcOnde(n);
+  if(o.status==='aqui')return `em ${nomeDestino(o.local)}, ${o.faz||''}`;
+  if(o.status==='caminho')return `a caminho de ${nomeDestino(o.para)}`;
+  return horaJogo()>=0&&horaJogo()<6?'em casa, provavelmente dormindo':'em casa, de folga';}
+async function enviarNpcMsg(id,texto){
+  const n=npcPorId(id);if(!n||!temNumeroNpc(id)||npcDigitando)return false;
+  const c0=npcConvs.get(id)||{uid:uid||myId(),npc:id,msgs:[]};
+  const agora=Date.now();
+  const c={...c0,uid:uid||myId(),npc:id,visto:null,msgs:[...(c0.msgs||[]),{de:'eu',texto:texto.slice(0,500),ts:agora}].slice(-60)};
+  try{await salvarNpcConv(id,c);}catch{toastChat('Não consegui mandar a mensagem. Confira se as regras novas do Firestore foram publicadas.');return false;}
+  contarConquista('dms',1);
+  npcDigitando=id;if(celApp==='mensagens')renderDM();
+  try{
+    const e=npcEstados.get(id)||{};const rel=relNpc(id);
+    const conversa=c.msgs.slice(-16).map(m=>`${m.de==='npc'?n.nome:F.nome}: ${m.texto}`).join('\n');
+    const ondeEu=meu?.local?nomeLocal(meu.local):'algum lugar';
+    const prompt=`Você interpreta UM personagem de uma campanha de RPG de Jujutsu Kaisen, e só ele. Agora você está respondendo MENSAGENS DE CELULAR (conversa privada), não falando cara a cara.
+PERSONAGEM: ${n.nome}, ${n.papel}.
+JEITO: ${n.jeito}. Escreva como essa pessoa escreveria no celular (curto, do jeito dela: pode ser seco, formal, cheio de emoji, com erro de digitação, só uma palavra...).
+O QUE SABE: ${n.sabe}. Não revele segredos da campanha que não estão aqui. Por mensagem você é mais cauteloso com assuntos perigosos do que pessoalmente.
+AGORA: ${relogioTxt()} (${periodoDia()}, ${DIAS_SEMANA[diaSemana()]}). Você está ${ondeNpcTxt(n)}.
+QUEM MANDA MENSAGEM: ${F.nome} (${ehFree(myId())?'feiticeiro freelancer, sem escola':'aluno da '+ESCOLAS[raizDaEscola(escolaDe(myId()))]?.nome}), que agora está em ${ondeEu}. Relação com ${F.nome}: ${NIVEL_REL(rel)}.
+O QUE VOCÊ LEMBRA DE ${F.nome}:
+${npcLembrancas(n,myId())||'(pouca coisa)'}
+CONVERSA PELO CELULAR ATÉ AGORA:
+${conversa}
+
+Responda à última mensagem de ${F.nome}, em português do Brasil, com 1 a 3 frases curtas. Por mensagem você não entrega itens, não cura e não luta. Se estiver ocupado, dormindo ou sem vontade de responder (pelo seu jeito e pela relação), pode ignorar com "ignorar":true. Se ${F.nome} combinar de se encontrar com você em algum lugar e você aceitar, use "vaiPara" com o lugar (pode recusar).
+Lugares válidos (ids): ${LOCAIS.filter(x=>!x.programado).map(x=>x.id).join(', ')}.
+Responda SOMENTE com JSON:
+{"mensagem":"o que você responde","ignorar":false,"vaiPara":null ou {"local":"id","horas":1,"motivo":"curto"},"lembrar":"frase curta do que você vai lembrar ou vazio","relacao":0}
+"relacao" entre -1 e 1: o quanto essa conversa mudou o que você acha de ${F.nome}.`;
+    const res=await chamarIA(prompt,'default');
+    let j;try{j=lerJSON(res.text||'');}catch{j={mensagem:String(res.text||'').slice(0,300)};}
+    const msg=String(j.mensagem||'').trim().slice(0,500);const now=Date.now();
+    const atual=npcConvs.get(id)||c;
+    if(j.ignorar||!msg)await salvarNpcConv(id,{...atual,visto:now});
+    else await salvarNpcConv(id,{...atual,visto:null,msgs:[...(atual.msgs||[]),{de:'npc',texto:msg,ts:now}].slice(-60)});
+    const patch={};const lem=String(j.lembrar||'').trim().slice(0,200);
+    if(lem)patch.memoria=[...(e.memoria||[]),{uid:myId(),nome:F.nome,texto:'(por mensagem) '+lem,t:now}].slice(-30);
+    const dr=Math.max(-1,Math.min(1,Math.round(+j.relacao||0)));if(dr)patch.relacoes={...(e.relacoes||{}),[myId()]:Math.max(-5,Math.min(5,rel+dr))};
+    const vp=j.vaiPara;if(vp&&locById(vp.local)&&!locById(vp.local).programado){const h=Math.max(0.5,Math.min(6,+vp.horas||1));
+      Object.assign(patch,{local:vp.local,seguindo:null,faz:String(vp.motivo||`esperando ${F.nome}`).slice(0,80),chega:now+TRANSITO*HORA_JOGO_MS,ate:now+(TRANSITO+h)*HORA_JOGO_MS});}
+    if(Object.keys(patch).length){const novo={...e,...patch};npcEstados.set(id,novo);if(db){try{await db.doc('npcEstado/'+id).set(novo);}catch{}}atualizarNpcsCena();}
+    if(!(celApp==='mensagens'&&dmAberto==='npc:'+id)&&msg&&!j.ignorar)toastChat(`${n.nome} respondeu sua mensagem no celular.`);
+  }catch(err){toastChat(`${n.nome} não respondeu: ${err?.message||'erro'}.`);}
+  finally{npcDigitando=null;atualizarAlertaDM();if(celApp==='mensagens')renderDM();}
+  return true;
+}
+async function apagarContatoNpc(id){
+  const c={...(meu.contatosNpc||{})};delete c[id];await atualizarMeu({contatosNpc:c});
+  dmMsgs.delete('npc:'+id);npcConvs.delete(id);
+  try{if(db&&uid)await db.doc('npcConversas/'+npcConvId(id)).delete();else{const l=JSON.parse(localStorage.getItem('jjk-npcconv-'+myId())||'{}');delete l[id];localStorage.setItem('jjk-npcconv-'+myId(),JSON.stringify(l));}}catch{}
+  dmAberto=null;renderDM();
 }
 
 /* ---------- Mercado Negro: loja programada (sem IA) + conversa entre freelancers ---------- */
@@ -3785,6 +3885,25 @@ function assinarDMs(){
       atualizarAlertaDM();if(celApp==='mensagens')renderDM();else if(celApp==='home')renderCelApp();},()=>{}));}
 }
 function atualizarAlertaDM(){const n=dmTotalNaoLidas()+(typeof postsNaoLidos==='function'?postsNaoLidos():0);['#cel-alerta','#cel-alerta-topo'].forEach(q=>{const el=$(q);if(el){el.hidden=!n;el.textContent=n?String(Math.min(n,99)):'';}});}
+function htmlContatosNpc(){
+  const ids=Object.keys(meu?.contatosNpc||{}).filter(npcPorId);
+  const ord=ids.map(id=>({id,n:npcPorId(id),ult:(dmMsgs.get('npc:'+id)||[]).slice(-1)[0]})).sort((a,b)=>(+b.ult?.ts||0)-(+a.ult?.ts||0)||a.n.nome.localeCompare(b.n.nome));
+  return `<div class="panel"><h2>Contatos</h2>${ord.length?ord.map(({id,n,ult})=>{const q=dmNaoLidas('npc:'+id);
+    return `<button type="button" class="dm-item" data-dmabrir="npc:${esc(id)}"><span class="tok tok-npc">${esc(iniciais(n.nome))}</span><span class="dm-txt"><b>${esc(n.nome)}</b><small>${npcDigitando===id?'digitando…':ult?esc((ult.de===myId()?'Você: ':'')+String(ult.texto).slice(0,60)):esc(n.papel)}</small></span>${q?`<i class="cel-badge">${q}</i>`:''}</button>`;}).join('')
+    :'<p class="note" style="margin:0">Nenhum contato ainda. Peça o número a um personagem pessoalmente (no chat, use "Falar com"). Ele só passa se gostar de você o bastante.</p>'}</div>`;}
+function renderDMNpc(digitando){
+  const box=$('#cel-dm');const k=dmAberto;const id=k.slice(4);const n=npcPorId(id);if(!n){dmAberto=null;renderDM();return;}
+  const lista=dmMsgs.get(k)||[];const c=npcConvs.get(id)||{};dmMarcarLido(k);atualizarAlertaDM();
+  $('#cel-titulo').textContent=n.nome;
+  const ult=lista.slice(-1)[0];
+  box.innerHTML=`<div class="dm-conversa"><div class="dm-npc-topo"><button type="button" class="btn small dm-voltar" data-dmvoltar="1">‹ Conversas</button><span class="dm-npc-info"><b>${esc(n.nome)}</b><small>${esc(n.papel)}</small><small class="dm-tel">📞 ${esc(telNpc(n))}</small></span></div>
+    <div class="dm-log" id="dm-log">${lista.length?lista.map(m=>{const eu=m.de===myId();return `<div class="dm-bolha ${eu?'eu':'ele'}"><p>${esc(m.texto)}</p><small>${new Date(+m.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</small></div>`;}).join(''):`<p class="note dm-vazio">Você tem o número de ${esc(n.nome.split(' ')[0])}. Mande uma mensagem.</p>`}
+    ${npcDigitando===id?`<div class="dm-bolha ele dm-digitando" aria-live="polite"><p>digitando<span>.</span><span>.</span><span>.</span></p></div>`:c.visto&&ult&&ult.de===myId()?'<p class="dm-visto">Visualizada · sem resposta</p>':''}</div>
+    <form class="dm-form" id="dm-form"><label class="sr" for="dm-texto">Mensagem para ${esc(n.nome)}</label><textarea id="dm-texto" rows="2" maxlength="500" placeholder="Mensagem para ${esc(n.nome)}..."></textarea><button class="btn primary" type="submit" ${npcDigitando?'disabled':''}>Enviar</button></form>
+    <button type="button" class="dm-apagar" data-npcapagar="${esc(id)}">Apagar contato</button></div>`;
+  const log=$('#dm-log');if(log)log.scrollTop=log.scrollHeight;
+  const ta=$('#dm-texto');if(ta&&digitando){ta.value=digitando.v;ta.focus();try{ta.setSelectionRange(digitando.s,digitando.s);}catch{}}
+}
 function renderDM(){
   const box=$('#cel-dm');if(!box)return;
   const ae=document.activeElement;const digitando=ae&&ae.id==='dm-texto'?{v:ae.value,s:ae.selectionStart}:null;
@@ -3794,8 +3913,9 @@ function renderDM(){
     $('#cel-titulo').textContent='Mensagens';
     box.innerHTML=`<div class="panel"><h2>Conversas</h2>${ord.length?ord.map(({k,j,ult})=>{const n=dmNaoLidas(k);
       return `<button type="button" class="dm-item" data-dmabrir="${esc(k)}"><span class="tok" style="background:${corDe(k)};color:#141216">${esc(iniciais(j.nome))}</span><span class="dm-txt"><b>${esc(j.nome)}</b><small>${ult?esc((ult.de===myId()?'Você: ':'')+String(ult.texto).slice(0,60)):esc(identDe(k))}</small></span>${n?`<i class="cel-badge">${n}</i>`:''}</button>`;}).join(''):'<p class="note" style="margin:0">Ninguém mais entrou no mundo ainda.</p>'}
-      <p class="note" style="margin:8px 0 0">Mensagens diretas ficam só entre vocês dois. O mestre não lê.</p></div>`;
+      <p class="note" style="margin:8px 0 0">Mensagens diretas ficam só entre vocês dois. O mestre não lê.</p></div>${htmlContatosNpc()}`;
     return;}
+  if(dmAberto.startsWith('npc:')){renderDMNpc(digitando);return;}
   const k=dmAberto;const j=jogadores.get(k)||{};const lista=dmMsgs.get(k)||[];dmMarcarLido(k);atualizarAlertaDM();
   $('#cel-titulo').textContent=j.nome||'Conversa';
   box.innerHTML=`<div class="dm-conversa"><button type="button" class="btn small dm-voltar" data-dmvoltar="1">‹ Conversas</button>
@@ -3806,6 +3926,7 @@ function renderDM(){
 }
 async function enviarDM(){
   const ta=$('#dm-texto');const t=(ta?.value||'').trim();if(!t||!dmAberto||dmEnviando)return;
+  if(dmAberto.startsWith('npc:')){if(npcDigitando)return;ta.value='';const ok=await enviarNpcMsg(dmAberto.slice(4),t);if(!ok){const t2=$('#dm-texto');if(t2)t2.value=t;}return;}
   const k=dmAberto;const m={de:myId(),deNome:F.nome||'Sem nome',para:k,texto:t.slice(0,1500),ts:Date.now()};
   dmEnviando=true;ta.value='';contarConquista('dms',1);
   try{if(db)await db.collection(`dms/${dmConv(k)}/msgs`).add(m);else dmMsgs.set(k,[...(dmMsgs.get(k)||[]),{id:'l'+m.ts,...m}]);}
@@ -3817,6 +3938,8 @@ document.addEventListener('click',e=>{
   if(document.body.classList.contains('rolar-aberto')&&!e.target.closest('#roll-panel')){document.body.classList.remove('rolar-aberto');}
   if(e.target.closest('#btn-rolar')&&document.body.classList.contains('rolar-aberto'))setTimeout(()=>document.body.classList.remove('rolar-aberto'),50);
 });
+document.addEventListener('click',e=>{const b=e.target.closest('[data-npcapagar]');if(!b)return;const id=b.dataset.npcapagar;const n=npcPorId(id);
+  openModal(`Apagar o contato de ${n?.nome||'NPC'}?`,'A conversa some do seu celular. Para ter o número de novo, você vai precisar pedir pessoalmente.','','Apagar',async()=>{closeModal();await apagarContatoNpc(id);});});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-dmabrir],[data-dmvoltar]');if(!b)return;
   if(b.dataset.dmabrir){dmAberto=b.dataset.dmabrir;renderDM();setTimeout(()=>{const t=$('#dm-texto');t&&t.focus();},30);return;}
   if(b.dataset.dmvoltar){dmAberto=null;renderDM();}});
@@ -4598,7 +4721,7 @@ async function boot(){
     {const agora=new Set(seguidoresDe(myId()));if(seguidoresAntes)agora.forEach(k=>{if(!seguidoresAntes.has(k))avisarSeguidor(k,jogadores.get(k)?.nome);});seguidoresAntes=agora;}
     if(celApp==='social'&&!perfilEditando&&document.activeElement?.tagName!=='TEXTAREA')renderSocial();
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
-  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();marcarVisto(true);
+  assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();marcarVisto(true);assinarNpcConversas();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
   document.querySelectorAll('.adm-link').forEach(a=>a.hidden=!souDono);
   renderAll();route();

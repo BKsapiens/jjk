@@ -76,6 +76,16 @@ service cloud.firestore {
       allow read, write: if liberado();
     }
     // Foto do personagem no Social Jujutsu (JPEG pequeno em texto base64, feito no navegador).
+    // Conversas por celular com NPCs: só o dono lê e escreve (a resposta do NPC é gerada no cliente dele).
+    match /npcConversas/{id} {
+      allow read, delete: if liberado() && resource.data.uid == request.auth.uid;
+      allow create: if liberado() && request.resource.data.uid == request.auth.uid
+        && id == request.auth.uid + '__' + request.resource.data.npc
+        && request.resource.data.msgs is list && request.resource.data.msgs.size() <= 60;
+      allow update: if liberado() && resource.data.uid == request.auth.uid
+        && request.resource.data.uid == request.auth.uid && request.resource.data.npc == resource.data.npc
+        && request.resource.data.msgs is list && request.resource.data.msgs.size() <= 60;
+    }
     match /fotos/{uid} {
       allow read: if liberado();
       allow create, update: if liberado() && request.auth.uid == uid
