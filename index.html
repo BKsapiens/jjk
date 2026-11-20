@@ -2200,7 +2200,7 @@ function emboscadaElmos(id,de){
 
 
 /* ---------- Roteiro: Munae Yakita em Shibuya ----------
-   1) Na próxima vez que Ino Jigoku entrar no Cruzamento de Shibuya, Munae Yakita (portador da primeira cabeça de
+   1) Na próxima vez que o jogador com antecedente Clã Elmos (o Ino) entrar no Cruzamento de Shibuya, Munae Yakita (portador da primeira cabeça de
       Cérberus, do Clã Elmos) aparece para capturá-lo. O mestre de IA conduz o diálogo seguindo o roteiro.
    2) Qualquer combate em Shibuya enquanto ele estiver lá inclui Munae, que não pode ser derrotado (a vida não desce
       da metade). Quando chega na metade, depois de 3 rodadas, ou se todos os jogadores caírem, ele destrói Shibuya e foge.
@@ -2215,10 +2215,14 @@ function mostrarEstrondo(){
   setTimeout(()=>el.classList.add('sai'),5200);setTimeout(()=>el.remove(),5800);
 }
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-const ehIno=()=>{const n=semAcento(F.nome);return /\bino\b/.test(n)&&n.includes('jigoku');};
+const ANT_ELMOS='Clã Elmos';
+const ehIno=()=>F.antecedente===ANT_ELMOS;
+/* o herdeiro do Clã Elmos: só pode existir um jogador com esse antecedente */
+const uidHerdeiro=()=>{if(ehIno())return myId();let r=null;party.forEach((d,k)=>{if(!r&&k!==myId()&&d?.ficha?.antecedente===ANT_ELMOS)r=k;});return r;};
+const nomeHerdeiro=()=>{const k=uidHerdeiro();return k===myId()?(F.nome||'o herdeiro'):k?(jogadores.get(k)?.nome||party.get(k)?.resumo?.nome||'o herdeiro'):'o herdeiro do clã';};
 const munaeAtivo=()=>eventos.has(EV_MUNAE)&&!eventos.has(EV_SHIB);
 const shibuyaDestruida=()=>eventos.has(EV_SHIB);
-const MUNAE_DESC='Munae Yakita, caçador do Clã Elmos e portador da primeira cabeça de Cérberus. Alto, sobretudo cinza, corrente selada na mão e máscara de cão de ferro pendurada no pescoço. Veio capturar Ino Jigoku e levá-lo de volta ao clã.';
+const MUNAE_DESC='Munae Yakita, caçador do Clã Elmos e portador da primeira cabeça de Cérberus. Alto, sobretudo cinza, corrente selada na mão e máscara de cão de ferro pendurada no pescoço. Veio capturar o herdeiro do clã que fugiu levando a segunda cabeça de Cérberus e levá-lo de volta.';
 let munaeDesfechando=false;
 async function marcarEvento(k,titulo){
   if(eventos.has(k))return false;
@@ -2230,7 +2234,7 @@ async function dispararMunae(local,forcado){
   if(!await marcarEvento(EV_MUNAE,'Munae Yakita aparece em Shibuya'))return false;
   if(carreg&&carreg.id===local)carreg.narrou=true;
   try{registrarNpcs([{nome:'Munae Yakita',descricao:MUNAE_DESC}],local);}catch{}
-  const nome=F.nome||'Ino Jigoku';
+  const nome=F.nome||'herdeiro';
   await postMsg(local,{tipo:'mestre',alvoId:'',alvoNome:'',texto:`O semáforo do cruzamento fecha e, por um segundo, a multidão inteira para. No meio da faixa, um homem alto de sobretudo cinza continua andando contra o fluxo, sem pressa. Ninguém esbarra nele: as pessoas desviam sem perceber, como água em volta de uma pedra. Na mão esquerda ele carrega uma corrente selada; no pescoço, pendurada, uma máscara de cão de ferro, igual às dos caçadores do Clã Elmos.
 
 Quando ele para na sua frente, o ar fica pesado e quente, e você sente na hora: a energia que vibra nele é parente da que dorme dentro de você. A primeira cabeça de Cérberus.
@@ -2244,12 +2248,13 @@ function roteiroCena(id){
   if(raiz(id)!=='shibuya')return '';
   if(shibuyaDestruida())return ` ATENÇÃO: SHIBUYA FOI DESTRUÍDA por Munae Yakita (portador da primeira cabeça de Cérberus, do Clã Elmos), que fugiu sem ser derrotado. Agora o bairro é ruína: prédios desabados, asfalto partido, telões estourados, incêndios, poeira, sirenes, resgate e polícia isolando a área, feiticeiros investigando os restos de energia. Quase não há civis andando por aqui. Mantenha isso em toda a narração deste lugar.`;
   if(!munaeAtivo())return '';
+  const ino=nomeHerdeiro();
   return `
 CENA ROTEIRIZADA PELO MESTRE HUMANO (siga com prioridade): MUNAE YAKITA está aqui no cruzamento. ${MUNAE_DESC}
-- Ele quer levar Ino Jigoku VIVO ao Clã Elmos (de onde Ino levou a segunda cabeça de Cérberus). Fala com calma, ironia e paciência curta. Oferece que Ino venha por bem; ameaça as pessoas em volta se precisar. Pode conversar, provocar e responder perguntas sem entregar segredos do clã. Fala com quem estiver na cena, mas o alvo é Ino.
-- Ninguém consegue feri-lo de verdade nem prendê-lo. Ele NÃO aceita ir embora sem Ino por conversa; no máximo adia se Ino ganhar tempo.
-- Se Ino (ou alguém) atacar, recusar de vez ou tentar fugir, Munae parte para a força: INICIE O COMBATE com "Munae Yakita" (grau 0) no campo de combate. O sistema cuida do resto (ele não pode ser derrotado e, no fim, destrói Shibuya e foge). Nunca narre a morte, a derrota ou a captura de Munae.
-- Se Ino aceitar ir com ele, Munae prende Ino com a corrente selada e o leva: narre a saída dos dois do cruzamento e encerre a cena.`;
+- Ele quer levar ${ino} VIVO ao Clã Elmos (de onde ${ino} levou a segunda cabeça de Cérberus). Fala com calma, ironia e paciência curta. Oferece que ${ino} venha por bem; ameaça as pessoas em volta se precisar. Pode conversar, provocar e responder perguntas sem entregar segredos do clã. Fala com quem estiver na cena, mas o alvo é ${ino}.
+- Ninguém consegue feri-lo de verdade nem prendê-lo. Ele NÃO aceita ir embora sem ${ino} por conversa; no máximo adia se ${ino} ganhar tempo.
+- Se ${ino} (ou alguém) atacar, recusar de vez ou tentar fugir, Munae parte para a força: INICIE O COMBATE com "Munae Yakita" (grau 0) no campo de combate. O sistema cuida do resto (ele não pode ser derrotado e, no fim, destrói Shibuya e foge). Nunca narre a morte, a derrota ou a captura de Munae.
+- Se ${ino} aceitar ir com ele, Munae prende ${ino} com a corrente selada e o leva: narre a saída dos dois do cruzamento e encerre a cena.`;
 }
 function aplicarEstadoMundo(){
   const on=shibuyaDestruida();
@@ -2279,7 +2284,7 @@ Os telões estouram um atrás do outro. O asfalto se parte em placas, a fachada 
 
 Quando a poeira baixa, Shibuya não existe mais como era: só ruínas, fogo e sirenes ao longe. No alto de um prédio partido, Munae ajeita a máscara de ferro, sem um arranhão.
 
-— Isso foi um aviso, ${F.nome&&ehIno()?F.nome.split(' ')[0]:'Ino'}. Da próxima vez, não vai sobrar nada de pé em volta de você.
+— Isso foi um aviso, ${String(nomeHerdeiro()).split(' ')[0]}. Da próxima vez, não vai sobrar nada de pé em volta de você.
 
 E some no meio da fumaça.`});
   if(combate&&combate.ativo&&combateLocal===local){
@@ -2304,15 +2309,14 @@ E some no meio da fumaça.`});
    num duelo ou combate com o contrato aceito recebe a recompensa (o clã paga uma vez por dia). Ino é avisado quando
    alguém aceita o contrato, mas não sabe quem. */
 const RECOMPENSA_ELMOS=2000000;
-const nomeEhIno=n=>{const t=semAcento(n);return /\bino\b/.test(t)&&t.includes('jigoku');};
-const uidIno=()=>{if(nomeEhIno(F.nome))return myId();const e=[...jogadores.entries()].find(([k,j])=>k!==myId()&&nomeEhIno(j?.nome));return e?e[0]:null;};
+const uidIno=uidHerdeiro;
 const diaReal=()=>{const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;};
 const elmosPagoHoje=()=>eventos.has('elmos-pago-'+diaReal());
 let elmosPagando=false,cacadoresAntes=null;
 function renderElmos(){
   const p=$('#elmos-panel');if(!p)return;
   if(canalAtual!=='sendai-elmos'||!meu){p.hidden=true;p.innerHTML='';return;}
-  const alvo=uidIno();const j=alvo?(alvo===myId()?{...meu,nome:F.nome}:jogadores.get(alvo)):null;const c=meu.contratoElmos;const meuC=c&&c.alvo===alvo;
+  const alvo0=uidIno();const alvo=alvo0&&(alvo0===myId()||jogadores.has(alvo0))?alvo0:null;const j=alvo?(alvo===myId()?{...meu,nome:F.nome}:jogadores.get(alvo)):null;const c=meu.contratoElmos;const meuC=c&&c.alvo===alvo;
   const onde=j&&j.local?`${locById(raiz(j.local))?.curto||''}${locById(j.local)?.pai?' · '+(locById(j.local)?.area||''):''}`:'desconhecido';
   p.hidden=false;
   p.innerHTML=`<h2>Mural do Clã Elmos</h2>${!alvo?'<p class="note" style="margin:0">O contrato principal está no mural, mas ninguém sabe onde o alvo anda. Volte depois.</p>':`
@@ -2350,7 +2354,7 @@ async function verificarContratoElmos(){
   }finally{elmosPagando=false;}
 }
 function avisarCacadoresIno(){
-  if(!nomeEhIno(F.nome))return;
+  if(!ehIno())return;
   const agora=new Set([...jogadores.entries()].filter(([k,j])=>k!==myId()&&j?.contratoElmos?.alvo===myId()).map(([k])=>k));
   if(cacadoresAntes)for(const k of agora)if(!cacadoresAntes.has(k)){toastChat('⚠ Um freelancer aceitou o contrato do Clã Elmos para te caçar. Você não sabe quem.');
     const el=document.createElement('div');el.className='conq-toast marca-toast caca-toast';el.setAttribute('role','alert');
@@ -4869,7 +4873,7 @@ function renderAdmCampanha(){
       return `<div class="treino-row"><span><b>${esc(e.titulo)}</b><br><span class="note">${st.feito?`aconteceu em ${new Date(+ev.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${ev.manual?' (manual)':''}`:st.pronto?'pronto: dispara na próxima checagem':'espera: '+esc(st.falta.join(' · '))}</span></span>${st.feito?'<span class="pill ok">feito</span>':`<button class="btn small" data-admevento="${e.k}">Disparar agora</button>`}</div>`;}).join('')}
       <div class="adm-acts"><button class="btn small" data-adm="pausar">${campanha.autoPausado?'Retomar automação':'Pausar automação'}</button>
       <label class="sr" for="cp-fase">Fase manual</label><select id="cp-fase" style="width:auto"><option value="">Fase automática (linha do tempo)</option>${[['ato1','Forçar Ato 1'],['queda','Forçar A Queda'],['kyoto','Forçar Kyoto']].map(([v,t])=>`<option value="${v}" ${campanha.faseManual===v?'selected':''}>${t}</option>`).join('')}</select></div></div>
-    <div class="f"><span>Roteiro: Munae Yakita</span><div class="treino-row"><span><b>Munae em Shibuya</b><br><span class="note">${shibuyaDestruida()?'Shibuya foi destruída; Munae fugiu.':munaeAtivo()?'Munae está no Cruzamento de Shibuya esperando por Ino.':'Espera Ino Jigoku entrar no Cruzamento de Shibuya.'}</span></span>${eventos.has(EV_MUNAE)||shibuyaDestruida()?'<button class="btn small" data-adm="munae-reset">Desfazer (Shibuya volta ao normal)</button>':'<span class="pill info">aguardando</span>'}</div></div>
+    <div class="f"><span>Roteiro: Munae Yakita</span><div class="treino-row"><span><b>Munae em Shibuya</b><br><span class="note">${shibuyaDestruida()?'Shibuya foi destruída; Munae fugiu.':munaeAtivo()?`Munae está no Cruzamento de Shibuya esperando por ${esc(nomeHerdeiro())}.`:`Espera o jogador do Clã Elmos${uidHerdeiro()?' ('+esc(nomeHerdeiro())+')':''} entrar no Cruzamento de Shibuya.`}</span></span>${eventos.has(EV_MUNAE)||shibuyaDestruida()?'<button class="btn small" data-adm="munae-reset">Desfazer (Shibuya volta ao normal)</button>':'<span class="pill info">aguardando</span>'}</div></div>
     <div class="f"><span>Missões em andamento</span>${[...missoes.values()].filter(m=>m.status==='andamento').map(m=>`<div class="npc-item"><b>${esc(m.titulo)}</b><span class="note">Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')} · ${m.objetivoCumprido?'objetivo cumprido':'em aberto'+(m.falta?` (falta: ${esc(m.falta)})`:'')} · ${m.historia?'missão de história':'missão comum'} · criaturas ${+m.criaturas||0}/${maxCriaturasDe(m)}</span>
       <div class="adm-acts"><button class="btn small" data-admconcluir="${esc(m.id)}">Concluir e pagar agora</button></div></div>`).join('')||'<span class="note">Nenhuma.</span>'}</div>
     <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
@@ -4962,7 +4966,7 @@ async function admAcao(a){
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
-  if(a==='munae-reset'){openModal('Desfazer o roteiro do Munae?','Shibuya volta ao normal no mapa e o Munae aparece de novo na próxima vez que Ino entrar no cruzamento.','','Desfazer',async()=>{closeModal();
+  if(a==='munae-reset'){openModal('Desfazer o roteiro do Munae?','Shibuya volta ao normal no mapa e o Munae aparece de novo na próxima vez que o jogador do Clã Elmos entrar no cruzamento.','','Desfazer',async()=>{closeModal();
     try{for(const k of [EV_SHIB,EV_MUNAE,EV_LUTA]){await db.doc('eventos/'+k).delete();eventos.delete(k);}estrondoVisto=false;aplicarEstadoMundo();renderAdmCampanha();admStatus('Roteiro do Munae desfeito.');}catch{admStatus('Não consegui desfazer.');}});return;}
   if(a==='pausar'){try{await db.doc('config/campanha').set({...campanha,autoPausado:!campanha.autoPausado});admStatus(campanha.autoPausado?'Automação retomada.':'Automação pausada.');}catch{admStatus('Não consegui salvar.',true);}return;}
   if(a==='lancamento'){openModal('Lançamento: apagar TUDO?','Apaga todos os personagens, chats, missões, NPCs, transferências e acontecimentos, e começa a campanha do zero (dia 0). Não dá para desfazer. Escreva RESETAR para confirmar.',' ','Apagar tudo e lançar',async()=>{if($('#modal-text').value.trim().toUpperCase()!=='RESETAR'){$('#modal-note').textContent='Escreva RESETAR para confirmar.';return;}closeModal();const ok=await resetarTudo();if(ok)setTimeout(()=>location.reload(),2500);});$('#modal-text').value='';$('#modal-text').placeholder='RESETAR';return;}
