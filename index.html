@@ -969,6 +969,26 @@ body.sem-animacao .cmd.entra .cmd-op,body.sem-animacao .cmd.entra .cmd-titulo{an
   .cmd-op kbd{display:none}
   .cmd-min{left:12px;right:12px;bottom:12px;text-align:center}
 }
+
+.caca-toast .k{background:#d3121c!important;color:#fff!important}
+.procurado{background:#f1e6c8;color:#2a1a0a;border:3px solid #000;box-shadow:5px 5px 0 #d3121c;padding:12px;transform:rotate(-1deg);display:flex;flex-direction:column;gap:8px;text-align:center}
+.procurado-tit{margin:0;font:900 italic 22px/1 var(--display);letter-spacing:2px;color:#0b0a0c;border-bottom:3px double #2a1a0a;padding-bottom:6px}
+.procurado-corpo{display:flex;gap:12px;align-items:center;text-align:left}.procurado-corpo b{display:block;font:900 italic 19px/1.1 var(--display);color:#0b0a0c}.procurado-corpo small{display:block;color:#4a3420;font-size:12px}
+.procurado-corpo .tok{flex:none;filter:sepia(.6) contrast(1.1)}
+.procurado-valor{margin:0;font:900 italic 30px/1 var(--display);color:#d3121c;text-shadow:2px 2px 0 #000}
+#view-mundo .side #elmos-panel .note{color:#d8d4d6}#view-mundo .side #elmos-panel .procurado .note{color:#4a3420}
+
+.estrondo{position:fixed;inset:0;z-index:9990;display:grid;place-items:center;background:rgba(5,4,6,.55);cursor:pointer;animation:estr-fundo .25s ease-out both}
+.estrondo-faixa{width:110%;background:#d3121c;border-top:6px solid #000;border-bottom:6px solid #000;box-shadow:0 10px 0 #fff,0 -10px 0 #fff;transform:rotate(-4deg);padding:18px 6vw;text-align:center;animation:estr-entra .35s cubic-bezier(.2,.9,.3,1.3) both,estr-treme .5s .35s 2}
+.estrondo-pre{margin:0 0 4px;font:900 14px/1 'Zen Kaku Gothic New',sans-serif;letter-spacing:6px;color:#0b0a0c}
+.estrondo-txt{margin:0;font:900 italic clamp(26px,5.4vw,64px)/1 var(--display);color:#fff;text-shadow:4px 4px 0 #000;letter-spacing:-1px}
+.estrondo.sai{animation:estr-sai .55s ease-in forwards}
+@keyframes estr-fundo{from{opacity:0}to{opacity:1}}
+@keyframes estr-entra{from{transform:rotate(-4deg) translateX(-120%)}to{transform:rotate(-4deg)}}
+@keyframes estr-treme{0%,100%{transform:rotate(-4deg)}20%{transform:rotate(-4deg) translate(-8px,4px)}40%{transform:rotate(-4deg) translate(7px,-5px)}60%{transform:rotate(-4deg) translate(-6px,-3px)}80%{transform:rotate(-4deg) translate(5px,4px)}}
+@keyframes estr-sai{to{opacity:0}}
+@media (prefers-reduced-motion:reduce){.estrondo,.estrondo-faixa,.estrondo.sai{animation:none}}
+body.sem-animacao .estrondo,body.sem-animacao .estrondo-faixa{animation:none}
 </style>
 </head>
 <body>
@@ -1154,6 +1174,7 @@ body.sem-animacao .cmd.entra .cmd-op,body.sem-animacao .cmd.entra .cmd-titulo{an
         <div class="panel combate" id="combate-panel" hidden></div>
         <div class="panel" id="missoes-panel" hidden></div>
         <div class="panel" id="treino-panel" hidden></div>
+        <div class="panel" id="elmos-panel" hidden></div>
         <div class="panel" id="roll-panel"></div>
       </div>
       <div id="cmd" class="cmd" hidden role="region" aria-label="Comandos de combate"><div id="cmd-conteudo"></div><div id="cmd-teste" hidden></div></div>
@@ -1954,6 +1975,18 @@ LOCAIS.push(
   {...subArea('fantasma','pensao','Pensão dos Caçadores','宿','pens[ãa]o|hospedaria|caçadores','Uma pensão de madeira de dois andares que os freelancers reocuparam: fogareiro sempre aceso, mural de recados com pedidos de ajuda e recompensas, quartos baratos, uma dona velha e calada que não aceita brigas lá dentro. É o lugar para trocar informação e fazer contatos.',['encontro','informação']),restrito:{cacadas:0}},
   {...subArea('fantasma','templo','Templo Partido','祠','templo|santu[áa]rio','Templo xintoísta no alto da colina, partido ao meio por uma rachadura de energia amaldiçoada. É onde a barreira da cidade parece nascer: talismãs antigos, um sino que toca sem vento e uma presença que observa quem sobe a escadaria. Ninguém sabe se protege a cidade ou prende algo nela.',['mistério','barreira']),restrito:{cacadas:0}}
 );
+/* Sendai: cidade que só aparece depois que Shibuya é destruída por Munae Yakita. Lá fica a base do Clã Elmos. */
+const sendaiAtiva=()=>typeof shibuyaDestruida==='function'&&shibuyaDestruida();
+LOCAIS.push(
+  {id:'sendai',nome:'Sendai',curto:'Sendai',kanji:'仙',regiao:'sendai',area:'Estação de Sendai',kw:'sendai',tags:['norte','cidade das árvores','clã elmos'],x:500,y:60,liberado:sendaiAtiva,
+   desc:'A "cidade das árvores", uma hora e meia ao norte de Tóquio pelo Shinkansen: avenidas largas cobertas de olmos, a estação cheia de lojas de língua de boi grelhada e, nos arredores, a base escondida do Clã Elmos.',
+   contexto:'Sendai, no norte, a uma hora e meia de Tóquio pelo Shinkansen: estação grande e moderna com passarelas elevadas, lojas de gyūtan (língua de boi grelhada), avenidas largas com fileiras de olmos, o rio Hirose e as ruínas do Castelo Aoba no morro. Cidade calma demais para o que esconde: é território do Clã Elmos, um clã antigo de feiticeiros que guarda (e caça) as cabeças de Cérberus. Caçadores do clã, de roupa cinza e máscara de cão de ferro, andam à paisana pela cidade. Depois da destruição de Shibuya, a cidade está tensa e cheia de olhos.'},
+  subArea('sendai','jozenji','Avenida Jōzenji','欅','j[oō]zenji|avenida|olmos','Avenida Jōzenji: canteiro central largo coberto de olmos enormes, bancos, cafés e músicos de rua. À noite, lanternas penduradas nas árvores. Os caçadores do clã gostam de observar daqui, sentados como turistas.',['árvores','cafés','olhos do clã']),
+  subArea('sendai','asaichi','Mercado Asaichi','市','asaichi|mercado|feira','Mercado Asaichi, perto da estação: barracas apertadas de peixe, frutas e conservas, vendedores gritando preços. Uma velha que vende amuletos sabe mais sobre o Clã Elmos do que deveria.',['feira','rumores','amuletos']),
+  subArea('sendai','aoba','Ruínas do Castelo Aoba','城','aoba|castelo|ru[íi]nas','Ruínas do Castelo Aoba no alto do morro: muralhas de pedra, a estátua de um samurai a cavalo, vista da cidade inteira. Dizem que o clã selou algo debaixo das pedras do castelo.',['vista','selo antigo','silêncio']),
+  {...subArea('sendai','elmos','Base do Clã Elmos','犬','base|cl[ãa] elmos|elmos','Base do Clã Elmos nos arredores de Sendai: um complexo de templos e galpões cercado por muros cinzentos e correntes seladas penduradas nos portões. Máscaras de cão de ferro em todo lugar. No pátio, um mural de madeira com contratos para freelancers: o clã paga bem a quem não pergunta muito.',['clã elmos','contratos','perigo']),restrito:{cacadas:0}},
+);
+function localAtivo(l){if(!l)return true;if(typeof l.liberado==='function'&&!l.liberado())return false;return l.pai?localAtivo(locById(l.pai)):true;}
 /* Áreas exclusivas de freelancers, liberadas com caçadas concluídas (app Caçadores) */
 LOCAIS.push(
   {...subArea('shinjuku','mercado','Mercado Negro','闇','mercado negro|contrabando|receptador','Mercado Negro de Shinjuku: um estacionamento subterrâneo atrás de Kabukichō que vira feira à meia-noite. Barracas de lona vendem ferramentas amaldiçoadas de segunda mão, talismãs falsificados, informação e restos de maldições. Ninguém pergunta nomes; quem paga em dinheiro vivo é atendido primeiro. Feiticeiros de escola não são bem-vindos.',['comércio','ilegal']),restrito:{cacadas:3},programado:true},
@@ -2004,7 +2037,7 @@ function quartoLoc(id){const dono=donoQuarto(id);const nome=dono?nomeJog(dono):'
     contexto:`Quarto de ${nome} no dormitório dos estudantes da Escola Jujutsu de ${E.curta}: ${pai==='kyoto'?'tatame, futon, mesa baixa, armário de correr':'cama estreita, escrivaninha, armário'}, ${janela}. É o espaço pessoal de ${nome}; outros alunos só entram se forem convidados. Descanso acontece pelo botão de descanso (o sistema aplica a recuperação); converse e narre o clima, mas não dê PV/PA/PE por descanso.`};}
 const locById=id=>LOCAIS.find(l=>l.id===id)||(ehQuarto(id)?quartoLoc(id):undefined);
 const raiz=id=>(locById(id)?.pai)||id;
-const MAPA=()=>LOCAIS.filter(l=>!l.pai&&areaVisivel(l));
+const MAPA=()=>LOCAIS.filter(l=>!l.pai&&areaVisivel(l)&&localAtivo(l));
 const nomeDestino=id=>{const l=locById(id);if(!l)return id||'';return l.pai&&!ehEscola(l.pai)?`${locById(l.pai)?.curto} · ${l.area}`:l.pai?`${locById(l.pai)?.curto} · ${l.area}`:l.curto;};
 const nomeLocal=id=>{const l=locById(id);if(!l)return '';return l.pai?l.area:l.curto;};
 const GRAUS_PG=[[3000,'Grau Especial'],[2500,'Semi-Grau Especial'],[2000,'Grau 1'],[1500,'Semi-Grau 1'],[850,'Grau 2'],[500,'Semi-Grau 2'],[300,'Grau 3'],[100,'Grau 4'],[0,'Aprendiz']];
@@ -2097,6 +2130,11 @@ function renderMapa(){
     <path d="M590 130 L700 230 L930 352" fill="none" stroke="#fff" stroke-width="8" stroke-linejoin="round"/>
     <path d="M590 130 L700 230 L930 352" fill="none" stroke="#0b0a0c" stroke-width="4" stroke-dasharray="10 8"/>
     <text x="735" y="242" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" transform="rotate(28 735 242)" stroke="#000" stroke-width="4" paint-order="stroke">SHINKANSEN</text>`;
+  if(sendaiAtiva())s+=`<path d="M590 130 L548 96" fill="none" stroke="#0b0a0c" stroke-width="14"/><path d="M590 130 L548 96" fill="none" stroke="#fff" stroke-width="8"/><path d="M590 130 L548 96" fill="none" stroke="#0b0a0c" stroke-width="4" stroke-dasharray="10 8"/>
+    <g transform="rotate(1.5 438 60)"><rect x="322" y="6" width="232" height="108" fill="#0b0a0c" stroke="#fff" stroke-width="4"/><rect x="322" y="6" width="232" height="108" fill="url(#dots)" opacity=".18"/>
+      <text x="334" y="38" fill="#fff" font-size="24" font-weight="900" font-family="Zen Kaku Gothic New, sans-serif">仙台</text>
+      <text x="334" y="58" fill="#fff" font-size="11" font-weight="800" letter-spacing="3" font-family="Zen Kaku Gothic New, sans-serif">SENDAI · 1h30</text>
+      <text x="334" y="96" fill="#ff5b63" font-size="10" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif">NOVO</text></g>`;
   LINHAS.filter(L=>!L.free||ehFree(myId())).forEach(L=>{const pts=L.nos.map(P);const d='M'+pts.map(([x,y])=>`${x} ${y}`).join(' L');
     s+=`<path d="${d}" fill="none" stroke="#0b0a0c" stroke-width="17" stroke-linejoin="round" stroke-linecap="round"/><path d="${d}" fill="none" stroke="${L.cor}" stroke-width="10" stroke-linejoin="round" stroke-linecap="round"/>`;
     for(let k=1;k<pts.length;k++){const [x1,y1]=pts[k-1],[x2,y2]=pts[k];s+=`<circle cx="${(x1+x2)/2}" cy="${(y1+y2)/2}" r="3.6" fill="#fff"/>`;}});
@@ -2126,6 +2164,7 @@ function renderMapa(){
 }
 
 function bloqueioDe(id){
+  if(!localAtivo(locById(id))||!localAtivo(locById(raiz(id))))return 'Esse lugar ainda não está no mapa.';
   if(meu?.descanso)return 'Você está descansando. Abra o app Descanso e toque em Levantar antes de sair.';
   if(ehEscola(raiz(id))&&!podeEntrarEscola(raiz(id)))return `Você é freelancer: só entra na ${ESCOLAS[raiz(id)].nome} se um aluno de lá te convidar.`;
   const l=locById(id);if(!areaLiberada(l))return !ehFree(myId())?`Esse lugar só existe para feiticeiros sem escola.`:`${l.area} só abre para freelancers com ${l.restrito.cacadas} caçadas concluídas (você tem ${+meu?.cacadasFeitas||0}).`;
@@ -2166,7 +2205,15 @@ function emboscadaElmos(id,de){
    2) Qualquer combate em Shibuya enquanto ele estiver lá inclui Munae, que não pode ser derrotado (a vida não desce
       da metade). Quando chega na metade, depois de 3 rodadas, ou se todos os jogadores caírem, ele destrói Shibuya e foge.
    3) Shibuya vira "Shibuya Destruída" no mapa, para todo mundo. */
-const EV_MUNAE='munae-aparece',EV_SHIB='shibuya-destruida';
+const EV_MUNAE='munae-aparece',EV_SHIB='shibuya-destruida',EV_LUTA='munae-luta';
+/* Aviso na tela de todos os conectados quando a luta com Munae começa */
+let estrondoVisto=false;
+function mostrarEstrondo(){
+  estrondoVisto=true;const el=document.createElement('div');el.className='estrondo';el.setAttribute('role','alert');
+  el.innerHTML='<div class="estrondo-faixa"><p class="estrondo-pre">渋谷 · ALGO ACONTECEU</p><p class="estrondo-txt">VOCÊ ESCUTA UM ESTRONDO EM SHIBUYA</p></div>';
+  el.addEventListener('click',()=>el.remove());document.body.appendChild(el);
+  setTimeout(()=>el.classList.add('sai'),5200);setTimeout(()=>el.remove(),5800);
+}
 const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const ehIno=()=>{const n=semAcento(F.nome);return /\bino\b/.test(n)&&n.includes('jigoku');};
 const munaeAtivo=()=>eventos.has(EV_MUNAE)&&!eventos.has(EV_SHIB);
@@ -2238,15 +2285,80 @@ E some no meio da fumaça.`});
   if(combate&&combate.ativo&&combateLocal===local){
     const up={},golpes={};let n=0;
     for(const p of Object.values(combate.participantes||{})){
-      if(p.tipo==='jogador'){const d=(+p.pv||0)-1;if(d!==0)golpes[`g${Date.now().toString(36)}m${n++}`]={alvo:p.id,pv:-d,de:'Munae Yakita',t:Date.now()};up[p.id]={pv:1};}
+      if(p.tipo==='jogador'){const d=(+p.pv||0)-1;const gid=`g${Date.now().toString(36)}m${n++}`;
+        if(p.id===myId()){if(meu)await atualizarMeu({estado:{...meu.estado,pv:1},golpesAplicados:[...(meu.golpesAplicados||[]),gid].slice(-80)});}
+        if(d!==0)golpes[gid]={alvo:p.id,pv:-d,de:'Munae Yakita',t:Date.now()};up[p.id]={pv:1};}
       else if(p.tipo==='inimigo')up[p.id]=p.invencivel?{fugiu:true}:{pv:0};}
     await combateWrite({participantes:up,golpes});
     await combateWrite({ativo:false,resultado:'encerrado',fim:Date.now()});
     await postMsg(local,{tipo:'combate',texto:'Munae Yakita fugiu sem ser derrotado. Shibuya foi destruída. Todos que estavam no combate ficaram com 1 PV.'});
   }
+  try{await postMsg('fantasma-pensao',{tipo:'mestre',alvoId:'',alvoNome:'',texto:'O rádio velho da pensão chia com a notícia: Shibuya foi destruída. Dona Fumiko desliga o aparelho e prega um papel novo no mural, carimbado com uma cabeça de cão de ferro: "Clã Elmos, Sendai. Contrato para freelancers. Pagamento alto." O Shinkansen para Sendai já aparece no mapa.'});}catch{}
   for(const l of LOCAIS.filter(x=>x.pai==='shibuya'))await postMsg(l.id,{tipo:'mestre',alvoId:'',alvoNome:'',texto:'Um estrondo vem do cruzamento e o chão inteiro treme. Vidros explodem, o teto racha, a luz cai. Quando a poeira assenta, metade do quarteirão está no chão: Shibuya acabou de ser destruída.'});
   aplicarEstadoMundo();
 }
+
+
+/* ---------- Contrato do Clã Elmos: caçar Ino Jigoku ----------
+   No mural da Base do Clã Elmos (Sendai, só freelancers), o freelancer aceita o contrato. Quem vencer Ino Jigoku
+   num duelo ou combate com o contrato aceito recebe a recompensa (o clã paga uma vez por dia). Ino é avisado quando
+   alguém aceita o contrato, mas não sabe quem. */
+const RECOMPENSA_ELMOS=2000000;
+const nomeEhIno=n=>{const t=semAcento(n);return /\bino\b/.test(t)&&t.includes('jigoku');};
+const uidIno=()=>{if(nomeEhIno(F.nome))return myId();const e=[...jogadores.entries()].find(([k,j])=>k!==myId()&&nomeEhIno(j?.nome));return e?e[0]:null;};
+const diaReal=()=>{const d=new Date();return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;};
+const elmosPagoHoje=()=>eventos.has('elmos-pago-'+diaReal());
+let elmosPagando=false,cacadoresAntes=null;
+function renderElmos(){
+  const p=$('#elmos-panel');if(!p)return;
+  if(canalAtual!=='sendai-elmos'||!meu){p.hidden=true;p.innerHTML='';return;}
+  const alvo=uidIno();const j=alvo?(alvo===myId()?{...meu,nome:F.nome}:jogadores.get(alvo)):null;const c=meu.contratoElmos;const meuC=c&&c.alvo===alvo;
+  const onde=j&&j.local?`${locById(raiz(j.local))?.curto||''}${locById(j.local)?.pai?' · '+(locById(j.local)?.area||''):''}`:'desconhecido';
+  p.hidden=false;
+  p.innerHTML=`<h2>Mural do Clã Elmos</h2>${!alvo?'<p class="note" style="margin:0">O contrato principal está no mural, mas ninguém sabe onde o alvo anda. Volte depois.</p>':`
+    <div class="procurado">
+      <p class="procurado-tit">PROCURADO · VIVO</p>
+      <div class="procurado-corpo">${typeof avatarHtml==='function'?avatarHtml(alvo,j.nome,'perfil-tok'):''}<div><b>${esc(j.nome)}</b><small>${esc(identDe(alvo))}</small><small>Levou a segunda cabeça de Cérberus do clã.</small></div></div>
+      <p class="procurado-valor">¥ ${RECOMPENSA_ELMOS.toLocaleString('pt-BR')}</p>
+      <p class="note" style="margin:0">Vença ${esc(j.nome.split(' ')[0])} num duelo ou combate com o contrato aceito. O clã busca o resto e paga na hora.</p>
+    </div>
+    ${alvo===myId()?'<p class="note" style="margin:0"><b>É o seu rosto no mural.</b> Melhor não ficar parado aqui.</p>'
+      :elmosPagoHoje()?'<p class="note" style="margin:0">O clã já recebeu o alvo hoje. O contrato reabre amanhã.</p>'
+      :meuC?`<div class="pedido"><b>Contrato aceito.</b> O talismã de rastreio do clã aponta para: <b>${esc(onde)}</b>${j.vistoEm&&Date.now()-(+j.vistoEm)>5*60000?` (visto ${typeof tempoAtras==='function'?'há '+tempoAtras(+j.vistoEm):'há algum tempo'})`:''}.</div><p class="note" style="margin:0">Quando estiver no mesmo lugar, use <b>Desafiar</b> em "Na cena".</p><button class="btn small" data-elmos="desistir">Desistir do contrato</button>`
+      :`<button class="btn primary" data-elmos="aceitar">Aceitar o contrato</button>`}`}`;
+}
+async function elmosAcao(a){
+  const alvo=uidIno();
+  if(a==='aceitar'){if(!alvo||alvo===myId()||elmosPagoHoje()||!ehFree(myId()))return;
+    await atualizarMeu({contratoElmos:{alvo,desde:Date.now()}});await postMsg(canalAtual,{tipo:'sistema',texto:`${F.nome} arrancou um contrato do mural do Clã Elmos.`});
+    toastChat(`Contrato aceito: ¥ ${RECOMPENSA_ELMOS.toLocaleString('pt-BR')} por ${nomeJog(alvo)} vivo.`);}
+  if(a==='desistir'){await atualizarMeu({contratoElmos:null});}
+  renderElmos();
+}
+async function verificarContratoElmos(){
+  const c=meu?.contratoElmos;if(!c||elmosPagando||!combate||combate.ativo)return;
+  const P=combate.participantes||{};const alvo=P[c.alvo],eu=P[myId()];
+  if(!alvo||!eu||+alvo.pv>0||+eu.pv<=0)return;
+  const chave=String(combate.iniciado||'');if((meu.contratosElmosPagos||[]).includes(chave))return;
+  elmosPagando=true;
+  try{
+    const k='elmos-pago-'+diaReal();
+    if(!await marcarEvento(k,`${F.nome} entregou ${alvo.nome} ao Clã Elmos`)){await atualizarMeu({contratoElmos:null,contratosElmosPagos:[...(meu.contratosElmosPagos||[]),chave].slice(-20)});toastChat('Outro caçador já entregou o alvo ao clã hoje. Sem pagamento desta vez.');return;}
+    await atualizarMeu({ienes:(+meu.ienes||0)+RECOMPENSA_ELMOS,contratoElmos:null,contratosElmosPagos:[...(meu.contratosElmosPagos||[]),chave].slice(-20)});
+    if(combateLocal)await postMsg(combateLocal,{tipo:'sistema',texto:`Caçadores do Clã Elmos surgem da sombra e levam ${alvo.nome} acorrentado. ${F.nome} recebe ¥ ${RECOMPENSA_ELMOS.toLocaleString('pt-BR')} do clã.`});
+    toastChat(`Contrato cumprido! +¥ ${RECOMPENSA_ELMOS.toLocaleString('pt-BR')}.`);
+  }finally{elmosPagando=false;}
+}
+function avisarCacadoresIno(){
+  if(!nomeEhIno(F.nome))return;
+  const agora=new Set([...jogadores.entries()].filter(([k,j])=>k!==myId()&&j?.contratoElmos?.alvo===myId()).map(([k])=>k));
+  if(cacadoresAntes)for(const k of agora)if(!cacadoresAntes.has(k)){toastChat('⚠ Um freelancer aceitou o contrato do Clã Elmos para te caçar. Você não sabe quem.');
+    const el=document.createElement('div');el.className='conq-toast marca-toast caca-toast';el.setAttribute('role','alert');
+    el.innerHTML='<span class="k">犬</span><span><small>Clã Elmos · alguém aceitou o contrato</small><b>Você está sendo caçado</b><small>Um freelancer quer te entregar ao clã. Você não sabe quem.</small></span>';
+    el.addEventListener('click',()=>el.remove());document.body.appendChild(el);setTimeout(()=>el.classList.add('sai'),8000);setTimeout(()=>el.remove(),8600);break;}
+  cacadoresAntes=agora;
+}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-elmos]');if(b)elmosAcao(b.dataset.elmos);});
 
 /* Chamada à IA com espera automática quando o limite de mensagens é atingido */
 let iaPausaAte=0;let chegadaRecente=null;
@@ -2944,7 +3056,7 @@ const RECOMP_CACADA={4:{ienes:2000,xp:2,pg:3},3:{ienes:5000,xp:5,pg:6},2:{ienes:
 function rngSeed(seed){let x=hashStr(seed)||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
 function ofertasCacada(){
   const dia=diaJogo();const r=rngSeed(myId()+'|caca|'+dia);const n=calc().n;
-  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&(!l.restrito||areaLiberada(l))&&!l.programado&&!((faseEfetiva()==='kyoto'||shibuyaDestruida())&&raiz(l.id)==='shibuya'));
+  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&(!l.restrito||areaLiberada(l))&&!l.programado&&localAtivo(l)&&!((faseEfetiva()==='kyoto'||shibuyaDestruida())&&raiz(l.id)==='shibuya'));
   const usadas=meu?.cacadasDia?.dia===dia?(meu.cacadasDia.usadas||[]):[];
   return [0,1,2,3].map(i=>{const [alvo,desc]=CRIATURAS[Math.floor(r()*CRIATURAS.length)];const d=destinos[Math.floor(r()*destinos.length)];
     const x=r();const grau=n>=6?(x<.3?2:3):n>=4?(x<.7?3:4):n>=2?(x<.2?3:4):4;
@@ -3045,7 +3157,7 @@ function assinarCampanha(){if(!db)return;
     if(t){let loc=null;try{loc=localStorage.getItem('jjk-temporada');}catch{}
       if(loc!==t){try{localStorage.setItem('jjk-temporada',t);const tinha=localStorage.getItem('jjk-ficha-rascunho')||localStorage.getItem('jjk-jogador');localStorage.removeItem('jjk-ficha-rascunho');localStorage.removeItem('jjk-jogador');if(tinha||loc!==null){location.reload();return;}}catch{}}}
     atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{});
-  db.collection('eventos').onSnapshot(s=>{eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;atualizarFase();aplicarEstadoMundo();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
+  db.collection('eventos').onSnapshot(s=>{const evAntes=new Set(eventos.keys()),jaCarregado=eventosCarregados;eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;if(jaCarregado&&eventos.has(EV_LUTA)&&!evAntes.has(EV_LUTA)&&!estrondoVisto)mostrarEstrondo();atualizarFase();aplicarEstadoMundo();if(typeof renderElmos==='function')renderElmos();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
   setInterval(checarLinhaDoTempo,5*60000);}
 /* ---------- Linha do tempo automática da campanha ----------
    Cada acontecimento dispara sozinho quando passa o número de dias desde o lançamento E o grupo já concluiu
@@ -3435,7 +3547,7 @@ COMO NARRAR
 - MISSÕES PEQUENAS são side quests: apresente personagens secundários com nome e um detalhe marcante; eles podem voltar no futuro.
 - EXPERIÊNCIA: o sistema já dá XP por vitória em combate. Use "xp" só para conquistas fora do combate (missão concluída, mistério resolvido, descoberta importante, boa interpretação marcante), seguindo a tabela do livro para nível 1-3: 5 a 30 XP. Na maioria das respostas, "xp" é 0.
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
-- VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
+- VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito&&localAtivo(x)),...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
 LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${roteiroCena(id)}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
@@ -3573,7 +3685,7 @@ function assinarCombate(local){
   if(db){combateUnsub=db.doc('combates/'+local).onSnapshot(s=>{combate=s.exists?s.data():null;aposMudancaCombate();},()=>{});}
   else{combate=(window.__combatesLocais||{})[local]||null;renderCombate();}
 }
-function aposMudancaCombate(){if(combate&&combate.ativo&&meu?.descanso&&combateLocal===meu.descanso.local)aplicarDescanso(true,'acordou com o combate');aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
+function aposMudancaCombate(){verificarContratoElmos();if(combate&&combate.ativo&&meu?.descanso&&combateLocal===meu.descanso.local)aplicarDescanso(true,'acordou com o combate');aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
 async function combateWrite(patch,full){
   const local=combateLocal;if(!local)return;
   let gatilhoMunae=false;
@@ -3606,7 +3718,8 @@ async function iniciarCombate(local,lista,outrosJogadores,extra){
   if(raiz(local)==='shibuya'&&munaeAtivo()){
     for(const k of Object.keys(parts))if(/munae/i.test(parts[k].nome))delete parts[k];
     const jaTem=combate&&combate.ativo&&combateLocal===local&&Object.values(combate.participantes||{}).some(p=>p.invencivel);
-    if(!jaTem){const m=participanteMunae();parts[m.id]=m;}}
+    if(!jaTem){const m=participanteMunae();parts[m.id]=m;
+      if(!eventos.has(EV_LUTA)){mostrarEstrondo();marcarEvento(EV_LUTA,'A luta com Munae Yakita começou em Shibuya').catch(()=>{});}}}
   const outros=(outrosJogadores||[]).filter(id=>id&&id!==myId()&&jogadores.has(id));
   const pvp=!Object.keys(parts).length&&outros.length>0;
   if(!Object.keys(parts).length&&!pvp)return;
@@ -3853,7 +3966,8 @@ async function resolverDefesa(pid,tipoDef){
   }finally{defendendo=false;}
 }
 async function aplicarGolpes(){
-  if(!combate||!meu||aplicando)return;const ja=new Set(meu.golpesAplicados||[]);
+  if(aplicando){clearTimeout(aplicarGolpes.t);aplicarGolpes.t=setTimeout(aplicarGolpes,400);return;}
+  if(!combate||!meu)return;const ja=new Set(meu.golpesAplicados||[]);
   const meus=Object.entries(combate.golpes||{}).filter(([k,g])=>g&&g.alvo===myId()&&!ja.has(k));
   if(!meus.length)return;aplicando=true;
   try{let pv=meu.estado.pv;meus.forEach(([k,g])=>{pv=Math.max(0,Math.min(meu.max.pv,pv+(+g.pv||0)));ja.add(k);});
@@ -4604,7 +4718,7 @@ async function route(){
   const id=h.slice(6);const l=locById(id);if(!l){location.hash='mapa';return;}
   if(meu.local!==id){await irPara(id);return;}
   $('#canal-view').hidden=false;$('#world-title').textContent=l.nome;$('#world-sub').textContent='Canal do local. Tudo que você escreve aqui o mestre e quem está na cena leem.';
-  abrirCanal(id);assinarCombate(id);atualizarNpcsCena();renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();if(celApp)renderCelApp();
+  abrirCanal(id);assinarCombate(id);atualizarNpcsCena();renderRoll();renderPresentes();renderCombate();renderAnexo();renderAreas();renderMissoes();renderDescanso();renderTreino();renderElmos();if(celApp)renderCelApp();
 }
 window.addEventListener('hashchange',route);
 document.addEventListener('click',e=>{
@@ -4849,7 +4963,7 @@ async function admAcao(a){
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
   if(a==='munae-reset'){openModal('Desfazer o roteiro do Munae?','Shibuya volta ao normal no mapa e o Munae aparece de novo na próxima vez que Ino entrar no cruzamento.','','Desfazer',async()=>{closeModal();
-    try{for(const k of [EV_SHIB,EV_MUNAE]){await db.doc('eventos/'+k).delete();eventos.delete(k);}aplicarEstadoMundo();renderAdmCampanha();admStatus('Roteiro do Munae desfeito.');}catch{admStatus('Não consegui desfazer.');}});return;}
+    try{for(const k of [EV_SHIB,EV_MUNAE,EV_LUTA]){await db.doc('eventos/'+k).delete();eventos.delete(k);}estrondoVisto=false;aplicarEstadoMundo();renderAdmCampanha();admStatus('Roteiro do Munae desfeito.');}catch{admStatus('Não consegui desfazer.');}});return;}
   if(a==='pausar'){try{await db.doc('config/campanha').set({...campanha,autoPausado:!campanha.autoPausado});admStatus(campanha.autoPausado?'Automação retomada.':'Automação pausada.');}catch{admStatus('Não consegui salvar.',true);}return;}
   if(a==='lancamento'){openModal('Lançamento: apagar TUDO?','Apaga todos os personagens, chats, missões, NPCs, transferências e acontecimentos, e começa a campanha do zero (dia 0). Não dá para desfazer. Escreva RESETAR para confirmar.',' ','Apagar tudo e lançar',async()=>{if($('#modal-text').value.trim().toUpperCase()!=='RESETAR'){$('#modal-note').textContent='Escreva RESETAR para confirmar.';return;}closeModal();const ok=await resetarTudo();if(ok)setTimeout(()=>location.reload(),2500);});$('#modal-text').value='';$('#modal-text').placeholder='RESETAR';return;}
   if(a==='campanha'){try{await db.doc('config/campanha').set({...campanha,faseManual:$('#cp-fase').value,notas:$('#cp-notas').value.trim().slice(0,1500)});admStatus('Campanha salva.');}catch{admStatus('Não consegui salvar a campanha. Publique as regras novas do Firestore.',true);}return;}
@@ -4999,6 +5113,7 @@ async function boot(){
     if(meu)jogadores.set(uid,{...meu});
     {const agora=new Set(seguidoresDe(myId()));if(seguidoresAntes)agora.forEach(k=>{if(!seguidoresAntes.has(k))avisarSeguidor(k,jogadores.get(k)?.nome);});seguidoresAntes=agora;}
     if(celApp==='social'&&!perfilEditando&&document.activeElement?.tagName!=='TEXTAREA')renderSocial();
+    avisarCacadoresIno();if(canalAtual==='sendai-elmos')renderElmos();
     renderHud();if(mapaAberto)renderMapa();if(canalAtual){renderPresentes();renderAreas();}if(celApp==='inventario')renderInv();if(!$('#view-admin').hidden)renderAdmLista();},()=>{});
   assinarMissoes();assinarTransferencias();assinarNpcs();assinarCampanha();assinarConvites();assinarPosts();assinarNpcEstados();assinarFotos();marcarVisto(true);assinarNpcConversas();
   try{souDono=!!(user&&await Promise.resolve(user.isOwner()));}catch{souDono=false;}
