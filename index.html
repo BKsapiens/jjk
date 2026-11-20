@@ -2106,11 +2106,11 @@ function renderMapa(){
       <g class="ico" transform="translate(${l.x} ${l.y}) rotate(${r})">
         ${here?`<circle class="pulse" r="40" fill="none" stroke="#fff" stroke-width="3"/>`:''}
         <g filter="url(#sombra)">
-        <rect x="-27" y="-40" width="54" height="50" fill="${sel?'#fff':'#0b0a0c'}" stroke="${sel?'#0b0a0c':'#fff'}" stroke-width="4"/>
+        <rect x="-27" y="-40" width="54" height="50" fill="${sel?'#fff':l.destruido?'#3a0c10':'#0b0a0c'}" stroke="${sel?'#0b0a0c':l.destruido?'#ff5b63':'#fff'}" stroke-width="4"/>
         <text y="-4" text-anchor="middle" fill="${sel?'#0b0a0c':'#fff'}" font-size="30" font-weight="900" font-family="Shippori Mincho B1, serif">${l.kanji}</text>
         <rect x="${-w/2}" y="14" width="${w}" height="22" fill="${sel?'#0b0a0c':'#fff'}" stroke="#0b0a0c" stroke-width="3"/>
         <text y="30" text-anchor="middle" fill="${sel?'#fff':'#0b0a0c'}" font-size="13" font-weight="900" letter-spacing=".5" font-family="Zen Kaku Gothic New, sans-serif">${esc(l.curto.toUpperCase())}</text></g>
-        ${(fe=>fe!=='ato1'&&(l.id==='escola'||l.id==='shibuya')?`<text y="-48" text-anchor="middle" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="4" paint-order="stroke">${fe==='kyoto'?'RUÍNAS':'SOB ATAQUE'}</text>`:'')(faseEfetiva())}
+        ${l.id==='shibuya'&&shibuyaDestruida()&&faseEfetiva()!=='kyoto'?`<text y="-48" text-anchor="middle" fill="#ff5b63" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="4" paint-order="stroke">DESTRUÍDA</text>`:''}${(fe=>fe!=='ato1'&&(l.id==='escola'||l.id==='shibuya')?`<text y="-48" text-anchor="middle" fill="#fff" font-size="11" font-weight="900" letter-spacing="2" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="4" paint-order="stroke">${fe==='kyoto'?'RUÍNAS':'SOB ATAQUE'}</text>`:'')(faseEfetiva())}
         ${nAreas?`<text y="50" text-anchor="middle" fill="#fff" font-size="10" font-weight="800" letter-spacing="1" font-family="Zen Kaku Gothic New, sans-serif" stroke="#000" stroke-width="3" paint-order="stroke">${nAreas+1} ÁREAS</text>`:''}
       </g>
       ${ps.map(([k,j],i)=>`<g transform="translate(${l.x+32+i*19} ${l.y-38})"><circle r="10" fill="${corDe(k)}" stroke="#0b0a0c" stroke-width="3"/><text y="4" text-anchor="middle" fill="#0b0a0c" font-size="9" font-weight="900" font-family="sans-serif">${esc(iniciais(j.nome))}</text></g>`).join('')}
@@ -2145,6 +2145,7 @@ async function irPara(id,anterior){
     await postMsg(id,{tipo:'sistema',texto:`${F.nome||'Alguém'} chegou${de?` vindo de ${nl(de)}`:''}.`});}
   if(location.hash==='#local-'+id)setTimeout(route,0);else location.hash='local-'+id;
   const de0=meu.__de;
+  if(mudou&&id==='shibuya'&&ehIno()&&eventosCarregados&&!eventos.has(EV_MUNAE)&&!(combate&&combate.ativo&&combateLocal===id)){setTimeout(()=>dispararMunae(id,false),600);return;}
   if(mudou&&emboscadaElmos(id,de0)){await atualizarMeu({ultimaEmboscada:Date.now()});setTimeout(()=>narrar(id,{tipo:'emboscada',primeira,anterior:anterior||''}),500);return;}
   if(mudou&&locById(id)?.programado){if(carreg&&carreg.id===id)carreg.narrou=true;setTimeout(()=>abrirMercado(),700);return;}
   if(mudou){if(primeira)setTimeout(()=>narrar(id,{tipo:'chegada',anterior:anterior||''}),500);else chegadaRecente={local:id,anterior:anterior||'',t:Date.now()};}
@@ -2156,6 +2157,95 @@ function emboscadaElmos(id,de){
   if(combate&&combate.ativo)return false;
   if(Date.now()-(+meu.ultimaEmboscada||0)<4*3600000)return false;
   return Math.random()<0.2;
+}
+
+
+/* ---------- Roteiro: Munae Yakita em Shibuya ----------
+   1) Na próxima vez que Ino Jigoku entrar no Cruzamento de Shibuya, Munae Yakita (portador da primeira cabeça de
+      Cérberus, do Clã Elmos) aparece para capturá-lo. O mestre de IA conduz o diálogo seguindo o roteiro.
+   2) Qualquer combate em Shibuya enquanto ele estiver lá inclui Munae, que não pode ser derrotado (a vida não desce
+      da metade). Quando chega na metade, depois de 3 rodadas, ou se todos os jogadores caírem, ele destrói Shibuya e foge.
+   3) Shibuya vira "Shibuya Destruída" no mapa, para todo mundo. */
+const EV_MUNAE='munae-aparece',EV_SHIB='shibuya-destruida';
+const semAcento=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const ehIno=()=>{const n=semAcento(F.nome);return /\bino\b/.test(n)&&n.includes('jigoku');};
+const munaeAtivo=()=>eventos.has(EV_MUNAE)&&!eventos.has(EV_SHIB);
+const shibuyaDestruida=()=>eventos.has(EV_SHIB);
+const MUNAE_DESC='Munae Yakita, caçador do Clã Elmos e portador da primeira cabeça de Cérberus. Alto, sobretudo cinza, corrente selada na mão e máscara de cão de ferro pendurada no pescoço. Veio capturar Ino Jigoku e levá-lo de volta ao clã.';
+let munaeDesfechando=false;
+async function marcarEvento(k,titulo){
+  if(eventos.has(k))return false;
+  if(db){try{const ref=db.doc('eventos/'+k);const s=await ref.get();if(s.exists){eventos.set(k,s.data()||{ts:Date.now()});return false;}await ref.set({ts:Date.now(),por:uid||'',titulo});}catch{return false;}}
+  eventos.set(k,{ts:Date.now(),titulo});return true;
+}
+async function dispararMunae(local,forcado){
+  if(eventos.has(EV_MUNAE)||(!forcado&&!ehIno()))return false;
+  if(!await marcarEvento(EV_MUNAE,'Munae Yakita aparece em Shibuya'))return false;
+  if(carreg&&carreg.id===local)carreg.narrou=true;
+  try{registrarNpcs([{nome:'Munae Yakita',descricao:MUNAE_DESC}],local);}catch{}
+  const nome=F.nome||'Ino Jigoku';
+  await postMsg(local,{tipo:'mestre',alvoId:'',alvoNome:'',texto:`O semáforo do cruzamento fecha e, por um segundo, a multidão inteira para. No meio da faixa, um homem alto de sobretudo cinza continua andando contra o fluxo, sem pressa. Ninguém esbarra nele: as pessoas desviam sem perceber, como água em volta de uma pedra. Na mão esquerda ele carrega uma corrente selada; no pescoço, pendurada, uma máscara de cão de ferro, igual às dos caçadores do Clã Elmos.
+
+Quando ele para na sua frente, o ar fica pesado e quente, e você sente na hora: a energia que vibra nele é parente da que dorme dentro de você. A primeira cabeça de Cérberus.
+
+— ${nome}. — Ele sorri sem mostrar os dentes. — Meu nome é Munae Yakita. O clã quer de volta o que você levou... e quer você junto. Pode vir andando, ou pode vir arrastado. Eu prefiro andando. Shibuya agradece.
+
+O que você faz?`});
+  return true;
+}
+function roteiroCena(id){
+  if(raiz(id)!=='shibuya')return '';
+  if(shibuyaDestruida())return ` ATENÇÃO: SHIBUYA FOI DESTRUÍDA por Munae Yakita (portador da primeira cabeça de Cérberus, do Clã Elmos), que fugiu sem ser derrotado. Agora o bairro é ruína: prédios desabados, asfalto partido, telões estourados, incêndios, poeira, sirenes, resgate e polícia isolando a área, feiticeiros investigando os restos de energia. Quase não há civis andando por aqui. Mantenha isso em toda a narração deste lugar.`;
+  if(!munaeAtivo())return '';
+  return `
+CENA ROTEIRIZADA PELO MESTRE HUMANO (siga com prioridade): MUNAE YAKITA está aqui no cruzamento. ${MUNAE_DESC}
+- Ele quer levar Ino Jigoku VIVO ao Clã Elmos (de onde Ino levou a segunda cabeça de Cérberus). Fala com calma, ironia e paciência curta. Oferece que Ino venha por bem; ameaça as pessoas em volta se precisar. Pode conversar, provocar e responder perguntas sem entregar segredos do clã. Fala com quem estiver na cena, mas o alvo é Ino.
+- Ninguém consegue feri-lo de verdade nem prendê-lo. Ele NÃO aceita ir embora sem Ino por conversa; no máximo adia se Ino ganhar tempo.
+- Se Ino (ou alguém) atacar, recusar de vez ou tentar fugir, Munae parte para a força: INICIE O COMBATE com "Munae Yakita" (grau 0) no campo de combate. O sistema cuida do resto (ele não pode ser derrotado e, no fim, destrói Shibuya e foge). Nunca narre a morte, a derrota ou a captura de Munae.
+- Se Ino aceitar ir com ele, Munae prende Ino com a corrente selada e o leva: narre a saída dos dois do cruzamento e encerre a cena.`;
+}
+function aplicarEstadoMundo(){
+  const on=shibuyaDestruida();
+  LOCAIS.filter(l=>raiz(l.id)==='shibuya').forEach(l=>{
+    if(!l.__orig)l.__orig={nome:l.nome,curto:l.curto,kanji:l.kanji,tags:l.tags,desc:l.desc};
+    const o=l.__orig;
+    if(!on){Object.assign(l,o);l.destruido=false;return;}
+    l.destruido=true;
+    if(l.id==='shibuya')Object.assign(l,{nome:'Shibuya Destruída',curto:'Shibuya Destruída',kanji:'壊',tags:['ruínas','destruição','perigo'],
+      desc:'O que sobrou do cruzamento mais movimentado do mundo depois do ataque de Munae Yakita: prédios desabados, asfalto partido em placas, telões estourados e fogo. A polícia isolou a área; só feiticeiros e equipes de resgate passam pelas barreiras.'});
+    else Object.assign(l,{nome:String(o.nome).replace(/^Shibuya\b/,'Shibuya Destruída'),tags:['ruínas',...(o.tags||[]).slice(0,2)],
+      desc:`${o.desc} Agora está em ruínas desde o ataque de Munae Yakita.`});
+  });
+  if(typeof canalAtual!=='undefined'&&canalAtual&&raiz(canalAtual)==='shibuya'&&location.hash.startsWith('#local-')){const t=$('#world-title');if(t)t.textContent=locById(canalAtual)?.nome||'';try{renderAreas();}catch{}}
+  if(typeof mapaAberto!=='undefined'&&mapaAberto)try{renderMapa();}catch{}
+}
+function munaeNoCombate(){return combate&&combate.ativo&&Object.values(combate.participantes||{}).find(p=>p.invencivel&&!p.fugiu);}
+function participanteMunae(){const G=GRAUS[0];const id=`munae${Date.now().toString(36)}`;
+  return {id,nome:'Munae Yakita',tipo:'inimigo',lado:'inimigos',grau:0,pv:G.pv,pvMax:G.pv,atk:11,def:G.def,dano:'2d6+4',rd:G.rd,ini:d20()+G.ini,descricao:'portador da primeira cabeça de Cérberus; não pode ser derrotado',invencivel:true};}
+function agendarDesfechoMunae(){if(munaeDesfechando)return;munaeDesfechando=true;const loc=combateLocal;setTimeout(()=>desfechoMunae(loc).finally(()=>{munaeDesfechando=false;}),900);}
+async function desfechoMunae(local){
+  if(!local||shibuyaDestruida())return;
+  if(!await marcarEvento(EV_SHIB,'Shibuya destruída por Munae Yakita'))return;
+  await postMsg(local,{tipo:'mestre',alvoId:'',alvoNome:'',texto:`Munae suspira, como quem perde a paciência com uma criança. A energia dele explode para fora em três ondas, e por um instante a sombra de uma cabeça de cão gigantesca, feita de fogo negro, abre a boca sobre o cruzamento.
+
+Os telões estouram um atrás do outro. O asfalto se parte em placas, a fachada de um shopping desaba sobre a avenida, carros são arremessados contra as vitrines e a estação afunda numa nuvem de poeira e gritos. A onda de choque joga todos que estavam lutando contra os escombros. Vocês sobrevivem por pouco.
+
+Quando a poeira baixa, Shibuya não existe mais como era: só ruínas, fogo e sirenes ao longe. No alto de um prédio partido, Munae ajeita a máscara de ferro, sem um arranhão.
+
+— Isso foi um aviso, ${F.nome&&ehIno()?F.nome.split(' ')[0]:'Ino'}. Da próxima vez, não vai sobrar nada de pé em volta de você.
+
+E some no meio da fumaça.`});
+  if(combate&&combate.ativo&&combateLocal===local){
+    const up={},golpes={};let n=0;
+    for(const p of Object.values(combate.participantes||{})){
+      if(p.tipo==='jogador'){const d=(+p.pv||0)-1;if(d!==0)golpes[`g${Date.now().toString(36)}m${n++}`]={alvo:p.id,pv:-d,de:'Munae Yakita',t:Date.now()};up[p.id]={pv:1};}
+      else if(p.tipo==='inimigo')up[p.id]=p.invencivel?{fugiu:true}:{pv:0};}
+    await combateWrite({participantes:up,golpes});
+    await combateWrite({ativo:false,resultado:'encerrado',fim:Date.now()});
+    await postMsg(local,{tipo:'combate',texto:'Munae Yakita fugiu sem ser derrotado. Shibuya foi destruída. Todos que estavam no combate ficaram com 1 PV.'});
+  }
+  for(const l of LOCAIS.filter(x=>x.pai==='shibuya'))await postMsg(l.id,{tipo:'mestre',alvoId:'',alvoNome:'',texto:'Um estrondo vem do cruzamento e o chão inteiro treme. Vidros explodem, o teto racha, a luz cai. Quando a poeira assenta, metade do quarteirão está no chão: Shibuya acabou de ser destruída.'});
+  aplicarEstadoMundo();
 }
 
 /* Chamada à IA com espera automática quando o limite de mensagens é atingido */
@@ -2592,7 +2682,7 @@ function npcOnde(n,t=Date.now()){
     if(e.seguindo){const j=e.seguindo===myId()?meu:jogadores.get(e.seguindo);if(j&&j.local)return {local:j.local,faz:`acompanhando ${j.nome||'alguém'}`,status:'aqui'};}
     else if(e.local){const chega=+e.chega||0;return t<chega?{local:null,status:'caminho',para:e.local}:{local:e.local,faz:e.faz||'ali, por conta própria',status:'aqui'};}
   }
-  const r=slotRotina(n,t);if(!r||!r.local)return {local:null,status:'casa'};
+  const r=slotRotina(n,t);if(!r||!r.local||(typeof shibuyaDestruida==='function'&&shibuyaDestruida()&&raiz(r.local)==='shibuya'))return {local:null,status:'casa'};
   const ini=(()=>{let x=t;for(let k=0;k<96;k++){const y=x-HORA_JOGO_MS/4;const r2=slotRotina(n,y);if(!r2||r2.local!==r.local)return x;x=y;}return x;})();
   if(t-ini<TRANSITO*HORA_JOGO_MS&&ini>t-HORA_JOGO_MS*23){const ant=slotRotina(n,ini-HORA_JOGO_MS/4);if(ant&&ant.local&&ant.local!==r.local)return {local:null,status:'caminho',para:trocaLocal(r.local)};}
   return {local:trocaLocal(r.local),faz:r.faz,status:'aqui'};
@@ -2854,7 +2944,7 @@ const RECOMP_CACADA={4:{ienes:2000,xp:2,pg:3},3:{ienes:5000,xp:5,pg:6},2:{ienes:
 function rngSeed(seed){let x=hashStr(seed)||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
 function ofertasCacada(){
   const dia=diaJogo();const r=rngSeed(myId()+'|caca|'+dia);const n=calc().n;
-  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&(!l.restrito||areaLiberada(l))&&!l.programado&&!(faseEfetiva()==='kyoto'&&raiz(l.id)==='shibuya'));
+  const destinos=LOCAIS.filter(l=>!ehEscola(raiz(l.id))&&(!l.restrito||areaLiberada(l))&&!l.programado&&!((faseEfetiva()==='kyoto'||shibuyaDestruida())&&raiz(l.id)==='shibuya'));
   const usadas=meu?.cacadasDia?.dia===dia?(meu.cacadasDia.usadas||[]):[];
   return [0,1,2,3].map(i=>{const [alvo,desc]=CRIATURAS[Math.floor(r()*CRIATURAS.length)];const d=destinos[Math.floor(r()*destinos.length)];
     const x=r();const grau=n>=6?(x<.3?2:3):n>=4?(x<.7?3:4):n>=2?(x<.2?3:4):4;
@@ -2955,7 +3045,7 @@ function assinarCampanha(){if(!db)return;
     if(t){let loc=null;try{loc=localStorage.getItem('jjk-temporada');}catch{}
       if(loc!==t){try{localStorage.setItem('jjk-temporada',t);const tinha=localStorage.getItem('jjk-ficha-rascunho')||localStorage.getItem('jjk-jogador');localStorage.removeItem('jjk-ficha-rascunho');localStorage.removeItem('jjk-jogador');if(tinha||loc!==null){location.reload();return;}}catch{}}}
     atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{});
-  db.collection('eventos').onSnapshot(s=>{eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;atualizarFase();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
+  db.collection('eventos').onSnapshot(s=>{eventos.clear();s.docs.forEach(d=>{const x=d.data();if(x)eventos.set(d.id,x);});eventosCarregados=true;atualizarFase();aplicarEstadoMundo();if(!$('#view-admin').hidden)renderAdmCampanha();agendarLinha();},()=>{eventosCarregados=true;});
   setInterval(checarLinhaDoTempo,5*60000);}
 /* ---------- Linha do tempo automática da campanha ----------
    Cada acontecimento dispara sozinho quando passa o número de dias desde o lançamento E o grupo já concluiu
@@ -3347,7 +3437,7 @@ COMO NARRAR
 - JOGADOR CONTRA JOGADOR: se um jogador atacar outro jogador presente (ou os dois decidirem lutar), não narre o golpe: inicie um duelo com "combate":{"jogadores":["Nome do outro jogador"]} e "narracao" com no máximo uma frase curta. O sistema cuida de tudo depois. Durante um duelo você só fala se algo de fora intervier.
 - VIAGEM: locais existentes: ${[...LOCAIS.filter(x=>!x.restrito),...[...new Set([myId(),...jogadores.keys()])].map(k=>locById(quartoId(k)))].map(x=>`${x.id} (${x.pai?(locById(x.pai)?.curto||'')+' · '+(x.quarto?x.curto:x.area):x.nome+(x.area?' · '+x.area:'')})`).join(', ')}. Ids que começam com o id de um lugar seguido de hífen (ex.: shibuya-cafe, escola-enfermaria) são ÁREAS dentro daquele lugar: andar entre elas é rápido, a pé. Os lugares de Tóquio (${LOCAIS.filter(l=>!l.pai&&l.regiao==='toquio').map(l=>l.id).join(', ')}) se ligam por trem e metrô (10 a 40 minutos; Yokohama e Miura um pouco mais). Kyoto (${LOCAIS.filter(l=>!l.pai&&l.regiao==='kyoto').map(l=>l.id).join(', ')}) fica a umas 2h15 de Shinkansen: viajar entre as cidades é uma viagem de verdade (narre a estação e o trem em 1 frase). Se o jogador disser que vai para outro desses locais (ex.: "caminho para Shibuya"), narre só a saída em 1 ou 2 frases e preencha "viajar" com o id do destino. A chegada será narrada no canal do destino. Para lugares que não existem no mapa, diga que ainda não dá para ir.
 
-LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
+LOCAL ATUAL: ${l.nome} (id: ${id}). ${l.contexto}${roteiroCena(id)}${faseEfetiva()==='kyoto'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar foi destruído na Queda; hoje são ruínas, interditadas, com restos de maldições e investigadores do Alto Escalão. Descreva assim.':faseEfetiva()==='queda'&&['escola','shibuya'].includes(raiz(id))?' ATENÇÃO: este lugar está sob ataque AGORA (a Queda): caos, água cinzenta, maldições, civis em perigo.':''}
 
 ${livroNpcs(40)}
 
@@ -3486,7 +3576,11 @@ function assinarCombate(local){
 function aposMudancaCombate(){if(combate&&combate.ativo&&meu?.descanso&&combateLocal===meu.descanso.local)aplicarDescanso(true,'acordou com o combate');aplicarGolpes();aplicarXpCombate();pagarCacada();contarCombate();renderCombate();checarPassagemAuto();}
 async function combateWrite(patch,full){
   const local=combateLocal;if(!local)return;
+  let gatilhoMunae=false;
+  if(!full&&patch&&patch.participantes&&combate&&combate.participantes)for(const [id,q] of Object.entries(patch.participantes)){const p=combate.participantes[id];
+    if(p&&p.invencivel&&q&&q.pv!=null){const piso=Math.ceil(p.pvMax/2);if(+q.pv<=piso){q.pv=piso;gatilhoMunae=true;}}}
   combate=full?patch:deepMerge(combate||{},patch);
+  if(combate&&combate.ativo&&munaeNoCombate()&&!shibuyaDestruida()&&(gatilhoMunae||(+combate.rodada||1)>=4))agendarDesfechoMunae();
   if(db){const ref=db.doc('combates/'+local);combateChain=combateChain.then(()=>full?ref.set(patch):ref.update(patch)).catch(()=>{});await combateChain;}
   else{(window.__combatesLocais=window.__combatesLocais||{})[local]=combate;setTimeout(aposMudancaCombate,0);}
   renderCombate();
@@ -3509,6 +3603,10 @@ async function iniciarCombate(local,lista,outrosJogadores,extra){
     for(let k=0;k<q;k++){const id=`e${Date.now().toString(36)}${i++}`;const nome=(String(e.nome||'Maldição').slice(0,40))+(q>1?` ${String.fromCharCode(65+k)}`:'');
       const olho=e.olho===true&&k===0;const pv=G.pv+(olho?100:0);
       parts[id]={id,nome:nome+(olho&&!/olho/i.test(nome)?' (comeu um olho)':''),tipo:'inimigo',lado:'inimigos',grau:g,pv,pvMax:pv,atk:G.atk+(olho?2:0),def:G.def+(olho?1:0),dano:G.dano,rd:G.rd,ini:d20()+G.ini,descricao:String(e.descricao||'').slice(0,160),...(olho?{olho:true}:{})};}});
+  if(raiz(local)==='shibuya'&&munaeAtivo()){
+    for(const k of Object.keys(parts))if(/munae/i.test(parts[k].nome))delete parts[k];
+    const jaTem=combate&&combate.ativo&&combateLocal===local&&Object.values(combate.participantes||{}).some(p=>p.invencivel);
+    if(!jaTem){const m=participanteMunae();parts[m.id]=m;}}
   const outros=(outrosJogadores||[]).filter(id=>id&&id!==myId()&&jogadores.has(id));
   const pvp=!Object.keys(parts).length&&outros.length>0;
   if(!Object.keys(parts).length&&!pvp)return;
@@ -3551,6 +3649,7 @@ async function checarFim(){
   const lados=new Set(vivosTodos().map(ladoDe));
   if(lados.size>1)return false;
   const resta=[...lados][0];
+  if(munaeNoCombate()&&!shibuyaDestruida()&&resta!=='jogadores'){agendarDesfechoMunae();return true;}
   if(!resta){await encerrarCombate('derrota');return true;}
   if(resta==='inimigos'){await encerrarCombate('derrota');return true;}
   if(temInimigos()){await encerrarCombate('vitoria');return true;}
@@ -4656,6 +4755,7 @@ function renderAdmCampanha(){
       return `<div class="treino-row"><span><b>${esc(e.titulo)}</b><br><span class="note">${st.feito?`aconteceu em ${new Date(+ev.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}${ev.manual?' (manual)':''}`:st.pronto?'pronto: dispara na próxima checagem':'espera: '+esc(st.falta.join(' · '))}</span></span>${st.feito?'<span class="pill ok">feito</span>':`<button class="btn small" data-admevento="${e.k}">Disparar agora</button>`}</div>`;}).join('')}
       <div class="adm-acts"><button class="btn small" data-adm="pausar">${campanha.autoPausado?'Retomar automação':'Pausar automação'}</button>
       <label class="sr" for="cp-fase">Fase manual</label><select id="cp-fase" style="width:auto"><option value="">Fase automática (linha do tempo)</option>${[['ato1','Forçar Ato 1'],['queda','Forçar A Queda'],['kyoto','Forçar Kyoto']].map(([v,t])=>`<option value="${v}" ${campanha.faseManual===v?'selected':''}>${t}</option>`).join('')}</select></div></div>
+    <div class="f"><span>Roteiro: Munae Yakita</span><div class="treino-row"><span><b>Munae em Shibuya</b><br><span class="note">${shibuyaDestruida()?'Shibuya foi destruída; Munae fugiu.':munaeAtivo()?'Munae está no Cruzamento de Shibuya esperando por Ino.':'Espera Ino Jigoku entrar no Cruzamento de Shibuya.'}</span></span>${eventos.has(EV_MUNAE)||shibuyaDestruida()?'<button class="btn small" data-adm="munae-reset">Desfazer (Shibuya volta ao normal)</button>':'<span class="pill info">aguardando</span>'}</div></div>
     <div class="f"><span>Missões em andamento</span>${[...missoes.values()].filter(m=>m.status==='andamento').map(m=>`<div class="npc-item"><b>${esc(m.titulo)}</b><span class="note">Grupo: ${(m.membros||[]).map(nomeJog).map(esc).join(', ')} · ${m.objetivoCumprido?'objetivo cumprido':'em aberto'+(m.falta?` (falta: ${esc(m.falta)})`:'')} · ${m.historia?'missão de história':'missão comum'} · criaturas ${+m.criaturas||0}/${maxCriaturasDe(m)}</span>
       <div class="adm-acts"><button class="btn small" data-admconcluir="${esc(m.id)}">Concluir e pagar agora</button></div></div>`).join('')||'<span class="note">Nenhuma.</span>'}</div>
     <label class="f" for="cp-notas">Direção para o mestre de IA (vale para todo mundo)<textarea id="cp-notas" rows="3" placeholder="Ex.: Nesta semana, o professor Yaga está desconfiado de um aluno do 2º ano. Faça a seita aparecer em Shibuya.">${esc(campanha.notas||'')}</textarea></label>
@@ -4748,6 +4848,8 @@ async function admAcao(a){
     if(a==='darxp'&&j.local)await admPost(j.local,{tipo:'sistema',texto:`${j.nome} ganhou ${v('adm-darxp')} XP (mestre).`});
     renderAdmEditor();}
   if(a==='escola'){await admUpdate(id,{pg:Math.max(0,v('adm-pg')),missaoPessoal:$('#adm-pessoal').value.trim().slice(0,500)});renderAdmEditor();}
+  if(a==='munae-reset'){openModal('Desfazer o roteiro do Munae?','Shibuya volta ao normal no mapa e o Munae aparece de novo na próxima vez que Ino entrar no cruzamento.','','Desfazer',async()=>{closeModal();
+    try{for(const k of [EV_SHIB,EV_MUNAE]){await db.doc('eventos/'+k).delete();eventos.delete(k);}aplicarEstadoMundo();renderAdmCampanha();admStatus('Roteiro do Munae desfeito.');}catch{admStatus('Não consegui desfazer.');}});return;}
   if(a==='pausar'){try{await db.doc('config/campanha').set({...campanha,autoPausado:!campanha.autoPausado});admStatus(campanha.autoPausado?'Automação retomada.':'Automação pausada.');}catch{admStatus('Não consegui salvar.',true);}return;}
   if(a==='lancamento'){openModal('Lançamento: apagar TUDO?','Apaga todos os personagens, chats, missões, NPCs, transferências e acontecimentos, e começa a campanha do zero (dia 0). Não dá para desfazer. Escreva RESETAR para confirmar.',' ','Apagar tudo e lançar',async()=>{if($('#modal-text').value.trim().toUpperCase()!=='RESETAR'){$('#modal-note').textContent='Escreva RESETAR para confirmar.';return;}closeModal();const ok=await resetarTudo();if(ok)setTimeout(()=>location.reload(),2500);});$('#modal-text').value='';$('#modal-text').placeholder='RESETAR';return;}
   if(a==='campanha'){try{await db.doc('config/campanha').set({...campanha,faseManual:$('#cp-fase').value,notas:$('#cp-notas').value.trim().slice(0,1500)});admStatus('Campanha salva.');}catch{admStatus('Não consegui salvar a campanha. Publique as regras novas do Firestore.',true);}return;}
