@@ -900,6 +900,75 @@ body.sem-animacao .modal.show .box{animation:none}
 .modal .btn.primary{background:#d3121c;color:#fff;font:900 italic 16px/1 var(--display);padding:10px 18px}
 .modal .btn.primary:hover{background:#0b0a0c}
 .modal .btn.primary:focus-visible{background:#d3121c;outline:3px solid #000;outline-offset:3px}
+
+/* ===== menu de comando do combate (estilo Persona 5) ===== */
+.cmd{position:fixed;top:0;right:0;bottom:0;width:min(470px,44vw);z-index:39;display:flex;flex-direction:column;justify-content:flex-end;gap:10px;padding:18px 22px 22px 40px;overflow:auto;
+  background:linear-gradient(100deg,transparent 0 6%,rgba(5,4,6,.93) 6% 100%);}
+.cmd::before{content:"";position:absolute;inset:0 auto 0 0;width:44px;background:#d3121c;clip-path:polygon(60% 0,100% 0,40% 100%,0 100%);pointer-events:none}
+.cmd>*{position:relative}
+#cmd-conteudo{display:flex;flex-direction:column;gap:10px}
+.cmd-topo{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.cmd-titulo{margin:0;font:900 italic 46px/0.95 var(--display);color:#fff;text-shadow:4px 4px 0 #d3121c,4px 4px 0 #d3121c;transform:rotate(-4deg);transform-origin:left bottom;letter-spacing:-1px}
+.cmd-info{margin:6px 0 0;color:#e6e2e4;font-size:13px}.cmd-info b{color:#fff}
+.cmd-ver{background:#fff;color:#0b0a0c;border:2px solid #000;font-weight:900;padding:5px 10px;transform:skew(-8deg);cursor:pointer;box-shadow:3px 3px 0 #d3121c;white-space:nowrap}
+.cmd-ver:hover,.cmd-ver:focus-visible{background:#d3121c;color:#fff;outline:none}
+.cmd-menu{display:flex;flex-direction:column;gap:8px;padding-left:6px}
+.cmd-op{display:flex;align-items:center;gap:12px;width:calc(100% - var(--i)*12px);margin-left:calc(var(--i)*12px);background:#0b0a0c;color:#fff;border:3px solid #fff;transform:skew(-12deg);padding:7px 14px;cursor:pointer;box-shadow:5px 5px 0 #d3121c;text-align:left;transition:transform .1s,background .1s}
+.cmd-op .kj{flex:none;display:grid;place-items:center;width:38px;height:38px;background:#fff;color:#d3121c;border-radius:50%;font:900 21px/1 var(--display);transform:skew(12deg)}
+.cmd-op .tx{display:flex;flex-direction:column;min-width:0;flex:1}
+.cmd-op b{font:900 italic 25px/1.05 var(--display);text-transform:uppercase;letter-spacing:.5px}
+.cmd-op small{font-size:12px;color:#cfcacc;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmd-op kbd{flex:none;font:800 11px/1 ui-monospace,monospace;color:#8d8689;border:1px solid #555;padding:2px 5px;background:none}
+.cmd-op:hover:not(:disabled),.cmd-op:focus-visible{background:#d3121c;border-color:#000;box-shadow:5px 5px 0 #fff;transform:skew(-12deg) translateX(-10px) scale(1.03);outline:none}
+.cmd-op:hover:not(:disabled) small,.cmd-op:focus-visible small{color:#fff}
+.cmd-op:hover:not(:disabled) .kj,.cmd-op:focus-visible .kj{background:#0b0a0c;color:#fff}
+.cmd-op:disabled{cursor:not-allowed;background:#1a1719;color:#7a7376;border-color:#4a4548;box-shadow:3px 3px 0 #3a0c10}.cmd-op:disabled .kj{background:#4a4548;color:#1a1719}.cmd-op:disabled small{color:#6b6568}
+.cmd.entra .cmd-op{animation:cmd-op .32s cubic-bezier(.2,.9,.3,1.2) both;animation-delay:calc(var(--i)*45ms)}
+.cmd.entra .cmd-titulo{animation:cmd-tit .3s ease-out both}
+@keyframes cmd-op{from{transform:skew(-12deg) translateX(110%);opacity:0}to{transform:skew(-12deg);opacity:1}}
+@keyframes cmd-tit{from{transform:rotate(-4deg) scale(1.6);opacity:0}to{transform:rotate(-4deg);opacity:1}}
+@media (prefers-reduced-motion:reduce){.cmd.entra .cmd-op,.cmd.entra .cmd-titulo{animation:none}}
+body.sem-animacao .cmd.entra .cmd-op,body.sem-animacao .cmd.entra .cmd-titulo{animation:none}
+.cmd-sub{background:#fff;color:#0b0a0c;border:3px solid #000;box-shadow:6px 6px 0 #d3121c;padding:12px 14px;display:flex;flex-direction:column;gap:9px;transform:rotate(-.6deg)}
+.cmd-sub p{margin:0}
+.cmd-sub label.f{color:#0b0a0c;font-weight:800;display:flex;flex-direction:column;gap:3px;font-size:13px}
+.cmd-sub select,.cmd-sub input[type=text],.cmd-sub input[type=number],.cmd-sub textarea{background:#fff;color:#0b0a0c;border:2px solid #000;border-radius:0;font-weight:500;padding:7px 8px;width:100%;box-sizing:border-box}
+.cmd-sub .chk-kok{color:#0b0a0c;font-weight:700}
+.cmd-sub .chk-kok input{accent-color:#d3121c}
+.cmd-nota{font-size:13px;color:#2a2629}.cmd-nota.forte{color:#d3121c;font-weight:800}
+.cmd-num{font:900 italic 22px/1 var(--display);color:#d3121c}
+.cmd-linha{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end}
+.cmd-acao{flex:1;min-width:120px;background:#d3121c;color:#fff;border:3px solid #000;font:900 italic 21px/1 var(--display);padding:11px 16px;transform:skew(-10deg);cursor:pointer;box-shadow:4px 4px 0 #000;text-transform:uppercase}
+.cmd-acao:hover:not(:disabled){background:#0b0a0c}
+.cmd-acao:focus-visible{outline:3px solid #000;outline-offset:3px}
+.cmd-acao:disabled{opacity:.45;cursor:not-allowed}
+.cmd-voltar,.cmd-mini{background:#fff;color:#0b0a0c;border:2px solid #000;font-weight:900;padding:9px 12px;transform:skew(-8deg);cursor:pointer;box-shadow:3px 3px 0 #000}
+.cmd-voltar:hover,.cmd-voltar:focus-visible,.cmd-mini:hover,.cmd-mini:focus-visible{background:#0b0a0c;color:#fff;outline:none}
+.cmd-linha-topo{justify-content:flex-start}
+.cmd-espera{background:#f6d32b;color:#0b0a0c;border:2px solid #000;font-weight:800;font-size:13px;padding:7px 10px;transform:skew(-4deg);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.cmd-espera .cmd-mini{padding:4px 8px;font-size:12px}
+#cmd-teste #roll-panel{background:#fff;color:#0b0a0c;border:3px solid #000;border-radius:0;box-shadow:6px 6px 0 #d3121c;display:flex}
+#cmd-teste #roll-panel h2{display:none}
+#cmd-teste #roll-panel label.f{color:#0b0a0c;font-weight:800}
+#cmd-teste #roll-panel select{background:#fff;color:#0b0a0c;border:2px solid #000;border-radius:0}
+#cmd-teste #roll-panel .seg{border:2px solid #000;border-radius:0}
+#cmd-teste #roll-panel .seg button{color:#0b0a0c;font-weight:800}
+#cmd-teste #roll-panel .seg button.on{background:#0b0a0c;color:#fff}
+#cmd-teste #roll-panel .note{color:#2a2629}
+#cmd-teste #roll-panel .btn.primary{background:#d3121c;color:#fff;border:3px solid #000;border-radius:0;font:900 italic 20px/1 var(--display);transform:skew(-10deg);box-shadow:4px 4px 0 #000;padding:11px}
+#cmd .dom-bt{border-radius:0;transform:skew(-8deg);font-weight:900}
+.cmd-min{position:fixed;right:18px;bottom:18px;z-index:39;background:#d3121c;color:#fff;border:3px solid #000;font:900 italic 18px/1 var(--display);padding:12px 18px;transform:skew(-10deg);box-shadow:5px 5px 0 #fff;cursor:pointer;animation:cmd-pulsa 1.6s ease-in-out infinite}
+.cmd-min:hover,.cmd-min:focus-visible{background:#0b0a0c;outline:none}
+@keyframes cmd-pulsa{0%,100%{box-shadow:5px 5px 0 #fff}50%{box-shadow:8px 8px 0 #fff}}
+@media (prefers-reduced-motion:reduce){.cmd-min{animation:none}}
+@media (max-width:760px){
+  .cmd{top:auto;left:0;width:auto;max-height:82vh;max-height:82dvh;padding:14px 14px calc(16px + env(safe-area-inset-bottom));background:rgba(5,4,6,.95);border-top:4px solid #d3121c;justify-content:flex-start}
+  .cmd::before{display:none}
+  .cmd-titulo{font-size:36px}
+  .cmd-op{padding:6px 12px}.cmd-op b{font-size:21px}.cmd-op .kj{width:32px;height:32px;font-size:18px}
+  .cmd-op kbd{display:none}
+  .cmd-min{left:12px;right:12px;bottom:12px;text-align:center}
+}
 </style>
 </head>
 <body>
@@ -1087,6 +1156,8 @@ body.sem-animacao .modal.show .box{animation:none}
         <div class="panel" id="treino-panel" hidden></div>
         <div class="panel" id="roll-panel"></div>
       </div>
+      <div id="cmd" class="cmd" hidden role="region" aria-label="Comandos de combate"><div id="cmd-conteudo"></div><div id="cmd-teste" hidden></div></div>
+      <button type="button" id="cmd-min" class="cmd-min" hidden></button>
     </div>
   </div>
 </div>
@@ -3769,26 +3840,114 @@ function renderCombate(){
   box.innerHTML=`<h2>${ehDuelo()?'Duelo':'Combate'} <span class="note" style="font-family:var(--body);font-size:13px;font-weight:400">rodada ${combate.rodada}</span></h2>${dominioAtivo()?`<p class="dom-aviso">領域 Domínio de ${esc(dominioAtivo().donoNome||'')}: <b>${esc(dominioAtivo().nome)}</b> · até a rodada ${dominioAtivo().ate}</p>`:''}
    <ol class="ordem">${o.map(p=>{const pct=p.pvMax?Math.max(0,p.pv/p.pvMax*100):0;
      return `<li data-pid="${esc(p.id)}" class="${p.id===combate.vez?'vez':''}${p.pv<=0?' caido':''}"><span class="ini">${p.ini}</span><span class="nm"><span>${esc(p.nome)}${p.tipo==='inimigo'?` <span class="pill warn">${esc(GRAUS[p.grau]?.label||'')}</span>`:p.id===myId()?' <span class="pill info">você</span>':''}${condAtivas(p).map(c=>` <span class="pill" title="${esc(descCond(c))}">${esc(c.nome)}${c.rodadas?` ${c.rodadas}r`:''}</span>`).join('')}</span><span class="mini ${p.tipo}"><span style="width:${pct}%"></span></span></span><span class="pvn">${p.pv}/${p.pvMax}</span></li>`;}).join('')}</ol>
-   ${meusPend.map(x=>`<div class="pedido defesa"><b>${esc(x.atacanteNome)}</b> ataca você com ${esc(x.arma)}: <b>${x.total}</b>${x.crit?' (20 natural, acerta de qualquer jeito)':''}. Role sua defesa:
-     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px"><button class="btn primary small" data-defesa="${x.id}|esquiva" ${defendendo?'disabled':''}>Esquiva ${C.skill['Esquiva'].v>=0?'+':''}${C.skill['Esquiva'].v}</button><button class="btn primary small" data-defesa="${x.id}|luta" ${defendendo?'disabled':''}>Bloqueio (Luta) ${C.skill['Luta'].v>=0?'+':''}${C.skill['Luta'].v}</button></div></div>`).join('')}
+   ${meusPend.length?`<div class="pedido defesa"><b>Você está sendo atacado.</b> <button class="btn primary small" data-cmdabrir="1">Rolar defesa</button></div>`:''}
    ${!eu?`<button class="btn primary" id="btn-entrar-combate">Entrar no combate</button>`:''}
-   ${eu&&minhaVez()?`<div class="pedido">Sua vez. Ataques usados: ${ataquesTurno} de ${maxAtaques()}${C.extraOpc?' (os extras de Força/Velocidade dão −2)':''}.</div>
-     ${aguardo?`<div class="pedido">Esperando ${esc(combate.participantes[aguardo.alvo]?.nome||'o alvo')} rolar a defesa. <button class="btn small" data-defauto="${aguardo.id}">Rolar defesa automática</button></div>`:''}
-     <label class="f" for="cb-alvo">Alvo<select id="cb-alvo">${alvos.map(a=>`<option value="${a.id}" ${a.id===cbAlvo?'selected':''}>${esc(a.nome)} (${a.pv} PV)</option>`).join('')}</select></label>
-     <label class="f" for="cb-arma">Arma<select id="cb-arma">${armas.map(a=>`<option value="${esc(a.nome)}" ${a.nome===cbArma?'selected':''}>${esc(a.nome)} · ${a.dados}+${C.a[a.attr]+a.flat} · ${a.skill}</option>`).join('')}</select></label>
-     <label class="chk-kok"><input type="checkbox" id="cb-energia" ${cbEnergia?'checked':''}> Ataque com energia amaldiçoada (+1d6 de dano; Kokusen com ${margemKokusen()}${margemKokusen()<20?'–20':''} natural)</label>
-     ${meu?.focoKokusen?'<p class="note" style="margin:0;color:#ff5b63"><b>Foco no Kokusen ativo:</b> +2 na margem no próximo ataque com energia.</p>':''}
-     <label class="f" for="cb-extra">Dano extra neste ataque (opcional)<input type="text" id="cb-extra" value="${esc(cbExtra)}" placeholder="Ex.: 1d8 ou 3"></label>
-     ${meu?.bonusAtaque&&(meu.bonusAtaque.dano||meu.bonusAtaque.acerto)?`<p class="note" style="margin:0">Guardado para o próximo ataque: ${esc(meu.bonusAtaque.motivo||'bônus')}${meu.bonusAtaque.dano?` +${esc(meu.bonusAtaque.dano)} de dano`:''}${meu.bonusAtaque.acerto?` ${meu.bonusAtaque.acerto>0?'+':''}${meu.bonusAtaque.acerto} no acerto`:''}.</p>`:''}
-     ${F.dominio?.nome&&!dominioAtivo()?`<button class="btn dom-bt" id="btn-dominio" style="--dom-cor:${esc(corValida(F.dominio.cor)||'#6a1fb0')}" ${narrando?'disabled':''}>領域展開 Expansão de Domínio: ${esc(F.dominio.nome)}</button>`:''}
-     ${dominioAtivo()?.dono===myId()?'<button class="btn small" id="btn-fechardominio">Desfazer domínio</button>':''}
-     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn primary" id="btn-atacar" ${narrando||!alvos.length||aguardo?'disabled':''}>Atacar</button><button class="btn" id="btn-fimturno" ${narrando||aguardo?'disabled':''}>Encerrar turno</button></div>
-     <button class="btn" id="btn-focokok" ${narrando||ataquesTurno>0||meu?.focoKokusen||aguardo?'disabled':''} title="Gasta o turno: +2 na margem do Kokusen no próximo ataque com energia">Focar no Kokusen (passa a vez)</button>
-     ${C.celestial?'':`<button class="btn" id="btn-recuperar" ${narrando||ataquesTurno>0||recuperouTurno?'disabled':''} title="Regra da casa: gasta a ação do turno">Recuperar energia (1d8 PA)</button>`}
-     <p class="note" style="margin:0">Recuperar energia usa a ação do turno no lugar dos ataques. Para técnicas (com PA extra para mais dano), manobras ou Energia Reversa, descreva no chat para o mestre.</p>`
+   ${eu&&minhaVez()?`<div class="pedido">Sua vez. Ataques usados: ${ataquesTurno} de ${maxAtaques()}. <button class="btn primary small" data-cmdabrir="1">Abrir comandos</button></div>`
    :eu?`<p class="note" style="margin:0">Vez de ${esc(vez?.nome||'...')}.</p>${vez&&vez.tipo==='jogador'?`<button class="btn small" id="btn-passar">Passar a vez de ${esc(vez.nome)}</button>`:''}`:''}
    <button class="btn small" id="btn-fimcombate" style="align-self:flex-start">Encerrar combate</button>`;
+  renderCmd();
 }
+/* ---------- Menu de comando do combate (estilo Persona 5) ----------
+   Aparece no seu turno (ou quando te atacam) por cima da cena. Os controles usam os mesmos ids de antes
+   (#btn-atacar, #cb-arma, data-defesa...), então a lógica do combate continua a mesma. */
+let cmdTela='menu',cmdMin=false,cmdChave=null,cmdTecTexto='',cmdTecPa=0;
+function devolverRoll(){const r=$('#roll-panel'),t=$('#treino-panel');if(r&&t&&r.parentElement.id==='cmd-teste')t.after(r);}
+function colocarRoll(){const r=$('#roll-panel'),slot=$('#cmd-teste');if(r&&slot&&r.parentElement!==slot){slot.appendChild(r);renderRoll();}}
+function cmdEsconder(){const c=$('#cmd'),m=$('#cmd-min');if(c)c.hidden=true;if(m)m.hidden=true;devolverRoll();document.body.classList.remove('cmd-aberto');}
+function renderCmd(){
+  const box=$('#cmd'),cont=$('#cmd-conteudo'),min=$('#cmd-min');if(!box||!cont)return;
+  const ativo=!!(combate&&combate.ativo&&combateLocal===canalAtual&&souParticipante());
+  const pend=ativo?pendentes().filter(x=>x.alvo===myId()):[];const turno=ativo&&minhaVez();
+  const chave=ativo&&(turno||pend.length)?`${combate.rodada}|${combate.vez}|${pend.map(x=>x.id).join(',')}`:null;
+  const novo=chave!==cmdChave;if(novo){cmdChave=chave;cmdTela='menu';cmdMin=false;}
+  if(!chave){cmdEsconder();return;}
+  if(cmdMin){box.hidden=true;devolverRoll();document.body.classList.remove('cmd-aberto');min.hidden=false;min.textContent=pend.length?'🛡 Te atacaram · defender':'⚔ Sua vez · abrir comandos';return;}
+  min.hidden=true;
+  const ae=document.activeElement;const foco=ae&&cont.contains(ae)&&ae.id?{id:ae.id,v:ae.value,s:ae.selectionStart}:null;
+  const C=calc();const est=meu?.estado||{};const mx=meu?.max||{};
+  const topo=(t,sub)=>`<div class="cmd-topo"><div><p class="cmd-titulo">${t}</p><p class="cmd-info">${sub}</p></div><button type="button" class="cmd-ver" id="cmd-minimizar" title="Recolher o menu para ler a cena">Ver cena ▾</button></div>`;
+  const stats=`Rodada ${combate.rodada} · PV <b>${est.pv??'?'}/${mx.pv??'?'}</b> · PA <b>${est.pa??'?'}/${mx.pa??'?'}</b>`;
+  let h='';
+  if(pend.length){
+    h=topo('DEFENDA-SE!',stats)+pend.map(x=>`<div class="cmd-sub"><p><b>${esc(x.atacanteNome)}</b> ataca você com ${esc(x.arma)}: <b class="cmd-num">${x.total}</b>${x.crit?' (20 natural: acerta de qualquer jeito)':''}</p>
+      <div class="cmd-linha"><button class="cmd-acao" data-defesa="${x.id}|esquiva" ${defendendo?'disabled':''}>Esquiva ${C.skill['Esquiva'].v>=0?'+':''}${C.skill['Esquiva'].v}</button><button class="cmd-acao" data-defesa="${x.id}|luta" ${defendendo?'disabled':''}>Bloqueio ${C.skill['Luta'].v>=0?'+':''}${C.skill['Luta'].v}</button></div></div>`).join('');
+  }else{
+    const armas=minhasArmas(),alvos=alvosPara(myId());const aguardo=pendentes().find(x=>x.atacante===myId());
+    const trava=narrando||!!aguardo;
+    const espera=aguardo?`<div class="cmd-espera">Esperando ${esc(combate.participantes[aguardo.alvo]?.nome||'o alvo')} rolar a defesa. <button type="button" class="cmd-mini" data-defauto="${aguardo.id}">Rolar defesa automática</button></div>`:narrando?'<div class="cmd-espera">O mestre está narrando…</div>':'';
+    const tecNome=C.hasTec&&F.tecnica?.nome?F.tecnica.nome:'';
+    const ops=[
+      ['atacar','攻','Atacar',`${ataquesTurno}/${maxAtaques()} ataques neste turno`,trava||!alvos.length||ataquesTurno>=maxAtaques()],
+      ['tecnica','術','Técnica',tecNome?esc(tecNome):'técnica, manobra, energia reversa',trava],
+      ['kokusen','黒','Kokusen',meu?.focoKokusen?'foco já ativo':'focar: +2 na margem (passa a vez)',trava||ataquesTurno>0||!!meu?.focoKokusen],
+      ...(C.celestial?[]:[['energia','気','Energia','recuperar 1d8 PA (passa a vez)',trava||ataquesTurno>0||recuperouTurno]]),
+      ['teste','試','Teste','rolar uma perícia',false],
+      ['fim','終','Encerrar turno','passar a vez',trava],
+    ];
+    if(cmdTela==='menu'){
+      h=topo('SUA VEZ!',stats)+espera+`<div class="cmd-menu" role="menu">${ops.map(([k,kj,n,sub,off],i)=>`<button type="button" role="menuitem" class="cmd-op" style="--i:${i}" ${k==='fim'?'id="btn-fimturno"':`data-cmd="${k}"`} ${off?'disabled':''}><span class="kj" aria-hidden="true">${kj}</span><span class="tx"><b>${n}</b><small>${sub}</small></span><kbd aria-hidden="true">${i+1}</kbd></button>`).join('')}</div>`;
+    }else{
+      const voltar='<button type="button" class="cmd-voltar" data-cmdvoltar="1">‹ Voltar</button>';
+      const tit={atacar:'ATACAR',tecnica:'TÉCNICA',kokusen:'KOKUSEN',energia:'ENERGIA',teste:'TESTE'}[cmdTela]||'';
+      h=topo(tit,stats)+espera;
+      if(cmdTela==='atacar')h+=`<div class="cmd-sub">
+        <label class="f" for="cb-alvo">Alvo<select id="cb-alvo">${alvos.map(a=>`<option value="${a.id}" ${a.id===cbAlvo?'selected':''}>${esc(a.nome)} (${a.pv} PV)</option>`).join('')}</select></label>
+        <label class="f" for="cb-arma">Arma<select id="cb-arma">${armas.map(a=>`<option value="${esc(a.nome)}" ${a.nome===cbArma?'selected':''}>${esc(a.nome)} · ${a.dados}+${C.a[a.attr]+a.flat} · ${a.skill}</option>`).join('')}</select></label>
+        <label class="chk-kok"><input type="checkbox" id="cb-energia" ${cbEnergia?'checked':''}> Com energia amaldiçoada (+1d6 de dano; Kokusen com ${margemKokusen()}${margemKokusen()<20?'–20':''} natural)</label>
+        ${meu?.focoKokusen?'<p class="cmd-nota forte">Foco no Kokusen ativo: +2 na margem no próximo ataque com energia.</p>':''}
+        <label class="f" for="cb-extra">Dano extra (opcional)<input type="text" id="cb-extra" value="${esc(cbExtra)}" placeholder="Ex.: 1d8 ou 3"></label>
+        ${meu?.bonusAtaque&&(meu.bonusAtaque.dano||meu.bonusAtaque.acerto)?`<p class="cmd-nota">Guardado para o próximo ataque: ${esc(meu.bonusAtaque.motivo||'bônus')}${meu.bonusAtaque.dano?` +${esc(meu.bonusAtaque.dano)} de dano`:''}${meu.bonusAtaque.acerto?` ${meu.bonusAtaque.acerto>0?'+':''}${meu.bonusAtaque.acerto} no acerto`:''}.</p>`:''}
+        ${C.extraOpc?'<p class="cmd-nota">Os ataques extras de Força/Velocidade dão −2.</p>':''}
+        <div class="cmd-linha">${voltar}<button class="cmd-acao" id="btn-atacar" ${trava||!alvos.length?'disabled':''}>Atacar!</button></div></div>`;
+      if(cmdTela==='tecnica'){const fontes=$('#chat-sobre-dado');const temSobre=C.hasTec||(F.especiais||[]).length;
+        h+=`<div class="cmd-sub">
+        ${tecNome?`<p class="cmd-nota"><b>${esc(tecNome)}</b>${F.tecnica.descricao?' · '+esc(String(F.tecnica.descricao).slice(0,140))+(String(F.tecnica.descricao).length>140?'…':''):''}</p>`:''}
+        <label class="f" for="cmd-tec-texto">O que você faz?<textarea id="cmd-tec-texto" rows="3" placeholder="${tecNome?`Ex.: uso ${esc(tecNome)} no inimigo da frente…`:'Ex.: tento desarmar o inimigo / uso Energia Reversa…'}">${esc(cmdTecTexto)}</textarea></label>
+        ${temSobre?`<div class="cmd-linha"><label class="f" for="cmd-tec-pa" style="flex:1">PA extra (+1 dado por PA)<input type="number" id="cmd-tec-pa" min="0" max="${C.tec.limite}" step="1" value="${cmdTecPa}"></label>${fontes&&fontes.options.length>1?`<label class="f" for="cmd-tec-dado" style="flex:2">Em qual técnica<select id="cmd-tec-dado">${[...fontes.options].map(o=>`<option value="${esc(o.value)}">${esc(o.textContent)}</option>`).join('')}</select></label>`:''}</div><p class="cmd-nota">Limite por ativação: ${C.tec.limite} PA. O mestre resolve o efeito e cobra o custo.</p>`:'<p class="cmd-nota">O mestre resolve o que você descrever.</p>'}
+        ${F.dominio?.nome&&!dominioAtivo()?`<button class="btn dom-bt" id="btn-dominio" style="--dom-cor:${esc(corValida(F.dominio.cor)||'#6a1fb0')}" ${narrando?'disabled':''}>領域展開 Expansão de Domínio: ${esc(F.dominio.nome)}</button>`:''}
+        ${dominioAtivo()?.dono===myId()?'<button class="cmd-mini" id="btn-fechardominio">Desfazer domínio</button>':''}
+        <div class="cmd-linha">${voltar}<button class="cmd-acao" id="cmd-tec-usar" ${trava?'disabled':''}>Usar</button></div></div>`;}
+      if(cmdTela==='kokusen')h+=`<div class="cmd-sub"><p class="cmd-nota">Você concentra a energia e passa a vez. No próximo ataque <b>com energia amaldiçoada</b>, a margem do Kokusen aumenta em 2 (hoje: ${margemKokusen()}${margemKokusen()<20?'–20':''} natural).</p>
+        <div class="cmd-linha">${voltar}<button class="cmd-acao" id="btn-focokok" ${trava||ataquesTurno>0||meu?.focoKokusen?'disabled':''}>Focar no Kokusen</button></div></div>`;
+      if(cmdTela==='energia')h+=`<div class="cmd-sub"><p class="cmd-nota">Você para e recupera o fôlego: ganha <b>1d8 PA</b> e usa a ação do turno no lugar dos ataques.</p>
+        <div class="cmd-linha">${voltar}<button class="cmd-acao" id="btn-recuperar" ${trava||ataquesTurno>0||recuperouTurno?'disabled':''}>Recuperar energia</button></div></div>`;
+      if(cmdTela==='teste')h+=`<div class="cmd-linha cmd-linha-topo">${voltar}</div>`;
+    }
+  }
+  const entra=box.hidden||novo;
+  cont.innerHTML=h;box.hidden=false;document.body.classList.add('cmd-aberto');
+  box.classList.toggle('entra',entra);if(entra)setTimeout(()=>box.classList.remove('entra'),700);
+  $('#cmd-teste').hidden=cmdTela!=='teste'||!!pend.length;
+  if(cmdTela==='teste'&&!pend.length)colocarRoll();else devolverRoll();
+  if(foco){const el=document.getElementById(foco.id);if(el){if(el.value!==undefined&&foco.v!==undefined&&el.tagName!=='SELECT')el.value=foco.v;el.focus();try{el.setSelectionRange(foco.s,foco.s);}catch{}}}
+  else if(entra||novo){const f=cont.querySelector('.cmd-op:not(:disabled),.cmd-acao:not(:disabled),select,textarea');if(f)setTimeout(()=>f.focus({preventScroll:true}),30);}
+}
+async function cmdUsarTecnica(){
+  const t=String($('#cmd-tec-texto')?.value||'').trim();if(!t){$('#cmd-tec-texto')?.focus();toastChat('Descreva o que você faz.');return;}
+  escolherPara('mestre');$('#chat-input').value=t;
+  const pa=$('#cmd-tec-pa');if(pa&&$('#chat-sobre'))$('#chat-sobre').value=String(Math.max(0,parseInt(pa.value)||0));
+  const dd=$('#cmd-tec-dado');if(dd&&$('#chat-sobre-dado'))$('#chat-sobre-dado').value=dd.value;
+  const antes=$('#chat-input').value;await enviar();
+  if(!$('#chat-input').value||$('#chat-input').value!==antes){cmdTecTexto='';cmdTecPa=0;cmdTela='menu';renderCmd();}
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-cmd],[data-cmdvoltar],#cmd-minimizar,#cmd-min,[data-cmdabrir],#cmd-tec-usar');if(!b)return;
+  if(b.dataset.cmd){cmdTela=b.dataset.cmd;renderCmd();return;}
+  if(b.dataset.cmdvoltar){cmdTela='menu';renderCmd();return;}
+  if(b.id==='cmd-minimizar'){cmdMin=true;renderCmd();$('#cmd-min')?.focus();return;}
+  if(b.id==='cmd-min'||b.dataset.cmdabrir){cmdMin=false;renderCmd();return;}
+  if(b.id==='cmd-tec-usar'){cmdUsarTecnica();return;}
+});
+document.addEventListener('input',e=>{if(e.target.id==='cmd-tec-texto')cmdTecTexto=e.target.value;if(e.target.id==='cmd-tec-pa')cmdTecPa=Math.max(0,parseInt(e.target.value)||0);});
+document.addEventListener('keydown',e=>{
+  const box=$('#cmd');if(!box||box.hidden||!box.contains(document.activeElement)&&document.activeElement!==document.body)return;
+  if(e.key==='Escape'){e.preventDefault();if(cmdTela!=='menu'){cmdTela='menu';renderCmd();}else{cmdMin=true;renderCmd();$('#cmd-min')?.focus();}return;}
+  if(cmdTela!=='menu')return;
+  const ops=[...box.querySelectorAll('.cmd-op')];if(!ops.length)return;
+  if(/^[1-9]$/.test(e.key)&&!/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){const o=ops[+e.key-1];if(o&&!o.disabled){e.preventDefault();o.click();}return;}
+  if(e.key==='ArrowDown'||e.key==='ArrowUp'){e.preventDefault();const i=ops.indexOf(document.activeElement);const n=ops.length;let k=i;
+    for(let t=0;t<n;t++){k=(k+(e.key==='ArrowDown'?1:-1)+n)%n;if(!ops[k].disabled)break;}ops[k].focus();}
+});
 
 /* ---------- Carregando ao trocar de cidade ---------- */
 const ANDANTES={passante1:'img/andante-passante1.png',passante2:'img/andante-passante2.png',passante3:'img/andante-passante3.png',passante4:'img/andante-passante4.png',passante5:'img/andante-passante5.png',passante6:'img/andante-passante6.png',passante7:'img/andante-passante7.png',gojo:'img/andante-gojo.png',itadori:'img/andante-itadori.png',nobara:'img/andante-nobara.png'};
